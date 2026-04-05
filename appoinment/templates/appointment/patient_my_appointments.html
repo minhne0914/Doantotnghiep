@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+
+{% block title %}Lịch hẹn của tôi{% endblock %}
+
+{% block content %}
+<div class="inner-banner-w3ls"><div class="container"></div></div>
+<div class="breadcrumb-agile">
+    <div aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Lịch hẹn của tôi</li>
+        </ol>
+    </div>
+</div>
+
+<style>
+    .appointments-shell {
+        padding: 18px 0 8px;
+    }
+    .appointments-hero,
+    .appointment-card-ui {
+        border: 1px solid #e6edf5;
+        border-radius: 22px;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+    }
+    .appointments-hero {
+        padding: 28px;
+        margin-bottom: 24px;
+    }
+    .appointments-title {
+        font-size: 2rem;
+        line-height: 1.2;
+        margin-bottom: 10px;
+        color: #16324f;
+    }
+    .appointments-subtitle {
+        margin-bottom: 0;
+        color: #5f7287;
+        max-width: 760px;
+    }
+    .hero-actions .btn {
+        border-radius: 999px;
+        padding: 11px 18px;
+        font-weight: 600;
+    }
+    .appointment-list-ui {
+        display: grid;
+        gap: 18px;
+    }
+    .appointment-card-ui {
+        padding: 22px;
+    }
+    .appointment-topbar {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+        margin-bottom: 16px;
+    }
+    .doctor-name-ui {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #16324f;
+        margin-bottom: 4px;
+    }
+    .doctor-meta-ui {
+        color: #6b7c8f;
+        font-size: 0.95rem;
+    }
+    .status-pill-ui {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 0.92rem;
+        color: #16324f;
+        background: #eef4fb;
+        white-space: nowrap;
+    }
+    .status-warning-ui { background: #fff4d9; color: #8a5b00; }
+    .status-success-ui { background: #def7ea; color: #166534; }
+    .status-info-ui { background: #dff4ff; color: #075985; }
+    .status-primary-ui { background: #dbeafe; color: #1d4ed8; }
+    .status-secondary-ui { background: #eceff3; color: #475569; }
+    .appointment-grid-ui {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 18px;
+    }
+    .appointment-metric-ui {
+        padding: 14px 16px;
+        border-radius: 16px;
+        background: #f8fbfe;
+        border: 1px solid #edf2f7;
+    }
+    .appointment-metric-ui span {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #7b8da1;
+        margin-bottom: 6px;
+    }
+    .appointment-metric-ui strong {
+        display: block;
+        color: #17324d;
+        font-size: 1rem;
+        line-height: 1.45;
+    }
+    .appointment-warning-ui {
+        margin-bottom: 14px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: #fff5f5;
+        border: 1px solid #fecaca;
+        color: #b91c1c;
+        font-size: 0.94rem;
+    }
+    .appointment-actions-ui {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+    .appointment-actions-ui .btn {
+        border-radius: 999px;
+        font-weight: 600;
+        padding: 10px 16px;
+    }
+    .history-toggle-ui {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #0f5fa8;
+        font-weight: 600;
+        cursor: pointer;
+        user-select: none;
+    }
+    .history-list-ui {
+        margin-top: 14px;
+        display: grid;
+        gap: 12px;
+    }
+    .history-item-ui {
+        border-radius: 16px;
+        border: 1px solid #e5edf5;
+        background: #f8fbfe;
+        padding: 14px 16px;
+        color: #314559;
+        font-size: 0.94rem;
+    }
+    .empty-card-ui {
+        text-align: center;
+        padding: 50px 24px;
+        border-radius: 22px;
+        background: #ffffff;
+        border: 1px dashed #d4deea;
+        color: #6c8197;
+    }
+    @media (max-width: 991px) {
+        .appointments-hero {
+            padding: 22px;
+        }
+        .appointment-grid-ui {
+            grid-template-columns: 1fr;
+        }
+        .appointment-topbar {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="container appointments-shell mb-5">
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="appointments-hero">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h2 class="appointments-title">Quản lý lịch khám của bạn dễ dàng hơn</h2>
+                <p class="appointments-subtitle">
+                    Theo dõi lịch hẹn sắp tới, đổi hoặc hủy lịch trước tối thiểu {{ change_deadline_hours }} giờ và xem lại toàn bộ thay đổi theo thời gian.
+                </p>
+            </div>
+            <div class="col-lg-4 mt-4 mt-lg-0 text-lg-right hero-actions">
+                <a href="{% url 'patient-emr-timeline' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-notes-medical mr-2"></i>Lịch sử bệnh án
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if appointments %}
+    <div class="appointment-list-ui">
+        {% for booking in appointments %}
+        <div class="appointment-card-ui">
+            <div class="appointment-topbar">
+                <div>
+                    <div class="doctor-name-ui">{{ booking.appointment.full_name }}</div>
+                    <div class="doctor-meta-ui">{{ booking.appointment.department }} • {{ booking.appointment.hospital_name }}</div>
+                </div>
+                <span class="status-pill-ui status-{{ booking.badge_class }}-ui">{{ booking.badge_label }}</span>
+            </div>
+
+            <div class="appointment-grid-ui">
+                <div class="appointment-metric-ui">
+                    <span>Ngày khám</span>
+                    <strong>{{ booking.date|date:"d/m/Y" }}</strong>
+                </div>
+                <div class="appointment-metric-ui">
+                    <span>Giờ khám</span>
+                    <strong>{{ booking.time|time:"H:i" }}</strong>
+                </div>
+                <div class="appointment-metric-ui">
+                    <span>Ghi chú</span>
+                    <strong>{{ booking.message|default:"Chưa có ghi chú" }}</strong>
+                </div>
+            </div>
+
+            {% if booking.modify_reason and not booking.can_modify %}
+            <div class="appointment-warning-ui">
+                <i class="fas fa-exclamation-triangle mr-2"></i>{{ booking.modify_reason }}
+            </div>
+            {% endif %}
+
+            <div class="appointment-actions-ui">
+                {% if booking.can_modify %}
+                <a href="{% url 'patient-reschedule-appointment' booking.id %}" class="btn btn-info">
+                    <i class="fas fa-calendar-alt mr-2"></i>Đổi lịch
+                </a>
+                <a href="{% url 'patient-cancel-appointment' booking.id %}" class="btn btn-danger">
+                    <i class="fas fa-times-circle mr-2"></i>Hủy lịch
+                </a>
+                {% elif booking.status == 'completed' %}
+                <a href="{% url 'patient-emr-timeline' %}" class="btn btn-primary">
+                    <i class="fas fa-file-medical-alt mr-2"></i>Xem bệnh án
+                </a>
+                {% else %}
+                <span class="text-muted align-self-center">Lịch này hiện không còn thao tác khả dụng.</span>
+                {% endif %}
+            </div>
+
+            {% if booking.change_history %}
+            <details>
+                <summary class="history-toggle-ui">
+                    <i class="fas fa-history"></i>Xem lịch sử thay đổi
+                </summary>
+                <div class="history-list-ui">
+                    {% for item in booking.change_history %}
+                    <div class="history-item-ui">
+                        <div><strong>{{ item.get_action_display }}</strong> lúc {{ item.created_at|date:"d/m/Y H:i" }}</div>
+                        {% if item.old_date or item.old_time %}
+                        <div class="text-muted mt-1">Từ: {{ item.old_date|date:"d/m/Y" }} {{ item.old_time|time:"H:i" }}</div>
+                        {% endif %}
+                        {% if item.new_date or item.new_time %}
+                        <div class="text-muted">Đến: {{ item.new_date|date:"d/m/Y" }} {{ item.new_time|time:"H:i" }}</div>
+                        {% endif %}
+                        {% if item.reason %}
+                        <div class="mt-1">Lý do: {{ item.reason }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </details>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-card-ui">
+        <h4 class="mb-3">Bạn chưa có lịch hẹn nào</h4>
+        <p class="mb-0">Khi đặt lịch thành công, các lịch khám sắp tới sẽ xuất hiện ở đây để bạn theo dõi và điều chỉnh.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

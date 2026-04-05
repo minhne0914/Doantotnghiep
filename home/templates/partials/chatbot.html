@@ -1,0 +1,427 @@
+<style>
+#chatbotToggle {
+    position: fixed;
+    right: 28px;
+    bottom: 28px;
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, #0891b2, #0f766e);
+    color: #fff;
+    box-shadow: 0 12px 30px rgba(8, 145, 178, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 9999;
+}
+
+#chatContainer {
+    position: fixed;
+    right: 28px;
+    bottom: 106px;
+    width: 380px;
+    max-width: calc(100vw - 24px);
+    height: 560px;
+    max-height: calc(100vh - 140px);
+    background: #fff;
+    border-radius: 22px;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.28);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 10000;
+}
+
+#chatHeader {
+    background: linear-gradient(135deg, #0f766e, #115e59);
+    color: #fff;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.chat-title { display: flex; flex-direction: column; gap: 2px; }
+.chat-title strong { font-size: 15px; }
+.chat-title span { font-size: 12px; color: rgba(255, 255, 255, 0.82); }
+
+.chat-actions { display: flex; align-items: center; gap: 8px; }
+.chat-action-btn {
+    border: 1px solid rgba(255,255,255,0.25);
+    background: transparent;
+    color: #fff;
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+#chatStatus {
+    padding: 10px 16px;
+    font-size: 12px;
+    color: #0f172a;
+    background: #ecfeff;
+    border-bottom: 1px solid #dbeafe;
+}
+
+#chatMessages {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    background:
+        radial-gradient(circle at top right, rgba(186, 230, 253, 0.35), transparent 30%),
+        linear-gradient(180deg, #f8fafc, #eef6f7);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.chat-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-width: 85%;
+}
+
+.chat-row.user { align-self: flex-end; align-items: flex-end; }
+.chat-row.bot { align-self: flex-start; align-items: flex-start; }
+
+.chat-bubble {
+    padding: 12px 14px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.55;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.chat-bubble.user {
+    background: linear-gradient(135deg, #0891b2, #0f766e);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+
+.chat-bubble.bot {
+    background: #fff;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
+    border-bottom-left-radius: 4px;
+}
+
+.chat-time {
+    font-size: 11px;
+    color: #64748b;
+}
+
+#chatInputContainer {
+    padding: 14px;
+    border-top: 1px solid #e2e8f0;
+    background: #fff;
+}
+
+.chat-input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+#chatInput {
+    flex: 1;
+    min-height: 44px;
+    max-height: 120px;
+    border: 1px solid #cbd5e1;
+    border-radius: 16px;
+    padding: 10px 14px;
+    resize: none;
+    outline: none;
+}
+
+#chatSend {
+    width: 46px;
+    height: 46px;
+    border: none;
+    border-radius: 14px;
+    background: #0f766e;
+    color: #fff;
+    cursor: pointer;
+}
+
+#chatSend:disabled,
+.chat-action-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.typing-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.typing-indicator span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #94a3b8;
+    animation: typing 1.2s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(2) { animation-delay: 0.15s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes typing {
+    0%, 80%, 100% { transform: scale(0.65); opacity: 0.6; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+@media (max-width: 640px) {
+    #chatContainer {
+        right: 12px;
+        left: 12px;
+        bottom: 88px;
+        width: auto;
+        height: 72vh;
+    }
+
+    #chatbotToggle {
+        right: 16px;
+        bottom: 16px;
+    }
+}
+</style>
+
+<button id="chatbotToggle" type="button" onclick="toggleChat()">
+    <i class="fas fa-robot"></i>
+</button>
+
+<div id="chatContainer">
+    <div id="chatHeader">
+        <div class="chat-title">
+            <strong><i class="fas fa-stethoscope mr-1"></i> Medic AI</strong>
+            <span>Trợ lý tham khảo sức khỏe cá nhân</span>
+        </div>
+        <div class="chat-actions">
+            <button id="clearChatBtn" class="chat-action-btn" type="button" onclick="clearChat()">Xóa chat</button>
+            <button class="chat-action-btn" type="button" onclick="toggleChat()">Đóng</button>
+        </div>
+    </div>
+
+    <div id="chatStatus">Sẵn sàng hỗ trợ. Cuộc trò chuyện sẽ được lưu trong tài khoản của bạn.</div>
+    <div id="chatMessages"></div>
+
+    <div id="chatInputContainer">
+        <div class="chat-input-row">
+            <textarea id="chatInput" rows="2" maxlength="1000" placeholder="Nhập câu hỏi về sức khỏe, triệu chứng hoặc lời khuyên chăm sóc..."></textarea>
+            <button id="chatSend" type="button" onclick="sendMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let chatLoaded = false;
+    let chatBusy = false;
+
+    function getCsrfToken() {
+        const csrfCookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+        return csrfCookie ? csrfCookie.split('=')[1] : '';
+    }
+
+    function setChatStatus(message, tone = 'info') {
+        const status = document.getElementById('chatStatus');
+        const styles = {
+            info: { bg: '#ecfeff', color: '#0f172a' },
+            loading: { bg: '#eff6ff', color: '#1d4ed8' },
+            success: { bg: '#ecfdf5', color: '#047857' },
+            error: { bg: '#fef2f2', color: '#b91c1c' },
+        };
+        const style = styles[tone] || styles.info;
+        status.textContent = message;
+        status.style.background = style.bg;
+        status.style.color = style.color;
+    }
+
+    function escapeHtml(value) {
+        return value
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function formatMessageText(text) {
+        let formatted = escapeHtml(text);
+        formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        formatted = formatted.replace(/\n/g, '<br>');
+        return formatted;
+    }
+
+    function appendMessage(sender, text, timestamp = '') {
+        const messages = document.getElementById('chatMessages');
+        const row = document.createElement('div');
+        row.className = `chat-row ${sender}`;
+
+        const bubble = document.createElement('div');
+        bubble.className = `chat-bubble ${sender}`;
+        bubble.innerHTML = formatMessageText(text);
+
+        row.appendChild(bubble);
+        if (timestamp) {
+            const time = document.createElement('div');
+            time.className = 'chat-time';
+            time.textContent = timestamp;
+            row.appendChild(time);
+        }
+
+        messages.appendChild(row);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    function showTyping() {
+        const messages = document.getElementById('chatMessages');
+        const row = document.createElement('div');
+        row.className = 'chat-row bot';
+        row.id = 'typingIndicator';
+
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble bot';
+        bubble.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+        row.appendChild(bubble);
+
+        messages.appendChild(row);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    function hideTyping() {
+        const indicator = document.getElementById('typingIndicator');
+        if (indicator) indicator.remove();
+    }
+
+    function setBusyState(isBusy) {
+        chatBusy = isBusy;
+        document.getElementById('chatSend').disabled = isBusy;
+        document.getElementById('clearChatBtn').disabled = isBusy;
+        document.getElementById('chatInput').disabled = isBusy;
+    }
+
+    async function loadChatHistory(force = false) {
+        if (chatLoaded && !force) return;
+
+        setChatStatus('Đang tải lịch sử hội thoại...', 'loading');
+        try {
+            const response = await fetch('/api/chat/history/');
+            const data = await response.json();
+            const messages = document.getElementById('chatMessages');
+            messages.innerHTML = '';
+
+            if (response.ok && Array.isArray(data.messages) && data.messages.length) {
+                data.messages.forEach((message) => {
+                    appendMessage(message.sender, message.message, message.created_at);
+                });
+                setChatStatus('Đã tải lịch sử hội thoại gần nhất.', 'success');
+            } else {
+                appendMessage('bot', 'Xin chào! Tôi là Medic AI. Bạn có thể hỏi tôi về kết quả sàng lọc và lời khuyên chăm sóc sức khỏe.');
+                setChatStatus('Chưa có lịch sử chat. Hãy bắt đầu cuộc trò chuyện mới.', 'info');
+            }
+            chatLoaded = true;
+        } catch (error) {
+            setChatStatus('Không thể tải lịch sử chat lúc này.', 'error');
+        }
+    }
+
+    function toggleChat() {
+        const chat = document.getElementById('chatContainer');
+        const isOpen = chat.style.display === 'flex';
+        chat.style.display = isOpen ? 'none' : 'flex';
+
+        if (!isOpen) {
+            loadChatHistory();
+            document.getElementById('chatInput').focus();
+        }
+    }
+
+    function handleKeyPress(event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            sendMessage();
+        }
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('chatInput');
+        const text = input.value.trim();
+        if (!text || chatBusy) return;
+
+        appendMessage('user', text, 'Đang gửi...');
+        input.value = '';
+        setBusyState(true);
+        setChatStatus('Medic AI đang suy nghĩ...', 'loading');
+        showTyping();
+
+        try {
+            const response = await fetch('/api/chat/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken(),
+                },
+                body: JSON.stringify({ message: text }),
+            });
+            const data = await response.json().catch(() => ({}));
+            hideTyping();
+
+            if (response.ok) {
+                appendMessage('bot', data.reply || 'AI chưa trả về nội dung hợp lệ.');
+                setChatStatus('Phản hồi đã được lưu vào lịch sử chat.', 'success');
+            } else {
+                appendMessage('bot', data.error || 'Xin lỗi, hệ thống AI tạm thời không phản hồi được.');
+                setChatStatus('Đã gặp lỗi khi gửi tin nhắn.', 'error');
+            }
+        } catch (error) {
+            hideTyping();
+            appendMessage('bot', 'Lỗi kết nối mạng, vui lòng thử lại sau.');
+            setChatStatus('Kết nối mạng không ổn định.', 'error');
+        } finally {
+            setBusyState(false);
+            document.getElementById('chatInput').focus();
+        }
+    }
+
+    async function clearChat() {
+        if (chatBusy) return;
+        if (!confirm('Bạn có chắc muốn xóa toàn bộ lịch sử hội thoại?')) return;
+
+        setBusyState(true);
+        setChatStatus('Đang xóa lịch sử hội thoại...', 'loading');
+        try {
+            const response = await fetch('/api/chat/clear/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken(),
+                },
+            });
+            const data = await response.json().catch(() => ({}));
+
+            if (response.ok && data.success) {
+                const messages = document.getElementById('chatMessages');
+                messages.innerHTML = '';
+                appendMessage('bot', 'Lịch sử hội thoại đã được xóa. Bạn có thể bắt đầu cuộc trò chuyện mới.');
+                setChatStatus('Đã xóa toàn bộ lịch sử chat.', 'success');
+            } else {
+                setChatStatus(data.error || 'Không thể xóa lịch sử chat.', 'error');
+            }
+        } catch (error) {
+            setChatStatus('Lỗi kết nối khi xóa lịch sử chat.', 'error');
+        } finally {
+            setBusyState(false);
+        }
+    }
+
+    document.getElementById('chatInput').addEventListener('keydown', handleKeyPress);
+</script>

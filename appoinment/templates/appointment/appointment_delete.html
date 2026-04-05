@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Chi tiết lịch khám{% endblock %}
+
+{% block content %}
+<style>
+    .social-list {
+        display: flex;
+        list-style: none;
+        justify-content: center;
+        padding: 0;
+    }
+
+    .social-list li {
+        padding: 10px;
+        color: #8E24AA;
+        font-size: 19px;
+    }
+</style>
+
+<div class="inner-banner-w3ls">
+    <div class="container"></div>
+</div>
+
+<div class="container mt-5">
+    <div class="row d-flex justify-content-center" style="margin-bottom: 30px;">
+        <div class="col-md-7">
+            <div class="card p-3 py-4">
+                <div class="text-center">
+                    <img src="{{ user_image }}" width="100" class="rounded-circle">
+                </div>
+
+                <div class="text-center mt-3">
+                    <h5 class="mt-2 mb-0">{{ object.full_name }}</h5>
+                    <span>{% if doctor.role == 'doctor' %}Bác sĩ{% endif %}</span>
+
+                    <div class="px-4 mt-1">
+                        <p class="fonts" style="color: black;">{{ object.hospital_name }}</p>
+                        <p class="fonts" style="color: black;">Thời gian bắt đầu: {{ object.start_time }}</p>
+                        <p class="fonts" style="color: black;">Thời gian kết thúc: {{ object.end_time }}</p>
+                        <p class="fonts" style="color: black;">Chuyên khoa: {{ object.department }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "emails/base_email.html" %}
+{% block content %}
+<h3 style="margin-top:0;">Nhắc lịch khám trước 1 giờ</h3>
+<p>Lịch khám của bạn sẽ diễn ra trong khoảng 1 giờ nữa.</p>
+<ul>
+    <li>Bác sĩ: {{ booking.appointment.full_name }}</li>
+    <li>Ngày: {{ appointment_info.date }}</li>
+    <li>Giờ: {{ appointment_info.time }}</li>
+    <li>Địa điểm: {{ booking.appointment.hospital_name }} - {{ booking.appointment.location }}</li>
+</ul>
+{% endblock %}

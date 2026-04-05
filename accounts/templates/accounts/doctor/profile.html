@@ -1,0 +1,79 @@
+{% extends 'app.html' %}
+{% load bootstrap %}
+{% load static %}
+
+{% block title %}Hồ sơ người dùng{% endblock %}
+
+{% block content %}
+<div class="content-wrapper" style="min-height: 1638px;">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Hồ sơ</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="{% url 'doctor-dashboard' %}">Bảng điều khiển</a></li>
+              <li class="breadcrumb-item active">Thông tin cá nhân</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-3">
+            <div class="card card-primary card-outline">
+              <div class="card-body box-profile">
+                <div class="text-center">
+                    <img class="profile-user-img img-fluid img-circle" src="{{ user_image }}" alt="Ảnh hồ sơ" style="width: 200px; height: 200px; border: 2px solid #ccc; border-radius: 50%;">
+                </div>
+
+                {% if request.user.is_authenticated and request.user.role == 'doctor' %}
+                <h3 class="profile-username text-center">{{ request.user.first_name }} {{ request.user.last_name }}</h3>
+                <h5 class="text-muted text-center">Bác sĩ</h5>
+                {% endif %}
+
+                <ul class="list-group list-group-unbordered mb-3">
+                  <li class="list-group-item">
+                    <b>Email</b> <a class="float-right">{{ request.user.email }}</a>
+                  </li>
+                  <li class="list-group-item">
+                    <b>Số điện thoại</b> <a class="float-right">{{ request.user.phone_number }}</a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-9">
+            <div class="card">
+              <div class="card-header p-2">
+                <ul class="nav nav-pills">
+                  <li class="nav-item"><a>Chỉnh sửa thông tin</a></li>
+                </ul>
+              </div>
+              <div class="card-body">
+                <div class="tab-content">
+                  <div class="tab-pane active" id="settings">
+                    <form id="quickForm" novalidate="novalidate" method="POST" enctype="multipart/form-data">{% csrf_token %}
+                        <div class="card-body">
+                            {{ form|bootstrap }}
+                        </div>
+                        <div class="card-footer" style="text-align: center;">
+                            <input type="submit" value="Cập nhật" class="btn btn-primary btn-md text-white" style="width: 100px;">
+                        </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+{% endblock %}

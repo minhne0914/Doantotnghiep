@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load bootstrap %}
+{% block title %}Đặt lịch khám{% endblock %}
+
+{% block style %}
+<style>
+    .input-group-addon {
+        padding: 6px 12px;
+        font-size: 14px;
+        font-weight: normal;
+        line-height: 1;
+        color: #555;
+        text-align: center;
+        background-color: #eee;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    .glyphicon {
+        position: relative;
+        top: 5px;
+        display: inline-block;
+        font-family: 'Glyphicons Halflings';
+        font-style: normal;
+        font-weight: normal;
+        line-height: 1;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="inner-banner-w3ls">
+    <div class="container"></div>
+</div>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-5 mb-5 mb-lg-0">
+            <center><h3>Đặt lịch khám</h3></center>
+
+            <form action="" method="POST">{% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Chuyên khoa</label>
+                    <input type="text" class="form-control" readonly value="{{ appointment_department }}">
+                </div>
+                <div class="mb-3">
+                    <label for="appointment" class="form-label">Bác sĩ</label>
+                    {{ form.appointment }}
+                    <input type="text" class="form-control" readonly value="{{ appointment_name }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Họ và tên</label>
+                    <input type="text" name="full_name" maxlength="100" class="form-control" readonly required id="id_full_name" value="{{ user.first_name }} {{ user.last_name }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Ngày khám</label>
+                    <div class="input-group date">
+                        <input type="text" class="form-control" value="{{ appointment_date|date:'d/m/Y' }}" readonly disabled id="id_date">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Giờ khám</label>
+                    <div class="input-group date" id="datetimepicker">
+                        <input type="text" class="form-control" name="time" value="" id="time" required>
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-time"><i class="fa fa-solid fa-clock"></i></span>
+                        </span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Số điện thoại</label>
+                    <input type="text" name="phone_number" maxlength="120" class="form-control" required id="id_phone_number" value="{{ user.phone_number }}" readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Ghi chú</label>
+                    <textarea name="message" cols="40" rows="3" placeholder="Nhập ghi chú ngắn cho bác sĩ" class="form-control" required id="id_message"></textarea>
+                </div>
+                <div class="row form-group">
+                    <div class="col-md-12" style="align-items: center;">
+                        <input type="submit" value="Xác nhận đặt lịch" class="btn btn-primary btn-md text-white">
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% load static %}
+<link href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/css/bootstrap-datetimepicker.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.15.2/moment.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/js/bootstrap-datetimepicker.min.js"></script>
+<script type="text/javascript">
+    $(function () {
+        $('#datetimepicker').datetimepicker({
+            format: 'HH:mm',
+            stepping: 30,
+            useCurrent: false,
+            icons: {
+                up: 'fa fa-chevron-up',
+                down: 'fa fa-chevron-down',
+            },
+            widgetPositioning: {
+                horizontal: 'auto',
+                vertical: 'bottom',
+            },
+            keepOpen: true,
+        });
+
+        $('#datetimepicker').on('dp.change', function (e) {
+            var selectedTime = e.date;
+            if (!selectedTime) {
+                return;
+            }
+            var formattedTime = selectedTime.format('HH:mm');
+            $('#datetimepicker').data('DateTimePicker').date(moment(formattedTime, 'HH:mm'));
+            $('[name="time"]').val(formattedTime);
+        });
+
+        $('form').on('submit', function (e) {
+            e.preventDefault();
+            const form = this;
+            const fullName = $('#id_full_name').val();
+            const phoneNumber = $('#id_phone_number').val();
+            const date = $('#id_date').val();
+            const time = $('#time').val();
+            const doctor = '{{ appointment_name|default:""|escapejs }}';
+
+            Swal.fire({
+                title: 'Xác nhận đặt lịch',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Xác nhận',
+                cancelButtonText: 'Hủy',
+                html: `Vui lòng kiểm tra lại thông tin đặt lịch.<br><br>
+                    Tên: ${fullName} <br>
+                    Số điện thoại: ${phoneNumber} <br>
+                    Ngày: ${date} <br>
+                    Giờ: ${time} <br>
+                    Bác sĩ: ${doctor}`
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        type: "POST",
+                        url: $(form).attr('action'),
+                        data: $(form).serialize(),
+                        success: function () {
+                            window.location.href = '/';
+                        },
+                        error: function (xhr) {
+                            const errorMessage = xhr.responseJSON && xhr.responseJSON.error
+                                ? xhr.responseJSON.error
+                                : 'Không thể gửi yêu cầu đặt lịch lúc này.';
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Có lỗi xảy ra',
+                                text: errorMessage,
+                            });
+                        }
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

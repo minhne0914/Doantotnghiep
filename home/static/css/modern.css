@@ -1,0 +1,144 @@
+/* Modern CSS Overrides for Healthcare AI */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary-teal: #0f766e;
+  --primary-teal-light: #14b8a6;
+  --secondary-blue: #0284c7;
+  --bg-light: #f8fafc;
+  --surface-color: #ffffff;
+  --text-dark: #1e293b;
+  --text-muted: #64748b;
+  --border-radius: 16px;
+  --box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --glass-bg: rgba(255, 255, 255, 0.85);
+}
+
+/* Global Typography Override */
+body, h1, h2, h3, h4, h5, h6, p, a, div, span, button, input, select, textarea {
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* Navbar Modernization */
+.top-bar {
+  background: var(--primary-teal) !important;
+}
+
+.main-top {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255,255,255,0.3);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+}
+
+a.navbar-brand span {
+  color: var(--primary-teal) !important;
+}
+
+a.navbar-brand {
+    color: var(--primary-teal-light) !important;
+}
+a.navbar-brand i {
+    color: var(--primary-teal-light) !important;
+}
+
+.navbar-light .navbar-nav .nav-link {
+    color: var(--text-dark) !important;
+    font-weight: 500;
+}
+
+.navbar-light .navbar-nav .nav-link:hover {
+    color: var(--primary-teal-light) !important;
+}
+
+/* Form Modernization */
+.card, .jumbotron {
+  background-color: var(--surface-color);
+  border-radius: var(--border-radius) !important;
+  box-shadow: var(--box-shadow) !important;
+  border: none !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+form .form-control {
+  border-radius: 8px !important;
+  border: 1px solid #cbd5e1 !important;
+  padding: 12px 15px !important;
+  font-size: 15px !important;
+  transition: all 0.3s ease !important;
+}
+
+form .form-control:focus {
+  border-color: var(--primary-teal-light) !important;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.2) !important;
+}
+
+form label {
+  font-weight: 600 !important;
+  color: var(--text-dark) !important;
+}
+
+.btn-primary, button.submit {
+  background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-light) 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 12px 24px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.btn-primary:hover, button.submit:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 10px 15px -3px rgba(20, 184, 166, 0.3) !important;
+}
+
+/* Alerts / Callouts */
+.alert-info, .alert-warning {
+  border-radius: 12px !important;
+  border-left: 5px solid !important;
+}
+.alert-warning {
+  background-color: #fffbeb !important;
+  border-color: #f59e0b !important;
+  color: #92400e !important;
+}
+
+/* Tooltip Hint */
+.hint-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: #e2e8f0;
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-left: 6px;
+  cursor: help;
+  transition: background-color 0.2s ease;
+}
+
+.hint-icon:hover {
+  background-color: var(--primary-teal-light);
+  color: #fff;
+}
+
+/* Feature/Services Cards */
+.wthree_agile_us {
+  transition: transform 0.3s ease;
+  padding: 15px;
+  border-radius: 12px;
+}
+
+.wthree_agile_us:hover {
+  transform: translateY(-5px);
+  background: var(--surface-color);
+  box-shadow: var(--box-shadow);
+}
+.wthree_features_grid i {
+    background: var(--primary-teal) !important;
+    border-radius: 50%;
+}

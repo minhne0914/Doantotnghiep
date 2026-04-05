@@ -1,0 +1,131 @@
+<!-- header -->
+<header>
+    <div class="top-bar py-3">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-7 top-social-agile">
+                    <div class="row">
+                        <ul class="col-lg-4 col-6 top-right-info text-center">
+                            <li><a href="#"><i class="fab fa-facebook-f"></i></a></li>
+                            <li class="mx-3"><a href="#"><i class="fab fa-twitter"></i></a></li>
+                            <li><a href="#"><i class="fab fa-google-plus-g"></i></a></li>
+                            <li class="ml-3"><a href="#"><i class="fab fa-pinterest-p"></i></a></li>
+                        </ul>
+                        <div class="col-6 header-top_w3layouts pl-3 text-lg-left text-center">
+                            <p class="text-white">
+                                <i class="fas fa-map-marker-alt mr-2"></i>Trung Tâm Y Tế ĐH Công Nghiệp Hà Nội
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-5 top-social-agile text-lg-right text-center">
+                    <div class="row">
+                        <div class="col-lg-7 col-6 top-w3layouts">
+                            <p class="text-white">
+                                <i class="far fa-envelope-open mr-2"></i>
+                                <a href="mailto:contact@haui.edu.vn" class="text-white">contact@haui.edu.vn</a>
+                            </p>
+                        </div>
+                        <div class="col-lg-5 col-6 header-w3layouts pl-4 text-lg-left">
+                            <p class="text-white">
+                                <i class="fas fa-phone mr-2"></i>Hotline 24/7: 1900 8888
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div id="home">
+    <div class="main-top py-1">
+        <nav class="navbar navbar-expand-lg navbar-light fixed-navi">
+            <div class="container">
+                <h1>
+                    <a class="navbar-brand font-weight-bold font-italic" href="{% url 'home' %}">
+                        <span>M</span>edic
+                        <i class="fas fa-syringe"></i>
+                    </a>
+                </h1>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                    aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse text-center" id="navbarSupportedContent">
+                    <ul class="navbar-nav ml-lg-auto">
+                        <li class="nav-item active mt-lg-0 mt-3">
+                            <a class="nav-link" href="{% url 'home' %}">Trang chủ
+                                <span class="sr-only">(current)</span>
+                            </a>
+                        </li>
+
+                        <li class="nav-item dropdown nav-item mx-lg-3 my-lg-0 my-3">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
+                                aria-haspopup="true" aria-expanded="false">
+                                Sàng lọc nguy cơ
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <a class="dropdown-item" href="{% url 'diabetes' %}">Nguy cơ tiểu đường</a>
+                                <a class="dropdown-item" href="{% url 'breast' %}">Nguy cơ ung thư vú</a>
+                                <a class="dropdown-item" href="{% url 'heart' %}">Nguy cơ bệnh tim</a>
+                                <a class="dropdown-item" href="{% url 'kidney' %}">Nguy cơ bệnh thận</a>
+                                <a class="dropdown-item" href="{% url 'pneumonia_detector' %}">Nguy cơ viêm phổi</a>
+                            </div>
+                        </li>
+
+                        <li class="nav-item mx-lg-4">
+                            <a class="nav-link" href="{% url 'doctor' %}">Bác sĩ</a>
+                        </li>
+
+                        {% if request.user.is_authenticated and request.user.role == 'doctor' %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownDoctor" role="button" data-toggle="dropdown"
+                                aria-haspopup="true" aria-expanded="false">
+                                {{ request.user.first_name }}
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="navbarDropdownDoctor">
+                                <a class="dropdown-item" href="{% url 'doctor-dashboard' %}"><i class="fas fa-cog"></i> Cài đặt</a>
+                                <a class="dropdown-item" href="{% url 'doctor-appointment' %}"><i class="fas fa-calendar-alt"></i> Lịch hẹn</a>
+                                <a class="dropdown-item" href="{% url 'doctor-appointment-create' %}"><i class="fas fa-plus-circle"></i> Tạo lịch khám</a>
+                                <a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                            </div>
+                        </li>
+
+                        {% elif request.user.is_authenticated and request.user.role == 'patient' %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownPatient" role="button" data-toggle="dropdown"
+                                aria-haspopup="true" aria-expanded="false">
+                                {{ request.user.first_name }}
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="navbarDropdownPatient">
+                                <a class="dropdown-item" href="{% url 'history' %}"><i class="fas fa-history"></i> Lịch sử sức khỏe</a>
+                                <a class="dropdown-item" href="{% url 'patient-my-appointments' %}"><i class="fas fa-calendar-check"></i> Lịch hẹn của tôi</a>
+                                <a class="dropdown-item" href="{% url 'patient-emr-timeline' %}"><i class="fas fa-file-medical"></i> Hồ sơ bệnh án</a>
+                                <a class="dropdown-item" href="{% url 'patient-profile-update' %}"><i class="fas fa-user-edit"></i> Chỉnh sửa hồ sơ</a>
+                                <a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+                            </div>
+                        </li>
+
+                        {% else %}
+                        <li class="nav-item dropdown nav-item mx-lg-3 my-lg-0 my-3">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownRegister" role="button" data-toggle="dropdown"
+                                aria-haspopup="true" aria-expanded="false">
+                                Đăng ký
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="navbarDropdownRegister">
+                                <a class="dropdown-item" href="{% url 'doctor-register' %}">Bác sĩ</a>
+                                <a class="dropdown-item" href="{% url 'patient-register' %}">Bệnh nhân</a>
+                            </div>
+                        </li>
+                    </ul>
+                        <a href="{% url 'login' %}" class="login-button ml-lg-5 mt-lg-0 mt-3 mb-lg-0 mb-3">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Đăng nhập
+                        </a>
+                        {% endif %}
+                </div>
+            </div>
+        </nav>
+    </div>
+</div>

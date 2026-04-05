@@ -1,0 +1,21 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zxx">
+
+    {% include "partials/head.html" %}
+    {% block style %}{% endblock %}
+<body>
+    {% include 'partials/navbar.html' %}
+    {% block content %}
+    {% endblock %}
+    {% include 'partials/footer.html' %}
+    {% include "partials/scripts.html" %}
+    {% include "partials/realtime_notifications.html" %}
+    {% block scripts %}
+    {% endblock %}
+    {% if request.user.is_authenticated %}
+        {% include "partials/chatbot.html" %}
+    {% endif %}
+</body>
+
+</html>    

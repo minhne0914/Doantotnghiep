@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Tóm tắt tiền sử bệnh{% endblock %}
+
+{% block content %}
+<div class="inner-banner-w3ls"><div class="container"></div></div>
+<div class="breadcrumb-agile">
+    <div aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'patient-list' %}">Bệnh nhân</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Tóm tắt tiền sử bệnh</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container mt-4 mb-5">
+    <div class="card mb-4 shadow-sm border-0">
+        <div class="card-body">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                <div>
+                    <h3 class="mb-2">Tóm tắt tiền sử bệnh nhân</h3>
+                    <p class="text-muted mb-0">
+                        Bệnh nhân: {{ booking.full_name }} |
+                        Ngày khám hiện tại: {{ booking.date|date:"d/m/Y" }} {{ booking.time|time:"H:i" }}
+                    </p>
+                </div>
+                <a href="{% url 'doctor-emr-form' booking.id %}" class="btn btn-primary mt-3 mt-md-0">
+                    <i class="fas fa-file-medical mr-2"></i>Mở form bệnh án
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% for record in patient_records %}
+    <div class="card mb-4 shadow-sm border-0">
+        <div class="card-body">
+            <div class="d-flex justify-content-between flex-wrap">
+                <h5>{{ record.created_at|date:"d/m/Y H:i" }}</h5>
+                <span class="badge badge-secondary">{{ record.doctor.get_full_name|default:record.doctor.email }}</span>
+            </div>
+            <p class="mt-3"><strong>Triệu chứng:</strong> {{ record.symptoms }}</p>
+            <p><strong>Chẩn đoán:</strong> {{ record.diagnosis }}</p>
+            <p><strong>Ghi chú:</strong> {{ record.clinical_notes|default:"Không có" }}</p>
+
+            {% if record.vital_sign %}
+            <p class="mb-2">
+                <strong>Chỉ số sinh tồn:</strong>
+                {{ record.vital_sign.weight_kg }} kg,
+                {{ record.vital_sign.height_cm }} cm,
+                huyết áp {{ record.vital_sign.blood_pressure_systolic }}/{{ record.vital_sign.blood_pressure_diastolic }},
+                mạch {{ record.vital_sign.heart_rate }},
+                nhiệt độ {{ record.vital_sign.temperature_c }} °C
+            </p>
+            {% endif %}
+
+            <div>
+                <strong>Thuốc đã kê:</strong>
+                {% if record.prescriptions.all %}
+                <ul class="mb-0">
+                    {% for item in record.prescriptions.all %}
+                    <li>{{ item.medicine_name }} - {{ item.dosage }}, {{ item.frequency }}, {{ item.duration }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <span class="text-muted"> Không có đơn thuốc</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="alert alert-info">Bệnh nhân chưa có bệnh án trước đây.</div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load bootstrap %}
+
+{% block title %}Cập nhật hồ sơ bệnh nhân{% endblock %}
+
+{% block content %}
+<div class="inner-banner-w3ls">
+    <div class="container"></div>
+</div>
+
+<div class="breadcrumb-agile">
+    <div aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Cập nhật hồ sơ</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 mb-5">
+            <h3 class="text-center mb-4">Chỉnh sửa hồ sơ và thông báo</h3>
+
+            <form action="" method="POST">{% csrf_token %}
+                <div class="card mb-4">
+                    <div class="card-header"><strong>Thông tin cá nhân</strong></div>
+                    <div class="card-body">
+                        {{ form|bootstrap }}
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header"><strong>Tùy chọn thông báo</strong></div>
+                    <div class="card-body">
+                        {% for field in notification_form %}
+                        <div class="form-check mb-2">
+                            {{ field }}
+                            <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="row form-group">
+                    <div class="col-md-12">
+                        <input type="submit" value="Lưu thay đổi" class="btn btn-primary btn-md text-white">
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
