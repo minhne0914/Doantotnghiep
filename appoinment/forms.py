@@ -94,6 +94,7 @@ class RescheduleAppointmentForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         current_booking = kwargs.pop('current_booking', None)
+        kwargs.pop('instance', None)
         super().__init__(*args, **kwargs)
         queryset = Appointment.objects.filter(is_active=True, date__gte=timezone.localdate()).select_related('user').order_by('date', 'start_time', 'full_name')
         self.fields['appointment'].queryset = queryset

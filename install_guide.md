@@ -1,94 +1,146 @@
-   # Hướng Dẫn Cài Đặt và Chạy Dự Án (Từ A-Z)
+# Huong Dan Cai Dat Va Chay Du An
 
-Tài liệu này tổng hợp toàn bộ các bước cần thiết để thiết lập môi trường, cài đặt thư viện, cấu hình cơ sở dữ liệu và khởi chạy dự án *Django Machine Health Prediction Website*.
+Tai lieu nay da duoc cap nhat theo trang thai codebase ngay 06/04/2026 va su dung virtualenv chuan hoa `.venv-runtime`.
 
----
+## 1. Yeu cau
 
-## 1. Yêu Cầu Hệ Thống (Môi trường)
-- *python -m venv venv
-- **MySQL/MariaDB:** Yêu cầu cài đặt XAMPP, WAMP hoặc MySQL Server độc lập để chạy Database.
+- Windows + PowerShell
+- Python 3.10.x
+- Redis neu ban muon dung notification queue va websocket theo cau hinh production-like
+- Ket noi Internet khi can cai package
 
----
+## 2. Virtualenv chuan hoa
 
-## 2. Cài Đặt Thư Viện (Packages)
+Neu repo da co san `.venv-runtime`, ban co the dung lai truc tiep:
 
-Mở Terminal / Command Prompt tại thư mục dự án (nơi chứa file `manage.py`) và chạy câu lệnh sau để cài đặt toàn bộ các thư viện cần dùng cho cả web (appoinment/accounts) và AI (home):
-
-```bash
-pip install django numpy pandas scikit-learn Pillow tensorflow mysqlclient
+```powershell
+Set-Location D:\doanhieu\doanhieu
+.venv-runtime\Scripts\Activate.ps1
+python -V
 ```
 
-*Trong đó:*
-- `django`: Bộ web framework chính.
-- `numpy`, `pandas`, `scikit-learn`, `Pillow`, `tensorflow`: Dùng cho Machine Learning và chẩn đoán bệnh tật (ung thư, tiểu đường, viêm phổi,...).
-- `mysqlclient`: Driver để Django kết nối mượt mà với CSDL MySQL (Nếu gặp lỗi khi cài mysqlclient trên Windows, bạn có thể cân nhắc dùng `pymysql` như một giải pháp thay thế tạm thời).
+Neu can tao moi:
 
----
-
-## 3. Thiết Lập Cơ Sở Dữ Liệu (Database MySQL)
-
-Ứng dụng đang cấu hình kết nối tới MySQL với tên CSDL là `db_healthcare`, user `root` và mật khẩu để trống.
-
-**Bước 3.1: Mở Server MySQL**
-Bật XAMPP hoặc WAMP Control Panel, nhấn **Start** ở module MySQL.
-
-**Bước 3.2: Tạo Database trống**
-- Truy cập vào **phpMyAdmin**: [http://localhost/phpmyadmin](http://localhost/phpmyadmin)
-- Bấm vào mục **New** (Tạo mới) ở thanh bên trái.
-- Nhập tên CSDL là: `db_healthcare`
-- Chọn bảng mã (Collation): `utf8mb4_unicode_ci` (hoặc để mặc định).
-- Nhấn nút **Create** (Tạo).
-
-**Bước 3.3: Chạy Migrations tạo cấu trúc bảng**
-Quay trở lại Terminal/CMD tại thư mục dự án, chạy lần lượt hai lệnh sau:
-
-```bash
-python manage.py makemigrations
+```powershell
+Set-Location D:\doanhieu\doanhieu
+C:\Users\Admin\AppData\Local\Programs\Python\Python310\python.exe -m venv .venv-runtime
+.venv-runtime\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
-*(Lệnh này đọc các models và lên lịch khởi tạo các bảng SQL).*
 
-```bash
+## 3. Cau hinh bien moi truong
+
+Tao file `.env` tu `.env.example`:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Gia tri toi thieu de chay local:
+
+```env
+DJANGO_SECRET_KEY=replace-me
+DJANGO_DEBUG=True
+DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
+USE_REDIS_SERVICES=False
+DB_ENGINE=django.db.backends.sqlite3
+DB_NAME=db.sqlite3
+CHANNEL_LAYER_BACKEND=inmemory
+CELERY_TASK_ALWAYS_EAGER=True
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-2.5-flash
+```
+
+Ghi chu:
+
+- File `.env` nay da duoc `settings.py` tu dong nap khi app khoi dong.
+- `CHANNEL_LAYER_BACKEND=inmemory` phu hop khi ban khong muon chay Redis local.
+- `CELERY_TASK_ALWAYS_EAGER=True` phu hop cho local/debug don gian.
+- Muon dung chat Gemini thi dien `GEMINI_API_KEY`.
+
+## 4. Migration
+
+```powershell
 python manage.py migrate
 ```
-*(Lệnh này chính thức đổ các bảng như user, appointment vào MySQL).*
 
----
+Neu can tao admin:
 
-## 4. Khởi Tạo Tài Khoản Quản Trị Hệ Thống (Superuser)
-
-Để đăng nhập vào trang Admin của Django và quản lý dữ liệu gốc, bạn cần tạo một tài khoản Superuser. Ở Terminal, chạy lệnh:
-
-```bash
+```powershell
 python manage.py createsuperuser
 ```
-Làm theo các bước trên màn hình:
-- Nhập **Email**: (ví dụ: `admin@gmail.com` - do project cấu hình dùng email thay cho username)
-- Nhập **Password**: (Mật khẩu khi gõ sẽ bị ẩn đi, cứ nhập và nhấn Enter)
-- Nhập lại Password để xác nhận.
 
----
+## 5. Chay test
 
-## 5. Chạy Dự Án
-
-Khi Database và thư viện đã sẵn sàng, hãy khởi động server nội bộ bằng lệnh:
-
-```bash
-python manage.py runserver
+```powershell
+python manage.py test
 ```
 
-**Hoàn thành!** Bây giờ bạn có thể trải nghiệm website:
-- **Trang chính (Dự đoán bệnh, Đặt lịch):** Mở trình duyệt và truy cập `http://localhost:8000/`
-- **Trang Quản trị (Admin):** Truy cập `http://localhost:8000/admin/` (Đăng nhập bằng email và pass vừa tạo ở Bước 4).
+Trang thai da xac minh:
 
----
+- Test suite hien tai pass `13/13`
+- `python manage.py check` pass
+- Boot server va goi HTTP local tra `200`
 
-## ⚙️ Xử lý lỗi thường gặp (Troubleshooting)
+## 6. Chay server
 
-1. **Lỗi `ModuleNotFoundError: No module named '...'` khi chạy server:**
-   - Nghĩa là bạn cài thiếu thư viện. Hãy kiểm tra lại câu lệnh ở Bước 2 hoặc cài đặt riêng thư viện bị báo thiếu (ví dụ: `pip install django-crispy-forms` nếu có).
+```powershell
+python manage.py runserver 127.0.0.1:8000
+```
 
-2. **Lỗi `django.db.utils.OperationalError: (1049, "Unknown database 'db_healthcare'")`:**
-   - Bạn quên thực hiện Bước 3.2. Hãy mở phpMyAdmin và tạo database `db_healthcare` trước khi chạy `migrate`.
+Neu cong `8000` dang ban:
 
-3. **Lỗi mô hình `h5` không load được (`ImportError` hoặc liên quan đến Keras):**
-   - Đảm bảo bạn đã cài `tensorflow`. Nếu phiên bản tensorflow quá mới không tương thích với file h5 cũ, bạn hãy cài lại phiên bản thấp hơn: `pip install tensorflow==2.10.0` (tùy thuộc vào version lúc training mô hình).
+```powershell
+python manage.py runserver 127.0.0.1:8001
+```
+
+## 7. Redis, Celery, Channels
+
+Neu ban muon chay theo mode day du hon:
+
+```env
+CELERY_BROKER_URL=redis://127.0.0.1:6379/0
+CELERY_RESULT_BACKEND=redis://127.0.0.1:6379/1
+CELERY_TASK_ALWAYS_EAGER=False
+CHANNEL_LAYER_BACKEND=redis
+CHANNEL_REDIS_URL=redis://127.0.0.1:6379/2
+```
+
+Va mo them terminal:
+
+```powershell
+.venv-runtime\Scripts\Activate.ps1
+celery -A mlhospital worker -l info
+```
+
+## 8. Gemini chat
+
+Project da duoc doi tu SDK cu `google-generativeai` sang SDK moi `google-genai`, vi SDK moi cai duoc chung voi stack `tensorflow/protobuf` hien tai.
+
+Can cau hinh:
+
+```env
+GEMINI_API_KEY=your-api-key
+GEMINI_MODEL=gemini-2.5-flash
+```
+
+Neu de trong `GEMINI_API_KEY`, giao dien chat van mo duoc nhung API chat se tra loi `503` voi thong bao chua cau hinh.
+
+## 9. Loi thuong gap
+
+1. `python` khong chay trong virtualenv
+   Dung truc tiep `D:\doanhieu\doanhieu\.venv-runtime\Scripts\python.exe`.
+
+2. Websocket/Celery loi ket noi Redis
+   Kiem tra Redis dang chay, hoac doi local env sang:
+   `USE_REDIS_SERVICES=False`
+   `CHANNEL_LAYER_BACKEND=inmemory`
+   `CELERY_TASK_ALWAYS_EAGER=True`
+
+3. Chat Gemini loi
+   Kiem tra `GEMINI_API_KEY` hop le va outbound network duoc phep.
+
+4. Cong `8000` da duoc dung
+   Chuyen sang cong khac, vi du:
+   `python manage.py runserver 127.0.0.1:8001`

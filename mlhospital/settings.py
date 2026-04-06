@@ -10,10 +10,34 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 import os
+import sys
 from pathlib import Path
+
+
+def load_local_env(env_path):
+    if not env_path.exists():
+        return
+
+    for raw_line in env_path.read_text(encoding='utf-8').splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+
+        key, value = line.split('=', 1)
+        key = key.strip()
+        value = value.strip()
+        if not key or key in os.environ:
+            continue
+
+        if value and value[0] == value[-1] and value[0] in {"'", '"'}:
+            value = value[1:-1]
+        os.environ[key] = value
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_local_env(BASE_DIR / '.env')
+RUNNING_TESTS = 'test' in sys.argv
 
 
 # Quick-start development settings - unsuitable for production
@@ -24,6 +48,10 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'dev-only-secret-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() == 'true'
+USE_REDIS_SERVICES = os.getenv(
+    'USE_REDIS_SERVICES',
+    'False' if DEBUG or RUNNING_TESTS else 'True',
+).lower() == 'true'
 
 ALLOWED_HOSTS = [host for host in os.getenv('DJANGO_ALLOWED_HOSTS', '').split(',') if host]
 
@@ -150,9 +178,22 @@ if not DEBUG:
 
 # Google Gemini API Key
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
+MAX_XRAY_UPLOAD_BYTES = int(os.getenv('MAX_XRAY_UPLOAD_BYTES', 5 * 1024 * 1024))
+ALLOWED_XRAY_CONTENT_TYPES = tuple(
+    content_type.strip()
+    for content_type in os.getenv(
+        'ALLOWED_XRAY_CONTENT_TYPES',
+        'image/jpeg,image/png,image/webp',
+    ).split(',')
+    if content_type.strip()
+)
 
 # Email / SMTP
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_BACKEND = os.getenv(
+    'EMAIL_BACKEND',
+    'django.core.mail.backends.locmem.EmailBackend' if RUNNING_TESTS else 'django.core.mail.backends.smtp.EmailBackend',
+)
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.sendgrid.net')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
@@ -163,11 +204,17 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'Medic <noreply@example.com
 # Celery / Redis
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://127.0.0.1:6379/0')
 CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://127.0.0.1:6379/1')
-CELERY_TASK_ALWAYS_EAGER = os.getenv('CELERY_TASK_ALWAYS_EAGER', 'False').lower() == 'true'
+CELERY_TASK_ALWAYS_EAGER = os.getenv(
+    'CELERY_TASK_ALWAYS_EAGER',
+    'True' if RUNNING_TESTS or not USE_REDIS_SERVICES else 'False',
+).lower() == 'true'
 CELERY_TIMEZONE = TIME_ZONE
 
 # Channels / Redis
-CHANNEL_LAYER_BACKEND = os.getenv('CHANNEL_LAYER_BACKEND', 'redis').lower()
+CHANNEL_LAYER_BACKEND = os.getenv(
+    'CHANNEL_LAYER_BACKEND',
+    'inmemory' if RUNNING_TESTS or not USE_REDIS_SERVICES else 'redis',
+).lower()
 CHANNEL_REDIS_URL = os.getenv('CHANNEL_REDIS_URL', 'redis://127.0.0.1:6379/2')
 
 if CHANNEL_LAYER_BACKEND == 'inmemory':

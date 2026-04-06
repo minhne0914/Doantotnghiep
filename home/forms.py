@@ -1,5 +1,6 @@
 from django import forms
 
+
 class DiabetesForm(forms.Form):
     pregnancies = forms.FloatField(required=True)
     glucose = forms.FloatField(required=True)
@@ -39,3 +40,7 @@ class KidneyDiseaseForm(forms.Form):
     hemoglobin = forms.FloatField(required=True)
     specific_gravity = forms.FloatField(required=True)
     hypertension = forms.FloatField(required=True)
+
+
+class PneumoniaUploadForm(forms.Form):
+    xray = forms.ImageField(required=True)

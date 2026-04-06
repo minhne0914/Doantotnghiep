@@ -7,9 +7,28 @@ from .utils import humanize_booking_datetime, reminder_schedule
 
 def get_context(booking, previous_date=None, previous_time=None):
     return {
-        'booking': booking,
-        'doctor': booking.appointment.user,
-        'patient': booking.user,
+        'booking': {
+            'id': booking.id,
+            'message': booking.message,
+            'appointment': {
+                'full_name': booking.appointment.full_name,
+                'department': booking.appointment.department,
+                'hospital_name': booking.appointment.hospital_name,
+                'location': booking.appointment.location,
+            },
+        },
+        'doctor': {
+            'id': booking.appointment.user_id,
+            'first_name': booking.appointment.user.first_name,
+            'last_name': booking.appointment.user.last_name,
+            'email': booking.appointment.user.email,
+        },
+        'patient': {
+            'id': booking.user_id,
+            'first_name': booking.user.first_name,
+            'last_name': booking.user.last_name,
+            'email': booking.user.email,
+        },
         'appointment_info': humanize_booking_datetime(booking),
         'previous_date': previous_date.strftime('%d/%m/%Y') if previous_date else '',
         'previous_time': previous_time.strftime('%H:%M') if previous_time else '',

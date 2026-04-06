@@ -1,12 +1,13 @@
 import base64
 import csv
 import json
-import joblib
+import logging
 import time
 from functools import lru_cache
 from io import BytesIO
 from pathlib import Path
 
+import joblib
 import numpy as np
 import tensorflow as tf
 from django.conf import settings
@@ -14,41 +15,23 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 from notifications.realtime import push_realtime_notification
 
-from .forms import BreastCancerForm, DiabetesForm, HeartDiseaseForm, KidneyDiseaseForm
+from .forms import (
+    BreastCancerForm,
+    DiabetesForm,
+    HeartDiseaseForm,
+    KidneyDiseaseForm,
+    PneumoniaUploadForm,
+)
 from .models import ChatMessage, MedicalHistory
 
 
 DATA_DIR = Path(settings.BASE_DIR) / 'data'
-
-
-@lru_cache(maxsize=1)
-def get_diabetes_model():
-    with open(DATA_DIR / 'diabetes_model.pkl', 'rb') as file:
-        return joblib.load(file)
-
-
-@lru_cache(maxsize=1)
-def get_breast_model():
-    with open(DATA_DIR / 'breast_model.pkl', 'rb') as file:
-        return joblib.load(file)
-
-
-@lru_cache(maxsize=1)
-def get_heart_model():
-    with open(DATA_DIR / 'heart_disease_model.pkl', 'rb') as file:
-        return joblib.load(file)
-
-
-@lru_cache(maxsize=1)
-def get_pneumonia_model():
-    model_path = DATA_DIR / 'pneumonia_classifiers.h5'
-    if not model_path.exists():
-        return None
-    return tf.keras.models.load_model(model_path, compile=True)
+ALLOWED_XRAY_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp'}
+logger = logging.getLogger(__name__)
 
 
 def image_to_base64(image):
@@ -67,121 +50,210 @@ def save_medical_history(request, disease_type, prediction_result, input_data):
         )
 
 
+def load_pickle_model(filename):
+    model_path = DATA_DIR / filename
+    if not model_path.exists():
+        logger.warning('Model file missing: %s', model_path)
+        return None
+
+    try:
+        with open(model_path, 'rb') as file:
+            return joblib.load(file)
+    except Exception:
+        logger.exception('Failed to load pickle model: %s', model_path)
+        return None
+
+
+@lru_cache(maxsize=1)
+def get_diabetes_model():
+    return load_pickle_model('diabetes_model.pkl')
+
+
+@lru_cache(maxsize=1)
+def get_breast_model():
+    return load_pickle_model('breast_model.pkl')
+
+
+@lru_cache(maxsize=1)
+def get_heart_model():
+    return load_pickle_model('heart_disease_model.pkl')
+
+
+@lru_cache(maxsize=1)
+def get_pneumonia_model():
+    model_path = DATA_DIR / 'pneumonia_classifiers.h5'
+    if not model_path.exists():
+        logger.warning('Model file missing: %s', model_path)
+        return None
+
+    try:
+        return tf.keras.models.load_model(model_path, compile=True)
+    except Exception:
+        logger.exception('Failed to load pneumonia model: %s', model_path)
+        return None
+
+
+def run_prediction(model, user_data, prediction_name):
+    if model is None:
+        return None, 'Mo hinh du doan hien khong kha dung. Vui long thu lai sau.'
+
+    try:
+        return model.predict(user_data)[0], ''
+    except Exception:
+        logger.exception('Prediction failed for %s', prediction_name)
+        return None, 'He thong du doan tam thoi gap su co. Vui long thu lai sau.'
+
+
+def validate_uploaded_xray(uploaded_file):
+    if uploaded_file is None:
+        return 'Vui long chon anh X-quang truoc khi sang loc.'
+
+    if uploaded_file.size > getattr(settings, 'MAX_XRAY_UPLOAD_BYTES', 5 * 1024 * 1024):
+        return 'Anh tai len vuot qua gioi han dung luong cho phep.'
+
+    content_type = (getattr(uploaded_file, 'content_type', '') or '').lower()
+    if content_type and content_type not in getattr(
+        settings,
+        'ALLOWED_XRAY_CONTENT_TYPES',
+        ('image/jpeg', 'image/png', 'image/webp'),
+    ):
+        return 'Dinh dang anh khong hop le. Chi chap nhan JPG, PNG hoac WEBP.'
+
+    suffix = Path(uploaded_file.name or '').suffix.lower()
+    if suffix and suffix not in ALLOWED_XRAY_EXTENSIONS:
+        return 'Ten file anh khong hop le. Chi chap nhan JPG, PNG hoac WEBP.'
+
+    try:
+        uploaded_file.seek(0)
+        image = Image.open(uploaded_file)
+        image.verify()
+        uploaded_file.seek(0)
+    except (UnidentifiedImageError, OSError):
+        logger.warning('Invalid xray upload received: %s', getattr(uploaded_file, 'name', '<unknown>'))
+        return 'File tai len khong phai la anh hop le.'
+
+    return ''
+
+
+def render_prediction_page(request, template_name, form, user_data, disease_type, positive_label, negative_label, advice_builder, prediction_name):
+    value = ''
+    error = ''
+    advices = []
+
+    if request.method == 'POST':
+        if form.is_valid():
+            prediction, prediction_error = run_prediction(
+                model=form.model_loader(),
+                user_data=user_data(form.cleaned_data),
+                prediction_name=prediction_name,
+            )
+            if prediction_error:
+                error = prediction_error
+            else:
+                value = positive_label if int(prediction) == 1 else negative_label
+                save_medical_history(request, disease_type, value, form.cleaned_data)
+                advices = advice_builder(form.cleaned_data)
+        else:
+            error = 'Du lieu khong hop le. Vui long nhap day du cac chi so o dang so.'
+
+    return render(request, template_name, {'context': value, 'error': error, 'advices': advices})
+
+
 def index(request):
     return render(request, 'index.html')
 
 
 def diabetes(request):
-    value = ''
-    error = ''
-    advices = []
+    form = DiabetesForm(request.POST or None)
+    form.model_loader = get_diabetes_model
 
-    if request.method == 'POST':
-        form = DiabetesForm(request.POST)
-        if form.is_valid():
-            user_data = np.array([
-                form.cleaned_data['pregnancies'],
-                form.cleaned_data['glucose'],
-                form.cleaned_data['bloodpressure'],
-                form.cleaned_data['skinthickness'],
-                form.cleaned_data['bmi'],
-                form.cleaned_data['insulin'],
-                form.cleaned_data['pedigree'],
-                form.cleaned_data['age'],
-            ]).reshape(1, 8)
+    def payload(data):
+        return np.array([
+            data['pregnancies'],
+            data['glucose'],
+            data['bloodpressure'],
+            data['skinthickness'],
+            data['bmi'],
+            data['insulin'],
+            data['pedigree'],
+            data['age'],
+        ]).reshape(1, 8)
 
-            prediction = get_diabetes_model().predict(user_data)[0]
-            value = 'Positive' if int(prediction) == 1 else 'Negative'
-            save_medical_history(request, 'Diabetes', value, form.cleaned_data)
+    def advices(data):
+        items = []
+        if data['glucose'] >= 140:
+            items.append('Duong huyet cua ban kha cao. Hay han che do ngot va tinh bot hap thu nhanh.')
+        if data['bmi'] >= 25:
+            items.append('BMI cho thay ban dang thua can. Nen duy tri van dong deu dan khoang 30 phut moi ngay.')
+        if data['bloodpressure'] >= 130:
+            items.append('Huyet ap dang o muc can luu y. Hay giam an man va theo doi huyet ap thuong xuyen.')
+        if not items:
+            items.append('Tiep tuc duy tri loi song lanh manh va kham suc khoe dinh ky.')
+        return items
 
-            if form.cleaned_data['glucose'] >= 140:
-                advices.append('Đường huyết của bạn khá cao. Hãy hạn chế đồ ngọt, nước có gas và tinh bột hấp thụ nhanh.')
-            if form.cleaned_data['bmi'] >= 25:
-                advices.append('BMI cho thấy bạn đang thừa cân. Nên duy trì vận động đều đặn khoảng 30 phút mỗi ngày.')
-            if form.cleaned_data['bloodpressure'] >= 130:
-                advices.append('Huyết áp đang ở mức cần lưu ý. Hãy giảm ăn mặn và theo dõi huyết áp thường xuyên.')
-            if not advices:
-                advices.append('Tiếp tục duy trì lối sống lành mạnh, ăn nhiều rau xanh và khám sức khỏe định kỳ.')
-        else:
-            error = 'Dữ liệu không hợp lệ. Vui lòng nhập đầy đủ các chỉ số ở dạng số.'
-
-    return render(request, 'diabetes.html', {'context': value, 'error': error, 'advices': advices})
+    return render_prediction_page(request, 'diabetes.html', form, payload, 'Diabetes', 'Positive', 'Negative', advices, 'diabetes')
 
 
 def breast(request):
-    value = ''
-    error = ''
-    advices = []
+    form = BreastCancerForm(request.POST or None)
+    form.model_loader = get_breast_model
 
-    if request.method == 'POST':
-        form = BreastCancerForm(request.POST)
-        if form.is_valid():
-            user_data = np.array([
-                form.cleaned_data['radius'],
-                form.cleaned_data['texture'],
-                form.cleaned_data['perimeter'],
-                form.cleaned_data['area'],
-                form.cleaned_data['smoothness'],
-            ]).reshape(1, 5)
+    def payload(data):
+        return np.array([
+            data['radius'],
+            data['texture'],
+            data['perimeter'],
+            data['area'],
+            data['smoothness'],
+        ]).reshape(1, 5)
 
-            prediction = get_breast_model().predict(user_data)[0]
-            value = 'have' if int(prediction) == 1 else "don't have"
-            save_medical_history(request, 'Breast Cancer', value, form.cleaned_data)
+    def advices(_data):
+        return [
+            'Duy tri thoi quen tu kiem tra vung nguc dinh ky de phat hien som bat thuong.',
+            'Khong nen tu y dung noi tiet hoac thuoc khong ro nguon goc khi chua co chi dinh.',
+            'Tang cuong rau xanh, trai cay va kham tam soat theo huong dan cua bac si.',
+            'Neu thay khoi u, dau keo dai hoac tiet dich bat thuong, hay di kham som.',
+        ]
 
-            advices = [
-                'Duy trì thói quen tự kiểm tra vùng ngực định kỳ để phát hiện sớm bất thường.',
-                'Không nên tự ý dùng nội tiết hoặc thuốc không rõ nguồn gốc khi chưa có chỉ định.',
-                'Tăng cường rau xanh, trái cây và khám tầm soát theo hướng dẫn của bác sĩ.',
-                'Nếu thấy khối u, đau kéo dài hoặc tiết dịch bất thường, hãy đi khám sớm.',
-            ]
-        else:
-            error = 'Dữ liệu không hợp lệ. Vui lòng nhập đầy đủ các chỉ số ở dạng số.'
-
-    return render(request, 'breast.html', {'context': value, 'error': error, 'advices': advices})
+    return render_prediction_page(request, 'breast.html', form, payload, 'Breast Cancer', 'have', "don't have", advices, 'breast')
 
 
 def heart(request):
-    value = ''
-    error = ''
-    advices = []
+    form = HeartDiseaseForm(request.POST or None)
+    form.model_loader = get_heart_model
 
-    if request.method == 'POST':
-        form = HeartDiseaseForm(request.POST)
-        if form.is_valid():
-            user_data = np.array([
-                form.cleaned_data['age'],
-                form.cleaned_data['sex'],
-                form.cleaned_data['cp'],
-                form.cleaned_data['trestbps'],
-                form.cleaned_data['chol'],
-                form.cleaned_data['fbs'],
-                form.cleaned_data['restecg'],
-                form.cleaned_data['thalach'],
-                form.cleaned_data['exang'],
-                form.cleaned_data['oldpeak'],
-                form.cleaned_data['slope'],
-                form.cleaned_data['ca'],
-                form.cleaned_data['thal'],
-            ]).reshape(1, 13)
+    def payload(data):
+        return np.array([
+            data['age'],
+            data['sex'],
+            data['cp'],
+            data['trestbps'],
+            data['chol'],
+            data['fbs'],
+            data['restecg'],
+            data['thalach'],
+            data['exang'],
+            data['oldpeak'],
+            data['slope'],
+            data['ca'],
+            data['thal'],
+        ]).reshape(1, 13)
 
-            prediction = get_heart_model().predict(user_data)[0]
-            value = 'have' if int(prediction) == 1 else "don't have"
-            save_medical_history(request, 'Heart Disease', value, form.cleaned_data)
+    def advices(data):
+        items = []
+        if data['trestbps'] >= 130:
+            items.append('Huyet ap nghi dang o muc cao. Ban nen giam an man va theo doi huyet ap tai nha.')
+        if data['chol'] >= 240:
+            items.append('Cholesterol dang cao. Hay han che thuc an nhieu mo va noi tang dong vat.')
+        if data['fbs'] == 1:
+            items.append('Duong huyet luc doi dang canh bao nguy co tim mach cao hon binh thuong.')
+        if data['exang'] == 1 or data['cp'] > 0:
+            items.append('Neu co dau nguc hoac kho tho khi gang suc, ban nen di kham tim mach som.')
+        if not items:
+            items.append('Tiep tuc duy tri che do an lanh manh va tap luyen nhe nhang deu dan.')
+        return items
 
-            if form.cleaned_data['trestbps'] >= 130:
-                advices.append('Huyết áp nghỉ đang ở mức cao. Bạn nên giảm ăn mặn và theo dõi huyết áp tại nhà.')
-            if form.cleaned_data['chol'] >= 240:
-                advices.append('Cholesterol đang cao. Hãy hạn chế thức ăn nhiều mỡ và nội tạng động vật.')
-            if form.cleaned_data['fbs'] == 1:
-                advices.append('Đường huyết lúc đói đang cảnh báo nguy cơ tim mạch cao hơn bình thường.')
-            if form.cleaned_data['exang'] == 1 or form.cleaned_data['cp'] > 0:
-                advices.append('Nếu có đau ngực hoặc khó thở khi gắng sức, bạn nên đi khám tim mạch sớm.')
-            if not advices:
-                advices.append('Tiếp tục duy trì chế độ ăn lành mạnh và tập luyện nhẹ nhàng, đều đặn.')
-        else:
-            error = 'Dữ liệu không hợp lệ. Vui lòng nhập đầy đủ các chỉ số ở dạng số.'
-
-    return render(request, 'heart.html', {'context': value, 'error': error, 'advices': advices})
+    return render_prediction_page(request, 'heart.html', form, payload, 'Heart Disease', 'have', "don't have", advices, 'heart')
 
 
 def kidney(request):
@@ -217,17 +289,17 @@ def kidney(request):
             save_medical_history(request, 'Kidney Disease', value, form.cleaned_data)
 
             if serum_creatinine > 1.2 or blood_urea > 40:
-                advices.append('Ure hoặc creatinine đang vượt ngưỡng tham khảo. Bạn nên kiểm tra chức năng thận sớm.')
+                advices.append('Ure hoac creatinine dang vuot nguong tham khao. Ban nen kiem tra chuc nang than som.')
             if hypertension == 1:
-                advices.append('Tăng huyết áp là yếu tố nguy cơ lớn với thận. Hãy theo dõi huyết áp đều đặn.')
+                advices.append('Tang huyet ap la yeu to nguy co lon voi than. Hay theo doi huyet ap deu dan.')
             if albumin > 0:
-                advices.append('Có dấu hiệu rò rỉ protein qua nước tiểu, nên tham khảo bác sĩ để được đánh giá thêm.')
+                advices.append('Co dau hieu ro ri protein qua nuoc tieu, nen tham khao bac si de duoc danh gia them.')
             if hemoglobin < 12:
-                advices.append('Hemoglobin thấp có thể liên quan đến thiếu máu. Bạn nên kiểm tra thêm khi đi khám.')
+                advices.append('Hemoglobin thap co the lien quan den thieu mau. Ban nen kiem tra them khi di kham.')
             if not advices:
-                advices.append('Duy trì uống đủ nước và tránh lạm dụng thuốc giảm đau hoặc thuốc không rõ nguồn gốc.')
+                advices.append('Duy tri uong du nuoc va tranh lam dung thuoc giam dau hoac thuoc khong ro nguon goc.')
         else:
-            error = 'Dữ liệu không hợp lệ. Vui lòng nhập đầy đủ các chỉ số ở dạng số.'
+            error = 'Du lieu khong hop le. Vui long nhap day du cac chi so o dang so.'
 
     return render(request, 'kidney.html', {'context': value, 'error': error, 'advices': advices})
 
@@ -239,28 +311,34 @@ def pneumonia_detector(request):
     error = None
 
     if request.method == 'POST':
-        img = request.FILES.get('xray')
-        if img is None:
-            error = 'Vui lòng chọn ảnh X-quang trước khi sàng lọc.'
-        else:
-            original_image = Image.open(img).convert('RGB')
-            preview_image = original_image.copy()
-            processed_image = np.array(original_image.resize((224, 224))) / 255.0
-            model = get_pneumonia_model()
+        form = PneumoniaUploadForm(request.POST, request.FILES)
+        image_file = request.FILES.get('xray')
+        error = validate_uploaded_xray(image_file)
 
+        if form.is_valid() and not error:
+            model = get_pneumonia_model()
             if model is None:
-                error = 'Chưa tìm thấy mô hình viêm phổi trong thư mục dữ liệu.'
+                error = 'Chua tim thay mo hinh viem phoi trong thu muc du lieu.'
             else:
-                prediction = model.predict(np.reshape(processed_image, [1, 224, 224, 3]), verbose=0)
-                probability = round(float(prediction.reshape(1, -1)[0][0]) * 100, 2)
-                pneumonia_detected = probability > 50
-                uploaded_image = image_to_base64(preview_image)
-                save_medical_history(
-                    request,
-                    'Pneumonia',
-                    'Positive' if pneumonia_detected else 'Negative',
-                    {'probability': probability},
-                )
+                try:
+                    original_image = Image.open(image_file).convert('RGB')
+                    preview_image = original_image.copy()
+                    processed_image = np.array(original_image.resize((224, 224))) / 255.0
+                    prediction = model.predict(np.reshape(processed_image, [1, 224, 224, 3]), verbose=0)
+                    probability = round(float(prediction.reshape(1, -1)[0][0]) * 100, 2)
+                    pneumonia_detected = probability > 50
+                    uploaded_image = image_to_base64(preview_image)
+                    save_medical_history(
+                        request,
+                        'Pneumonia',
+                        'Positive' if pneumonia_detected else 'Negative',
+                        {'probability': probability},
+                    )
+                except Exception:
+                    logger.exception('Pneumonia detection failed for upload: %s', getattr(image_file, 'name', '<unknown>'))
+                    error = 'He thong phan tich anh tam thoi gap su co. Vui long thu lai sau.'
+        elif not error:
+            error = 'Vui long tai len mot anh X-quang hop le.'
 
     return render(request, 'pneumonia.html', {
         'uploaded_image': uploaded_image,
@@ -276,7 +354,7 @@ def export_health_history(request):
     response['Content-Disposition'] = 'attachment; filename="lich-su-suc-khoe.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(['Thời gian', 'Loại bệnh', 'Kết quả', 'Chi tiết chỉ số'])
+    writer.writerow(['Thoi gian', 'Loai benh', 'Ket qua', 'Chi tiet chi so'])
 
     histories = MedicalHistory.objects.filter(user=request.user).order_by('-created_at')
     for history in histories:
@@ -329,34 +407,34 @@ def history_view(request):
 
 def build_chat_prompt(user, user_message):
     context_string = (
-        'Bạn là trợ lý y tế Medic AI. Hãy trả lời bằng tiếng Việt rõ ràng, thân thiện và an toàn. '
-        'Không đưa ra kết luận chẩn đoán cuối cùng và luôn khuyên người dùng đi khám khi cần.\n\n'
+        'Ban la tro ly y te Medic AI. Hay tra loi bang tieng Viet ro rang, than thien va an toan. '
+        'Khong dua ra ket luan chan doan cuoi cung va luon khuyen nguoi dung di kham khi can.\n\n'
     )
     latest_history = MedicalHistory.objects.filter(user=user).order_by('-created_at').first()
     if latest_history:
         context_string += (
-            f'Thông tin sàng lọc gần nhất: bệnh {latest_history.disease_type}, '
-            f'kết quả {latest_history.prediction_result}, chỉ số {latest_history.input_data}.\n'
+            f'Thong tin sang loc gan nhat: benh {latest_history.disease_type}, '
+            f'ket qua {latest_history.prediction_result}, chi so {latest_history.input_data}.\n'
         )
-        context_string += 'Hãy đưa ra hướng dẫn ngắn gọn, thực tế, và nói rõ nếu thông tin chưa đủ để kết luận.\n'
+        context_string += 'Hay dua ra huong dan ngan gon, thuc te, va noi ro neu thong tin chua du de ket luan.\n'
     else:
-        context_string += 'Người dùng chưa có dữ liệu sàng lọc lưu trữ. Hãy trả lời ở mức tham khảo chung.\n'
-    return context_string + '\nCâu hỏi của người dùng: ' + user_message
+        context_string += 'Nguoi dung chua co du lieu sang loc luu tru. Hay tra loi o muc tham khao chung.\n'
+    return context_string + '\nCau hoi cua nguoi dung: ' + user_message
 
 
 def is_urgent_chat_reply(reply):
     normalized = (reply or '').lower()
     urgent_keywords = [
-        'cấp cứu',
+        'cap cuu',
         '115',
-        'đến bệnh viện ngay',
-        'đi cấp cứu ngay',
-        'khó thở dữ dội',
-        'đau ngực dữ dội',
-        'mất ý thức',
-        'nguy hiểm',
-        'khẩn cấp',
-        'đến cơ sở y tế ngay',
+        'den benh vien ngay',
+        'di cap cuu ngay',
+        'kho tho du doi',
+        'dau nguc du doi',
+        'mat y thuc',
+        'nguy hiem',
+        'khan cap',
+        'den co so y te ngay',
     ]
     return any(keyword in normalized for keyword in urgent_keywords)
 
@@ -364,8 +442,8 @@ def is_urgent_chat_reply(reply):
 def push_urgent_chat_notification(user, reply):
     push_realtime_notification(
         user,
-        title='Cảnh báo từ Medic AI',
-        message='Medic AI vừa phát hiện nội dung có mức độ khẩn. Hãy mở khung chat để xem khuyến cáo và cân nhắc đi khám ngay.',
+        title='Canh bao tu Medic AI',
+        message='Medic AI vua phat hien noi dung co muc do khan. Hay mo khung chat de xem khuyen cao va can nhac di kham ngay.',
         level='danger',
         category='urgent_chat',
         link='/history/',
@@ -389,7 +467,7 @@ def chat_history_api(request):
 @login_required(login_url='login')
 def clear_chat_api(request):
     if request.method != 'POST':
-        return JsonResponse({'error': 'Phương thức không hợp lệ.'}, status=405)
+        return JsonResponse({'error': 'Phuong thuc khong hop le.'}, status=405)
 
     ChatMessage.objects.filter(user=request.user).delete()
     request.session.pop('chat_last_sent_at', None)
@@ -399,23 +477,27 @@ def clear_chat_api(request):
 @login_required(login_url='login')
 def chat_api(request):
     if request.method != 'POST':
-        return JsonResponse({'error': 'Phương thức không hợp lệ.'}, status=405)
+        return JsonResponse({'error': 'Phuong thuc khong hop le.'}, status=405)
 
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
-        return JsonResponse({'error': 'Dữ liệu gửi lên không hợp lệ.'}, status=400)
+        return JsonResponse({'error': 'Du lieu gui len khong hop le.'}, status=400)
 
     user_message = (data.get('message') or '').strip()
     if not user_message:
-        return JsonResponse({'error': 'Vui lòng nhập nội dung cần tư vấn.'}, status=400)
+        return JsonResponse({'error': 'Vui long nhap noi dung can tu van.'}, status=400)
     if len(user_message) > 1000:
-        return JsonResponse({'error': 'Tin nhắn quá dài. Vui lòng rút gọn dưới 1000 ký tự.'}, status=400)
+        return JsonResponse({'error': 'Tin nhan qua dai. Vui long rut gon duoi 1000 ky tu.'}, status=400)
+
+    if not getattr(settings, 'GEMINI_API_KEY', None):
+        logger.warning('Chat request rejected because GEMINI_API_KEY is missing for user_id=%s', request.user.id)
+        return JsonResponse({'error': 'He thong chat AI chua duoc cau hinh.'}, status=503)
 
     now = time.time()
     last_sent_at = request.session.get('chat_last_sent_at', 0)
     if now - last_sent_at < 2:
-        return JsonResponse({'error': 'Bạn gửi quá nhanh. Vui lòng đợi vài giây rồi thử lại.'}, status=429)
+        return JsonResponse({'error': 'Ban gui qua nhanh. Vui long doi vai giay roi thu lai.'}, status=429)
     request.session['chat_last_sent_at'] = now
 
     ChatMessage.objects.create(
@@ -425,18 +507,18 @@ def chat_api(request):
     )
 
     try:
-        import google.generativeai as genai
+        from google import genai
 
-        if not getattr(settings, 'GEMINI_API_KEY', None):
-            return JsonResponse({'error': 'Hệ thống chat AI chưa được cấu hình.'}, status=503)
-
-        genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content(build_chat_prompt(request.user, user_message))
-        reply = getattr(response, 'text', '').strip()
+        client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        response = client.models.generate_content(
+            model=getattr(settings, 'GEMINI_MODEL', 'gemini-2.5-flash'),
+            contents=build_chat_prompt(request.user, user_message),
+        )
+        reply = (getattr(response, 'text', '') or '').strip()
 
         if not reply:
-            return JsonResponse({'error': 'AI chưa trả về nội dung hợp lệ. Vui lòng thử lại sau.'}, status=502)
+            logger.warning('Gemini returned empty reply for user_id=%s', request.user.id)
+            return JsonResponse({'error': 'AI chua tra ve noi dung hop le. Vui long thu lai sau.'}, status=502)
 
         ChatMessage.objects.create(
             user=request.user,
@@ -447,4 +529,5 @@ def chat_api(request):
             push_urgent_chat_notification(request.user, reply)
         return JsonResponse({'reply': reply})
     except Exception:
-        return JsonResponse({'error': 'Hệ thống AI tạm thời gặp sự cố. Vui lòng thử lại sau.'}, status=503)
+        logger.exception('Gemini chat request failed for user_id=%s', request.user.id)
+        return JsonResponse({'error': 'He thong AI tam thoi gap su co. Vui long thu lai sau.'}, status=503)
