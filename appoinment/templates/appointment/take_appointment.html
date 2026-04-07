@@ -38,7 +38,15 @@
         <div class="col-lg-5 mb-5 mb-lg-0">
             <center><h3>Đặt lịch khám</h3></center>
 
-            <form action="" method="POST">{% csrf_token %}
+            <form action="" method="POST" id="bookingForm">{% csrf_token %}
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    {% for field, error_list in form.errors.items %}
+                        <strong>{{ field }}:</strong> {{ error_list|join:", " }}<br>
+                    {% endfor %}
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
                 <div class="mb-3">
                     <label class="form-label">Chuyên khoa</label>
                     <input type="text" class="form-control" readonly value="{{ appointment_department }}">
@@ -144,24 +152,7 @@
                     Bác sĩ: ${doctor}`
             }).then((result) => {
                 if (result.isConfirmed) {
-                    $.ajax({
-                        type: "POST",
-                        url: $(form).attr('action'),
-                        data: $(form).serialize(),
-                        success: function () {
-                            window.location.href = '/';
-                        },
-                        error: function (xhr) {
-                            const errorMessage = xhr.responseJSON && xhr.responseJSON.error
-                                ? xhr.responseJSON.error
-                                : 'Không thể gửi yêu cầu đặt lịch lúc này.';
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Có lỗi xảy ra',
-                                text: errorMessage,
-                            });
-                        }
-                    });
+                    form.submit();
                 }
             });
         });

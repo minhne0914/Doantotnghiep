@@ -154,7 +154,8 @@ def render_prediction_page(request, template_name, form, user_data, disease_type
                 save_medical_history(request, disease_type, value, form.cleaned_data)
                 advices = advice_builder(form.cleaned_data)
         else:
-            error = 'Du lieu khong hop le. Vui long nhap day du cac chi so o dang so.'
+            errors = [f"{field}: {', '.join(e)}" for field, e in form.errors.items()]
+            error = f"Loi nhap lieu: {' | '.join(errors)}" if errors else 'Du lieu khong hop le.'
 
     return render(request, template_name, {'context': value, 'error': error, 'advices': advices})
 
@@ -299,7 +300,8 @@ def kidney(request):
             if not advices:
                 advices.append('Duy tri uong du nuoc va tranh lam dung thuoc giam dau hoac thuoc khong ro nguon goc.')
         else:
-            error = 'Du lieu khong hop le. Vui long nhap day du cac chi so o dang so.'
+            errors = [f"{field}: {', '.join(e)}" for field, e in form.errors.items()]
+            error = f"Loi nhap lieu: {' | '.join(errors)}" if errors else 'Du lieu khong hop le.'
 
     return render(request, 'kidney.html', {'context': value, 'error': error, 'advices': advices})
 
