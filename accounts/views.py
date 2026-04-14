@@ -16,8 +16,8 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic import CreateView, FormView, RedirectView, UpdateView
 
-from accounts.forms import DoctorProfileUpdateForm, DoctorRegistrationForm, PatientProfileUpdateForm, PatientRegistrationForm, UserLoginForm
-from accounts.models import User
+from accounts.forms import DoctorExtendedProfileForm, DoctorProfileUpdateForm, DoctorRegistrationForm, PatientProfileUpdateForm, PatientRegistrationForm, UserLoginForm
+from accounts.models import DoctorProfile, User
 from appoinment.models import AppointmentChangeLog, TakeAppointment
 from notifications.forms import NotificationPreferenceForm
 from notifications.models import NotificationPreference
@@ -153,6 +153,10 @@ class EditDoctorProfileView(UpdateView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         context['user_image'] = user.image.url if user.image else None
+        
+        doctor_profile, _ = DoctorProfile.objects.get_or_create(user=user)
+        if 'extended_form' not in context:
+            context['extended_form'] = DoctorExtendedProfileForm(instance=doctor_profile)
         return context
 
     def form_valid(self, form):
@@ -161,6 +165,25 @@ class EditDoctorProfileView(UpdateView):
             image.name = generate_unique_image_name(image.name)
             form.instance.image = SimpleUploadedFile(image.name, image.read())
         return super().form_valid(form)
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        
+        doctor_profile, _ = DoctorProfile.objects.get_or_create(user=request.user)
+        extended_form = DoctorExtendedProfileForm(request.POST, instance=doctor_profile)
+
+        if form.is_valid() and extended_form.is_valid():
+            if 'image' in request.FILES:
+                image = request.FILES['image']
+                image.name = generate_unique_image_name(image.name)
+                form.instance.image = SimpleUploadedFile(image.name, image.read())
+            form.save()
+            extended_form.save()
+            messages.success(request, 'Hồ sơ đã được cập nhật thành công.')
+            return redirect(self.success_url)
+            
+        return self.render_to_response(self.get_context_data(form=form, extended_form=extended_form))
 
 
 class Dashboard(View):

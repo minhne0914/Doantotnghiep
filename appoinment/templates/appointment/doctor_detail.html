@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Hồ sơ Bác sĩ{% endblock %}
+
+{% block content %}
+	<div class="inner-banner-w3ls">
+		<div class="container"></div>
+	</div>
+	<div class="breadcrumb-agile">
+		<div aria-label="breadcrumb">
+			<ol class="breadcrumb">
+				<li class="breadcrumb-item"><a href="{% url 'doctor' %}">Bác sĩ</a></li>
+				<li class="breadcrumb-item active" aria-current="page">Hồ sơ BS. {{ doctor.last_name }}</li>
+			</ol>
+		</div>
+	</div>
+
+    <section class="content py-5">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-4">
+            <div class="card card-primary card-outline">
+              <div class="card-body box-profile">
+                <div class="text-center">
+                    <img class="profile-user-img img-fluid img-circle" style="width:150px;height:150px;object-fit:cover;" src="{{ doctor.image.url }}" alt="User profile picture">
+                </div>
+
+                <h3 class="profile-username text-center">BS. {{ doctor.first_name }} {{ doctor.last_name }}</h3>
+                <p class="text-muted text-center">{{ profile.specialization|default:"Bác sĩ chuyên khoa" }}</p>
+
+                <ul class="list-group list-group-unbordered mb-3">
+                  <li class="list-group-item">
+                    <b>Đánh giá</b> <a class="float-right text-warning"><i class="fas fa-star"></i> {{ avg_rating }} ({{ total_reviews }} lượt)</a>
+                  </li>
+                  <li class="list-group-item">
+                    <b>Chuyên môn chính</b> <a class="float-right">{{ profile.specialization|default:'Đang cập nhật' }}</a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- About Me Box -->
+            <div class="card card-primary">
+              <div class="card-header">
+                <h3 class="card-title">Giới thiệu</h3>
+              </div>
+              <div class="card-body">
+                <strong><i class="fas fa-book mr-1"></i> Bằng cấp & Đào tạo</strong>
+                <p class="text-muted">
+                  {{ profile.qualifications|default:"Chưa cập nhật thông tin bằng cấp." }}
+                </p>
+                <hr>
+                <strong><i class="fas fa-stethoscope mr-1"></i> Kinh nghiệm làm việc</strong>
+                <p class="text-muted">
+                  {{ profile.experience|default:"Chưa cập nhật thông tin kinh nghiệm." }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-8">
+            <div class="card">
+              <div class="card-header p-2">
+                <ul class="nav nav-pills">
+                  <li class="nav-item"><a class="nav-link active" href="#biography" data-toggle="tab">Tiểu sử Bác sĩ</a></li>
+                  <li class="nav-item"><a class="nav-link" href="#reviews" data-toggle="tab">Nhận xét từ Bệnh nhân</a></li>
+                  <li class="nav-item"><a class="nav-link bg-success text-white ml-2 rounded" href="#book" data-toggle="tab"><i class="fas fa-calendar-plus"></i> Đặt lịch ngay</a></li>
+                </ul>
+              </div>
+              <div class="card-body">
+                <div class="tab-content">
+                  <div class="active tab-pane" id="biography">
+                    {% if profile.biography %}
+                        <p>{{ profile.biography|linebreaks }}</p>
+                    {% else %}
+                        <p class="text-muted">Bác sĩ chưa có bài giới thiệu chi tiết.</p>
+                    {% endif %}
+                  </div>
+                  
+                  <div class="tab-pane" id="reviews">
+                    {% if reviews %}
+                        {% for review in reviews %}
+                        <div class="post">
+                          <div class="user-block">
+                            <img class="img-circle img-bordered-sm" src="{% if review.patient.image %}{{ review.patient.image.url }}{% else %}{% static 'path/to/default/avatar.png' %}{% endif %}" alt="user image">
+                            <span class="username">
+                              <a href="#">{{ review.patient.first_name }} {{ review.patient.last_name }}</a>
+                            </span>
+                            <span class="description">Đã được khám - {{ review.created_at|date:"d/m/Y H:i" }}</span>
+                          </div>
+                          <p>
+                            <span class="text-warning">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= review.rating %}
+                                        <i class="fas fa-star"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </span>
+                            <br>
+                            {{ review.comment|linebreaks }}
+                          </p>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">Chưa có lượt đánh giá nào cho bác sĩ này.</p>
+                    {% endif %}
+                  </div>
+                  
+                  <div class="tab-pane" id="book">
+                    <h4>Ca khám sắp tới của Bác sĩ</h4>
+                    {% if appointments %}
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Chuyên khoa</th>
+                                    <th>Ngày khám</th>
+                                    <th>Thời gian</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for slot in appointments %}
+                                <tr>
+                                    <td>{{ slot.department }}</td>
+                                    <td>{{ slot.date|date:"d/m/Y" }}</td>
+                                    <td>{{ slot.start_time|time:"H:i" }} - {{ slot.end_time|time:"H:i" }}</td>
+                                    <td>
+                                        <a href="{% url 'take-appointment' slot.id %}" class="btn btn-sm btn-primary">Chọn giờ</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p class="text-danger">Hiện bác sĩ chưa mở ca khám mới hoặc đã kín lịch.</p>
+                    {% endif %}
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+{% endblock %}

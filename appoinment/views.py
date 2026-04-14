@@ -4,14 +4,17 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.db.models import Avg, Count, Q, Max
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
+from django.views import View
 
-from accounts.decorators import user_is_doctor
+from accounts.decorators import user_is_doctor, user_is_patient
+from accounts.models import DoctorProfile, User
 from home.models import MedicalHistory
 from notifications.orchestrators import (
     schedule_booking_notifications,
@@ -23,10 +26,11 @@ from notifications.realtime import push_realtime_notification
 from .forms import (
     CancellationAppointmentForm,
     CreateAppointmentForm,
+    DoctorReviewForm,
     RescheduleAppointmentForm,
     TakeAppointmentForm,
 )
-from .models import Appointment, AppointmentChangeLog, TakeAppointment
+from .models import Appointment, AppointmentChangeLog, TakeAppointment, DoctorReview
 
 
 APPOINTMENT_CHANGE_DEADLINE_HOURS = getattr(settings, 'APPOINTMENT_CHANGE_DEADLINE_HOURS', 4)
@@ -148,15 +152,19 @@ class DoctorPageView(ListView):
     def get_queryset(self):
         today = timezone.localdate()
         now_time = timezone.localtime().time()
-        queryset = self.model.objects.filter(is_active=True).order_by('-id')
-        return [
-            appointment for appointment in queryset
-            if appointment.date is not None
-            if not (
-                appointment.date < today
-                or (appointment.date == today and appointment.end_time <= now_time)
-            )
-        ]
+        queryset = self.model.objects.filter(is_active=True).select_related('user').order_by('-id')
+        
+        doctor_ids = {app.user_id for app in queryset}
+        reviews_data = DoctorReview.objects.filter(doctor_id__in=doctor_ids).values('doctor_id').annotate(avg_rating=Avg('rating'))
+        ratings_map = {item['doctor_id']: round(item['avg_rating'], 1) for item in reviews_data}
+        
+        results = []
+        for appointment in queryset:
+            if appointment.date is not None:
+                if not (appointment.date < today or (appointment.date == today and appointment.end_time <= now_time)):
+                    appointment.avg_rating = ratings_map.get(appointment.user_id, 0)
+                    results.append(appointment)
+        return results
 
 
 class TakeAppointmentView(CreateView):
@@ -274,6 +282,7 @@ class PatientOwnAppointmentListView(ListView):
             booking.badge_class = badge_class
             booking.badge_label = badge_label
             booking.change_history = booking.change_logs.all()[:5]
+            booking.has_review = hasattr(booking, 'review')
         return queryset
 
 
@@ -603,3 +612,152 @@ class AppointmentDeleteView(DeleteView):
                 level='danger',
             )
         return redirect(self.success_url)
+
+
+class DoctorDetailView(View):
+    template_name = 'appointment/doctor_detail.html'
+
+    def get(self, request, doctor_id):
+        doctor = get_object_or_404(User, id=doctor_id, role='doctor')
+        
+        try:
+            profile = doctor.doctor_profile
+        except DoctorProfile.DoesNotExist:
+            profile = None
+            
+        appointments = Appointment.objects.filter(
+            user=doctor,
+            is_active=True,
+            date__gte=timezone.localdate()
+        ).order_by('date', 'start_time')
+        
+        reviews = DoctorReview.objects.filter(doctor=doctor).select_related('patient')
+        review_stats = reviews.aggregate(
+            avg_rating=Avg('rating'),
+            total_reviews=Count('id')
+        )
+        
+        context = {
+            'doctor': doctor,
+            'profile': profile,
+            'appointments': appointments,
+            'reviews': reviews,
+            'avg_rating': round(review_stats['avg_rating'] or 0, 1),
+            'total_reviews': review_stats['total_reviews'],
+        }
+        return render(request, self.template_name, context)
+
+
+class SubmitReviewView(View):
+    template_name = 'appointment/submit_review.html'
+    
+    @method_decorator(login_required(login_url='login'))
+    @method_decorator(user_is_patient)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, pk):
+        booking = get_object_or_404(TakeAppointment, pk=pk, user=request.user, status=TakeAppointment.STATUS_COMPLETED)
+        if hasattr(booking, 'review'):
+            messages.info(request, "Bạn đã đánh giá lịch khám này rồi.")
+            return redirect('patient-my-appointments')
+            
+        form = DoctorReviewForm()
+        return render(request, self.template_name, {'form': form, 'booking': booking})
+
+    def post(self, request, pk):
+        booking = get_object_or_404(TakeAppointment, pk=pk, user=request.user, status=TakeAppointment.STATUS_COMPLETED)
+        if hasattr(booking, 'review'):
+            messages.info(request, "Bạn đã đánh giá lịch khám này rồi.")
+            return redirect('patient-my-appointments')
+
+        form = DoctorReviewForm(request.POST)
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.doctor = booking.appointment.user
+            review.patient = request.user
+            review.booking = booking
+            review.save()
+            messages.success(request, "Cảm ơn bạn đã gửi đánh giá!")
+            return redirect('patient-my-appointments')
+        return render(request, self.template_name, {'form': form, 'booking': booking})
+
+
+class ChatRoomView(View):
+    template_name = 'appointment/chat_room.html'
+
+    @method_decorator(login_required(login_url='login'))
+    def dispatch(self, request, *args, **kwargs):
+        self.booking_id = kwargs.get('booking_id')
+        self.booking = get_object_or_404(TakeAppointment, id=self.booking_id)
+
+        if request.user.role == 'patient' and self.booking.user != request.user:
+            messages.error(request, 'Bạn không có quyền truy cập đoạn chat này.')
+            return redirect('home')
+            
+        if request.user.role == 'doctor' and self.booking.appointment.user != request.user:
+            messages.error(request, 'Bạn không có quyền truy cập đoạn chat này.')
+            return redirect('home')
+
+        # Check if chat is allowed (only pending, confirmed)
+        if self.booking.status in ['completed', 'cancelled']:
+            self.chat_enabled = False
+        else:
+            self.chat_enabled = True
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        from .models import DirectMessage
+        messages_queryset = DirectMessage.objects.filter(booking=self.booking).order_by('created_at')
+        
+        # Identify the other person
+        other_user = self.booking.user if request.user.role == 'doctor' else self.booking.appointment.user
+
+        context = {
+            'booking': self.booking,
+            'chat_messages': messages_queryset,
+            'chat_enabled': self.chat_enabled,
+            'other_user': other_user,
+        }
+        return render(request, self.template_name, context)
+
+
+class DoctorInboxView(View):
+    template_name = 'appointment/doctor_inbox.html'
+
+    @method_decorator(login_required(login_url='login'))
+    @method_decorator(user_is_doctor)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, booking_id=None, *args, **kwargs):
+        from .models import DirectMessage
+
+        active_statuses = [TakeAppointment.STATUS_PENDING, TakeAppointment.STATUS_CONFIRMED, TakeAppointment.STATUS_ARRIVED]
+        
+        all_bookings = TakeAppointment.objects.filter(
+            appointment__user=request.user
+        ).annotate(
+            last_msg_time=Max('messages__created_at')
+        ).filter(
+            Q(status__in=active_statuses) | Q(last_msg_time__isnull=False)
+        ).select_related('user').order_by('-last_msg_time', '-date', '-time')
+
+        active_booking = None
+        messages_queryset = None
+        chat_enabled = False
+
+        if booking_id:
+            active_booking = get_object_or_404(TakeAppointment, id=booking_id, appointment__user=request.user)
+            messages_queryset = DirectMessage.objects.filter(booking=active_booking).order_by('created_at')
+            chat_enabled = active_booking.status in active_statuses
+
+        context = {
+            'bookings': all_bookings,
+            'active_booking': active_booking,
+            'chat_messages': messages_queryset,
+            'chat_enabled': chat_enabled,
+            'user_image': request.user.image.url if request.user.image else None,
+        }
+        return render(request, self.template_name, context)

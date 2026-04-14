@@ -66,6 +66,9 @@
                                             <a href="{% url 'delete-patient' patient.id %}" class="btn btn-danger btn-sm text-white mb-1" title="Hủy lịch">
                                                 <i class="fas fa-trash"></i> Hủy lịch
                                             </a>
+                                            <a href="{% url 'doctor-inbox-detail' patient.id %}" class="btn btn-warning btn-sm text-dark mb-1" title="Nhắn tin">
+                                                <i class="fas fa-comment-dots"></i> Nhắn tin
+                                            </a>
 
                                             <div class="modal fade" id="historyModal{{ patient.id }}" tabindex="-1" role="dialog" aria-labelledby="historyModalLabel{{ patient.id }}" aria-hidden="true">
                                                 <div class="modal-dialog modal-lg" role="document">

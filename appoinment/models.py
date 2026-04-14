@@ -99,3 +99,39 @@ class AppointmentChangeLog(models.Model):
 
     def __str__(self):
         return f"{self.get_action_display()} - booking #{self.booking_id}"
+
+
+class DoctorReview(models.Model):
+    RATING_CHOICES = (
+        (1, '1 Star'),
+        (2, '2 Stars'),
+        (3, '3 Stars'),
+        (4, '4 Stars'),
+        (5, '5 Stars'),
+    )
+    doctor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='doctor_reviews')
+    patient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='patient_reviews')
+    booking = models.OneToOneField(TakeAppointment, on_delete=models.CASCADE, related_name='review')
+    rating = models.IntegerField(choices=RATING_CHOICES, default=5)
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Review for Dr. {self.doctor.last_name} by {self.patient.last_name} - {self.rating} Stars"
+
+
+class DirectMessage(models.Model):
+    booking = models.ForeignKey(TakeAppointment, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    content = models.TextField()
+    attachments = models.FileField(upload_to='chat_attachments/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"Msg from {self.sender.email} for booking {self.booking_id}"

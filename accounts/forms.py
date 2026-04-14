@@ -140,3 +140,17 @@ class DoctorProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'email', 'phone_number', 'image']
+
+
+class DoctorExtendedProfileForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['specialization'].widget.attrs.update({'placeholder': 'Chuyên khoa', 'class': 'form-control'})
+        self.fields['qualifications'].widget.attrs.update({'placeholder': 'Bằng cấp, chứng chỉ', 'class': 'form-control', 'rows': 3})
+        self.fields['experience'].widget.attrs.update({'placeholder': 'Kinh nghiệm làm việc...', 'class': 'form-control', 'rows': 3})
+        self.fields['biography'].widget.attrs.update({'placeholder': 'Tiểu sử, giới thiệu bản thân...', 'class': 'form-control', 'rows': 4})
+
+    class Meta:
+        from .models import DoctorProfile
+        model = DoctorProfile
+        fields = ['specialization', 'qualifications', 'experience', 'biography']

@@ -128,3 +128,17 @@ class CancellationAppointmentForm(forms.Form):
         required=False,
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Ví dụ: thay đổi kế hoạch cá nhân, đã khám ở nơi khác'}),
     )
+
+
+class DoctorReviewForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['rating'].label = "Đánh giá sao"
+        self.fields['rating'].widget.attrs.update({'class': 'form-control'})
+        self.fields['comment'].label = "Nhận xét của bạn"
+        self.fields['comment'].widget.attrs.update({'class': 'form-control', 'rows': 4, 'placeholder': 'Viết trải nghiệm của bạn với bác sĩ...'})
+
+    class Meta:
+        from .models import DoctorReview
+        model = DoctorReview
+        fields = ['rating', 'comment']
