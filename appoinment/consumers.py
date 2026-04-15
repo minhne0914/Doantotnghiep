@@ -19,8 +19,15 @@ class DirectChatConsumer(AsyncJsonWebsocketConsumer):
             await self.close()
             return
             
-        # Group name specific to this booking
-        self.room_group_name = f'chat_booking_{self.booking_id}'
+        # Group name specific to this doctor-patient pair
+        if self.user.role == 'doctor':
+            doctor_id = self.user.id
+            patient_id = self.booking.user.id
+        else:
+            doctor_id = self.booking.appointment.user.id
+            patient_id = self.user.id
+            
+        self.room_group_name = f'chat_doc{doctor_id}_pat{patient_id}'
 
         # Join room group
         await self.channel_layer.group_add(

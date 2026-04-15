@@ -709,11 +709,20 @@ class ChatRoomView(View):
 
     def get(self, request, *args, **kwargs):
         from .models import DirectMessage
-        messages_queryset = DirectMessage.objects.filter(booking=self.booking).order_by('created_at')
-        
-        # Identify the other person
-        other_user = self.booking.user if request.user.role == 'doctor' else self.booking.appointment.user
+        if request.user.role == 'doctor':
+            doctor = request.user
+            patient = self.booking.user
+            other_user = patient
+        else:
+            doctor = self.booking.appointment.user
+            patient = request.user
+            other_user = doctor
 
+        messages_queryset = DirectMessage.objects.filter(
+            booking__appointment__user=doctor,
+            booking__user=patient
+        ).order_by('created_at')
+        
         context = {
             'booking': self.booking,
             'chat_messages': messages_queryset,
@@ -744,17 +753,27 @@ class DoctorInboxView(View):
             Q(status__in=active_statuses) | Q(last_msg_time__isnull=False)
         ).select_related('user').order_by('-last_msg_time', '-date', '-time')
 
+        seen_users = set()
+        unique_bookings = []
+        for b in all_bookings:
+            if b.user_id not in seen_users:
+                seen_users.add(b.user_id)
+                unique_bookings.append(b)
+
         active_booking = None
         messages_queryset = None
         chat_enabled = False
 
         if booking_id:
             active_booking = get_object_or_404(TakeAppointment, id=booking_id, appointment__user=request.user)
-            messages_queryset = DirectMessage.objects.filter(booking=active_booking).order_by('created_at')
+            messages_queryset = DirectMessage.objects.filter(
+                booking__appointment__user=request.user,
+                booking__user=active_booking.user
+            ).order_by('created_at')
             chat_enabled = active_booking.status in active_statuses
 
         context = {
-            'bookings': all_bookings,
+            'bookings': unique_bookings,
             'active_booking': active_booking,
             'chat_messages': messages_queryset,
             'chat_enabled': chat_enabled,
