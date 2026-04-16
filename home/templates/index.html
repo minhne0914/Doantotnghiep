@@ -1,8 +1,8 @@
   
 {% extends 'base.html' %}
-{% block title %} Home  {% endblock %}
+{% load static i18n %}
+{% block title %} {% trans "Trang chủ" %} {% endblock %}
 {% block content %}
-{% load static %}
 
 	<!-- banner -->
 	<div class="slider">
@@ -12,11 +12,11 @@
 					<div class="banner-top1">
 						<div class="banner-info_agile_w3ls">
 							<div class="container">
-								<h3>Medical services that you
-									<span>can trust</span>
+								<h3>{% trans "Dịch vụ y tế mà bạn" %}
+									<span>{% trans "có thể tin cậy" %}</span>
 								</h3>
-								<p class="mt-3 mb-md-5 mb-3">Dự báo chẩn đoán bệnh lý đa khoa bằng các mô hình Học Máy chuẩn xác và bảo mật. Trợ lý Ảo AI tư vấn cá nhân hóa.</p>
-								<a href="">Read More
+								<p class="mt-3 mb-md-5 mb-3">{% trans "Dự báo chẩn đoán bệnh lý đa khoa bằng các mô hình Học Máy chuẩn xác và bảo mật. Trợ lý Ảo AI tư vấn cá nhân hóa." %}</p>
+								<a href="">{% trans "Tìm hiểu thêm" %}
 									<i class="fa fa-caret-right ml-2" aria-hidden="true"></i>
 								</a>
 							</div>
@@ -27,11 +27,11 @@
 					<div class="banner-top2">
 						<div class="banner-info_agile_w3ls">
 							<div class="container">
-								<h3>Medical excellence
-									<span>every day</span>
+								<h3>{% trans "Chất lượng y tế" %}
+									<span>{% trans "mỗi ngày" %}</span>
 								</h3>
-								<p class="mt-3 mb-md-5 mb-3">Triển khai Machine Learning cho Chẩn đoán Ung Thư Vú, Bệnh Tim, Tiểu Đường và mô hình Học Sâu (Deep Learning) cho Viêm phổi.</p>
-								<a href="about.html">Read More
+								<p class="mt-3 mb-md-5 mb-3">{% trans "Triển khai Machine Learning cho Chẩn đoán Ung Thư Vú, Bệnh Tim, Tiểu Đường và mô hình Học Sâu (Deep Learning) cho Viêm phổi." %}</p>
+								<a href="about.html">{% trans "Read More" %}
 									<i class="fa fa-caret-right ml-2" aria-hidden="true"></i>
 								</a>
 							</div>
@@ -42,11 +42,11 @@
 					<div class="banner-top3">
 						<div class="banner-info_agile_w3ls">
 							<div class="container">
-								<h3>The Hospital of the
-									<span>future, today</span>
+								<h3>{% trans "Bệnh viện của" %}
+									<span>{% trans "tương lai" %}</span>
 								</h3>
-								<p class="mt-3 mb-md-5 mb-3">Xây dựng Bệnh Án Điện Tử EMR và Hệ thống cảnh báo tự động SMS/Email, tối ưu quy trình làm việc của Bác Sĩ.</p>
-								<a href="about.html">Read More
+								<p class="mt-3 mb-md-5 mb-3">{% trans "Xây dựng Bệnh Án Điện Tử EMR và Hệ thống cảnh báo tự động SMS/Email, tối ưu quy trình làm việc của Bác Sĩ." %}</p>
+								<a href="about.html">{% trans "Read More" %}
 									<i class="fa fa-caret-right ml-2" aria-hidden="true"></i>
 								</a>
 							</div>
@@ -63,12 +63,12 @@
 	<div class="banner-bottom py-5">
 		<div class="d-flex container py-xl-3 py-lg-3">
 			<div class="banner-left-bottom-w3ls offset-lg-2 offset-md-1">
-				<h6 class="text-white">Công nghệ Đột phá</h6>
-				<h3 class="text-white my-3">Bác sĩ và Trợ Lý Ảo</h3>
-				<p>Hệ thống không chỉ có các Y bác sĩ chuyên môn cao mà còn được trợ lực bởi sức mạnh của Generative AI (LLM).</p>
+				<h6 class="text-white">{% trans "Công nghệ Đột phá" %}</h6>
+				<h3 class="text-white my-3">{% trans "Bác sĩ và Trợ Lý Ảo" %}</h3>
+				<p>{% trans "Hệ thống không chỉ có các Y bác sĩ chuyên môn cao mà còn được trợ lực bởi sức mạnh của Generative AI (LLM)." %}</p>
 			</div>
 			<div class="button">
-				<a href="{% url 'doctor' %}" class="w3ls-button-agile">Read More
+				<a href="{% url 'doctor' %}" class="w3ls-button-agile">{% trans "Tìm hiểu thêm" %}
 					<i class="fas fa-hand-point-right"></i>
 				</a>
 			</div>
@@ -82,11 +82,11 @@
 	<div class="why-choose-agile pt-5" id="services">
 		<div class="container pt-xl-5 pt-lg-3">
 			<div class="w3ls-titles text-center mb-5">
-				<h3 class="title">Our Best Services</h3>
+				<h3 class="title">{% trans "Dịch vụ ưu việt" %}</h3>
 				<span>
 					<i class="fas fa-user-md"></i>
 				</span>
-				<p class="mt-2">Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+				<p class="mt-2">{% trans "Chúng tôi cung cấp các giải pháp công nghệ hiện đại nhất áp dụng trong chăm sóc sức khỏe." %}</p>
 			</div>
 			<div class="row why-choose-agile-grids-top">
 				<div class="col-lg-4 agileits-w3layouts-grid">
@@ -97,8 +97,8 @@
 							</div>
 						</div>
 						<div class="col-9 agile-why-text-2">
-							<h4 class="text-dark font-weight-bold mb-3">Chẩn Đoán Đa Khoa</h4>
-							<p>Ứng dụng Random Forest & KNN phân lớp rủi ro bệnh lý tức thì.</p>
+							<h4 class="text-dark font-weight-bold mb-3">{% trans "Chẩn Đoán Đa Khoa" %}</h4>
+							<p>{% trans "Ứng dụng Random Forest & KNN phân lớp rủi ro bệnh lý tức thì." %}</p>
 						</div>
 					</div>
 					<div class="row wthree_agile_us my-5">
@@ -108,8 +108,8 @@
 							</div>
 						</div>
 						<div class="col-9 agile-why-text-2">
-							<h4 class="text-dark font-weight-bold mb-3">Trợ lý Y tế AI</h4>
-							<p>Chatbot thông minh Google Gemini tư vấn 24/7 theo bệnh án.</p>
+							<h4 class="text-dark font-weight-bold mb-3">{% trans "Trợ lý Y tế AI" %}</h4>
+							<p>{% trans "Chatbot thông minh Google Gemini tư vấn 24/7 theo bệnh án." %}</p>
 						</div>
 					</div>
 					<div class="row wthree_agile_us">
@@ -119,8 +119,8 @@
 							</div>
 						</div>
 						<div class="col-9 agile-why-text-2">
-							<h4 class="text-dark font-weight-bold mb-3">Bệnh Án EMR</h4>
-							<p>Quản lý hồ sơ điện tử, đơn thuốc, lịch trình theo dõi an toàn.</p>
+							<h4 class="text-dark font-weight-bold mb-3">{% trans "Bệnh Án EMR" %}</h4>
+							<p>{% trans "Quản lý hồ sơ điện tử, đơn thuốc, lịch trình theo dõi an toàn." %}</p>
 						</div>
 					</div>
 				</div>
@@ -130,8 +130,8 @@
 				<div class="col-lg-4 agileits-w3layouts-grid">
 					<div class="row wthree_agile_us">
 						<div class="col-9 agile-why-text-2">
-							<h4 class="text-dark font-weight-bold mb-3">Lịch Khám Online</h4>
-							<p>Chống trùng lịch, tự động nhắc hẹn bệnh nhân qua Email.</p>
+							<h4 class="text-dark font-weight-bold mb-3">{% trans "Lịch Khám Online" %}</h4>
+							<p>{% trans "Chống trùng lịch, tự động nhắc hẹn bệnh nhân qua Email." %}</p>
 						</div>
 						<div class="col-3 agile-why-text p-0">
 							<div class="wthree_features_grid">
@@ -141,8 +141,8 @@
 					</div>
 					<div class="row wthree_agile_us my-5">
 						<div class="col-9 agile-why-text-2">
-							<h4 class="text-dark font-weight-bold mb-3">Chẩn đoán Hình Ảnh</h4>
-							<p>Phát hiện viêm phổi X-Quang chuẩn xác bằng công nghệ CNN.</p>
+							<h4 class="text-dark font-weight-bold mb-3">{% trans "Chẩn đoán Hình Ảnh" %}</h4>
+							<p>{% trans "Phát hiện viêm phổi X-Quang chuẩn xác bằng công nghệ CNN." %}</p>
 						</div>
 						<div class="col-3 agile-why-text p-0">
 							<div class="wthree_features_grid">
@@ -153,8 +153,8 @@
 					</div>
 					<div class="row wthree_agile_us">
 						<div class="col-9 agile-why-text-2">
-							<h4 class="text-dark font-weight-bold mb-3">Biểu Đồ Sức Khỏe</h4>
-							<p>Theo dõi tiến trình sinh tồn qua Dashboard thời gian thực.</p>
+							<h4 class="text-dark font-weight-bold mb-3">{% trans "Biểu Đồ Sức Khỏe" %}</h4>
+							<p>{% trans "Theo dõi tiến trình sinh tồn qua Dashboard thời gian thực." %}</p>
 						</div>
 						<div class="col-3 agile-why-text p-0">
 							<div class="wthree_features_grid">

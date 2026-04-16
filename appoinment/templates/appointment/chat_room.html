@@ -164,7 +164,8 @@
                 noMessages.style.display = 'none';
             }
             
-            const isMe = data.sender_id === {{ request.user.id }};
+            const myUserId = parseInt("{{ request.user.id|default:'0' }}", 10);
+            const isMe = data.sender_id === myUserId;
             const msgDiv = document.createElement('div');
             msgDiv.className = 'message ' + (isMe ? 'message-me' : 'message-other');
             

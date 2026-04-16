@@ -152,9 +152,28 @@ class DoctorPageView(ListView):
     def get_queryset(self):
         today = timezone.localdate()
         now_time = timezone.localtime().time()
+        
+        dept = self.request.GET.get('department', '').strip()
+        search = self.request.GET.get('search', '').strip()
+        date_param = self.request.GET.get('date', '').strip()
+        
         queryset = self.model.objects.filter(is_active=True).select_related('user').order_by('-id')
         
+        if dept:
+            queryset = queryset.filter(department=dept)
+        if search:
+            queryset = queryset.filter(Q(full_name__icontains=search) | Q(hospital_name__icontains=search))
+        if date_param:
+            try:
+                search_date = datetime.strptime(date_param, '%Y-%m-%d').date()
+                queryset = queryset.filter(date=search_date)
+            except ValueError:
+                pass
+                
         doctor_ids = {app.user_id for app in queryset}
+        if not doctor_ids:
+            return []
+
         reviews_data = DoctorReview.objects.filter(doctor_id__in=doctor_ids).values('doctor_id').annotate(avg_rating=Avg('rating'))
         ratings_map = {item['doctor_id']: round(item['avg_rating'], 1) for item in reviews_data}
         
@@ -165,6 +184,38 @@ class DoctorPageView(ListView):
                     appointment.avg_rating = ratings_map.get(appointment.user_id, 0)
                     results.append(appointment)
         return results
+
+    def get_context_data(self, **kwargs):
+        from django.utils.translation import gettext_lazy as _
+        context = super().get_context_data(**kwargs)
+        
+        # Giữ trạng thái form
+        context['search_val'] = self.request.GET.get('search', '').strip()
+        context['dept_val'] = self.request.GET.get('department', '').strip()
+        context['date_val'] = self.request.GET.get('date', '').strip()
+        
+        # Danh sách khoa dùng tiếng Việt cho frontend
+        context['departments'] = [
+            ('Heart Disease', _('Bệnh tim mạch')),
+            ('Diabetes Disease', _('Bệnh tiểu đường')),
+            ('Breast Cancer', _('Ung thư vú')),
+            ('Dentistry', _('Nha khoa')),
+            ('Cardiology', _('Khoa Nội tim mạch')),
+            ('ENT Specialists', _('Tai Mũi Họng')),
+            ('Astrology', _('Tâm lý / Chiêm tinh học')),
+            ('Neuroanatomy', _('Nội thần kinh')),
+            ('Blood Screening', _('Xét nghiệm huyết học')),
+            ('Eye Care', _('Nhãn khoa / Mắt')),
+            ('Physical Therapy', _('Vật lý trị liệu')),
+        ]
+        
+        # Build query string để gắn vào url Pagination
+        query_params = self.request.GET.copy()
+        if 'page' in query_params:
+            del query_params['page']
+        context['filter_qs'] = f"&{query_params.urlencode()}" if query_params else ""
+            
+        return context
 
 
 class TakeAppointmentView(CreateView):

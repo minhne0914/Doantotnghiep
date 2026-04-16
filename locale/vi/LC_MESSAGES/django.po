@@ -1,0 +1,450 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"Language: vi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Tiếng Việt"
+msgstr "Tiếng Việt"
+
+msgid "English"
+msgstr "English"
+
+msgid "Bệnh tim mạch"
+msgstr "Bệnh tim mạch"
+
+msgid "Bệnh tiểu đường"
+msgstr "Bệnh tiểu đường"
+
+msgid "Ung thư vú"
+msgstr "Ung thư vú"
+
+msgid "Nha khoa"
+msgstr "Nha khoa"
+
+msgid "Khoa Nội tim mạch"
+msgstr "Khoa Nội tim mạch"
+
+msgid "Tai Mũi Họng"
+msgstr "Tai Mũi Họng"
+
+msgid "Tâm lý / Chiêm tinh học"
+msgstr "Tâm lý / Chiêm tinh học"
+
+msgid "Nội thần kinh"
+msgstr "Nội thần kinh"
+
+msgid "Xét nghiệm huyết học"
+msgstr "Xét nghiệm huyết học"
+
+msgid "Nhãn khoa / Mắt"
+msgstr "Nhãn khoa / Mắt"
+
+msgid "Vật lý trị liệu"
+msgstr "Vật lý trị liệu"
+
+msgid "Danh sách Lịch khám"
+msgstr "Danh sách Lịch khám"
+
+msgid "Trang chủ"
+msgstr "Trang chủ"
+
+msgid "Đội ngũ Bác sĩ"
+msgstr "Đội ngũ Bác sĩ"
+
+msgid "Tên Bác sĩ / Cơ sở..."
+msgstr "Tên Bác sĩ / Cơ sở..."
+
+msgid "Tất cả chuyên khoa"
+msgstr "Tất cả chuyên khoa"
+
+msgid "Lọc"
+msgstr "Lọc"
+
+msgid "Không tìm thấy lịch khám nào khớp với bộ lọc của bạn."
+msgstr "Không tìm thấy lịch khám nào khớp với bộ lọc của bạn."
+
+msgid ""
+"Vui lòng thử thay đổi chuyên khoa, khoảng thời gian, hoặc kiểm tra lại từ "
+"khóa."
+msgstr ""
+"Vui lòng thử thay đổi chuyên khoa, khoảng thời gian, hoặc kiểm tra lại từ "
+"khóa."
+
+msgid "Xem lại tất cả bác sĩ"
+msgstr "Xem lại tất cả bác sĩ"
+
+msgid "Đánh giá"
+msgstr "Đánh giá"
+
+msgid "Chuyên ngành"
+msgstr "Chuyên ngành"
+
+msgid "Ngày khám:"
+msgstr "Ngày khám:"
+
+msgid "Khung giờ"
+msgstr "Khung giờ"
+
+msgid "đến"
+msgstr "đến"
+
+msgid "tại"
+msgstr "tại"
+
+msgid "Địa chỉ:"
+msgstr "Địa chỉ:"
+
+msgid "Đặt lịch khám"
+msgstr "Đặt lịch khám"
+
+msgid "Trang trước"
+msgstr "Trang trước"
+
+msgid "Trang sau"
+msgstr "Trang sau"
+
+msgid "Trung Tâm Y Tế ĐH Công Nghiệp Hà Nội"
+msgstr "Trung Tâm Y Tế ĐH Công Nghiệp Hà Nội"
+
+msgid "Sàng lọc nguy cơ"
+msgstr "Sàng lọc nguy cơ"
+
+msgid "Nguy cơ tiểu đường"
+msgstr "Nguy cơ tiểu đường"
+
+msgid "Nguy cơ ung thư vú"
+msgstr "Nguy cơ ung thư vú"
+
+msgid "Nguy cơ bệnh tim"
+msgstr "Nguy cơ bệnh tim"
+
+msgid "Nguy cơ bệnh thận"
+msgstr "Nguy cơ bệnh thận"
+
+msgid "Nguy cơ viêm phổi"
+msgstr "Nguy cơ viêm phổi"
+
+msgid "Bác sĩ"
+msgstr "Bác sĩ"
+
+msgid "Cài đặt"
+msgstr "Cài đặt"
+
+msgid "Lịch hẹn"
+msgstr "Lịch hẹn"
+
+msgid "Tạo lịch khám"
+msgstr "Tạo lịch khám"
+
+msgid "Đăng xuất"
+msgstr "Đăng xuất"
+
+msgid "Lịch sử sức khỏe"
+msgstr "Lịch sử sức khỏe"
+
+msgid "Lịch hẹn của tôi"
+msgstr "Lịch hẹn của tôi"
+
+msgid "Hồ sơ bệnh án"
+msgstr "Hồ sơ bệnh án"
+
+msgid "Chỉnh sửa hồ sơ"
+msgstr "Chỉnh sửa hồ sơ"
+
+msgid "Đăng ký"
+msgstr "Đăng ký"
+
+msgid "Bệnh nhân"
+msgstr "Bệnh nhân"
+
+msgid "Đăng nhập"
+msgstr "Đăng nhập"
+
+msgid "Đăng ký Bác sĩ"
+msgstr "Đăng ký Bác sĩ"
+
+msgid "Đăng ký Bệnh nhân"
+msgstr "Đăng ký Bệnh nhân"
+
+msgid "Giới tính"
+msgstr "Giới tính"
+
+msgid "Nam"
+msgstr "Nam"
+
+msgid "Nữ"
+msgstr "Nữ"
+
+msgid "Địa chỉ"
+msgstr "Địa chỉ"
+
+msgid "Liên kết nhanh"
+msgstr "Liên kết nhanh"
+
+msgid "Dịch vụ y tế mà bạn"
+msgstr "Dịch vụ y tế mà bạn"
+
+msgid "có thể tin cậy"
+msgstr "có thể tin cậy"
+
+msgid ""
+"Dự báo chẩn đoán bệnh lý đa khoa bằng các mô hình Học Máy chuẩn xác và bảo "
+"mật. Trợ lý Ảo AI tư vấn cá nhân hóa."
+msgstr ""
+"Dự báo chẩn đoán bệnh lý đa khoa bằng các mô hình Học Máy chuẩn xác và bảo "
+"mật. Trợ lý Ảo AI tư vấn cá nhân hóa."
+
+msgid "Tìm hiểu thêm"
+msgstr "Tìm hiểu thêm"
+
+msgid "Chất lượng y tế"
+msgstr "Chất lượng y tế"
+
+msgid "mỗi ngày"
+msgstr "mỗi ngày"
+
+msgid ""
+"Triển khai Machine Learning cho Chẩn đoán Ung Thư Vú, Bệnh Tim, Tiểu Đường "
+"và mô hình Học Sâu (Deep Learning) cho Viêm phổi."
+msgstr ""
+"Triển khai Machine Learning cho Chẩn đoán Ung Thư Vú, Bệnh Tim, Tiểu Đường "
+"và mô hình Học Sâu (Deep Learning) cho Viêm phổi."
+
+msgid "Bệnh viện của"
+msgstr "Bệnh viện của"
+
+msgid "tương lai"
+msgstr "tương lai"
+
+msgid ""
+"Xây dựng Bệnh Án Điện Tử EMR và Hệ thống cảnh báo tự động SMS/Email, tối ưu "
+"quy trình làm việc của Bác Sĩ."
+msgstr ""
+"Xây dựng Bệnh Án Điện Tử EMR và Hệ thống cảnh báo tự động SMS/Email, tối ưu "
+"quy trình làm việc của Bác Sĩ."
+
+msgid "Công nghệ Đột phá"
+msgstr "Công nghệ Đột phá"
+
+msgid "Bác sĩ và Trợ Lý Ảo"
+msgstr "Bác sĩ và Trợ Lý Ảo"
+
+msgid ""
+"Hệ thống không chỉ có các Y bác sĩ chuyên môn cao mà còn được trợ lực bởi "
+"sức mạnh của Generative AI (LLM)."
+msgstr ""
+"Hệ thống không chỉ có các Y bác sĩ chuyên môn cao mà còn được trợ lực bởi "
+"sức mạnh của Generative AI (LLM)."
+
+msgid "Dịch vụ ưu việt"
+msgstr "Dịch vụ ưu việt"
+
+msgid ""
+"Chúng tôi cung cấp các giải pháp công nghệ hiện đại nhất áp dụng trong chăm "
+"sóc sức khỏe."
+msgstr ""
+"Chúng tôi cung cấp các giải pháp công nghệ hiện đại nhất áp dụng trong chăm "
+"sóc sức khỏe."
+
+msgid "Chẩn Đoán Đa Khoa"
+msgstr "Chẩn Đoán Đa Khoa"
+
+msgid "Ứng dụng Random Forest & KNN phân lớp rủi ro bệnh lý tức thì."
+msgstr "Ứng dụng Random Forest & KNN phân lớp rủi ro bệnh lý tức thì."
+
+msgid "Trợ lý Y tế AI"
+msgstr "Trợ lý Y tế AI"
+
+msgid "Chatbot thông minh Google Gemini tư vấn 24/7 theo bệnh án."
+msgstr "Chatbot thông minh Google Gemini tư vấn 24/7 theo bệnh án."
+
+msgid "Bệnh Án EMR"
+msgstr "Bệnh Án EMR"
+
+msgid "Quản lý hồ sơ điện tử, đơn thuốc, lịch trình theo dõi an toàn."
+msgstr "Quản lý hồ sơ điện tử, đơn thuốc, lịch trình theo dõi an toàn."
+
+msgid "Lịch Khám Online"
+msgstr "Lịch Khám Online"
+
+msgid "Chống trùng lịch, tự động nhắc hẹn bệnh nhân qua Email."
+msgstr "Chống trùng lịch, tự động nhắc hẹn bệnh nhân qua Email."
+
+msgid "Chẩn đoán Hình Ảnh"
+msgstr "Chẩn đoán Hình Ảnh"
+
+msgid "Phát hiện viêm phổi X-Quang chuẩn xác bằng công nghệ CNN."
+msgstr "Phát hiện viêm phổi X-Quang chuẩn xác bằng công nghệ CNN."
+
+msgid "Biểu Đồ Sức Khỏe"
+msgstr "Biểu Đồ Sức Khỏe"
+
+msgid "Theo dõi tiến trình sinh tồn qua Dashboard thời gian thực."
+msgstr "Theo dõi tiến trình sinh tồn qua Dashboard thời gian thực."
+
+msgid "Sàng Lọc Nguy Cơ Tiểu Đường"
+msgstr "Sàng Lọc Nguy Cơ Tiểu Đường"
+
+msgid "Sàng lọc nguy cơ tiểu đường"
+msgstr "Sàng lọc nguy cơ tiểu đường"
+
+msgid "Lưu ý minh bạch:"
+msgstr "Lưu ý minh bạch:"
+
+msgid ""
+"Mô hình Dữ liệu Khoa học Máy tính (Machine Learning) dựa theo tiêu chuẩn bộ "
+"PIMA Indians Diabetes Database. Kết quả dự đoán chỉ mang tính học thuật và "
+"tham khảo ban đầu, không thay thế cho chẩn đoán y khoa chuyên nghiệp."
+msgstr ""
+"Mô hình Dữ liệu Khoa học Máy tính (Machine Learning) dựa theo tiêu chuẩn bộ "
+"PIMA Indians Diabetes Database. Kết quả dự đoán chỉ mang tính học thuật và "
+"tham khảo ban đầu, không thay thế cho chẩn đoán y khoa chuyên nghiệp."
+
+msgid "Kết quả sàng lọc"
+msgstr "Kết quả sàng lọc"
+
+msgid "Nguy cơ cao hơn bình thường"
+msgstr "Nguy cơ cao hơn bình thường"
+
+msgid "Nguy cơ thấp hơn"
+msgstr "Nguy cơ thấp hơn"
+
+msgid ""
+"Hệ thống phát hiện nguy cơ tiểu đường ở mức cần lưu ý. Bạn nên thực hiện xét"
+" nghiệm và thăm khám sớm để xác nhận."
+msgstr ""
+"Hệ thống phát hiện nguy cơ tiểu đường ở mức cần lưu ý. Bạn nên thực hiện xét"
+" nghiệm và thăm khám sớm để xác nhận."
+
+msgid ""
+"Hệ thống chưa ghi nhận dấu hiệu nguy cơ nổi bật từ các chỉ số đã nhập, nhưng"
+" bạn vẫn nên theo dõi sức khỏe định kỳ."
+msgstr ""
+"Hệ thống chưa ghi nhận dấu hiệu nguy cơ nổi bật từ các chỉ số đã nhập, nhưng"
+" bạn vẫn nên theo dõi sức khỏe định kỳ."
+
+msgid "Thông tin chuyển hóa"
+msgstr "Thông tin chuyển hóa"
+
+msgid "Số lần mang thai"
+msgstr "Số lần mang thai"
+
+msgid ""
+"Tại sao cần số này? Tình trạng thai kỳ trước đây có liên quan đến tiểu đường"
+" thai kỳ."
+msgstr ""
+"Tại sao cần số này? Tình trạng thai kỳ trước đây có liên quan đến tiểu đường"
+" thai kỳ."
+
+msgid "Ví dụ: 2"
+msgstr "Ví dụ: 2"
+
+msgid "Glucose"
+msgstr "Glucose"
+
+msgid ""
+"Nồng độ đường huyết: Đây là yếu tố quan trọng nhất để AI học máy nhận biết "
+"rối loạn chuyển hóa."
+msgstr ""
+"Nồng độ đường huyết: Đây là yếu tố quan trọng nhất để AI học máy nhận biết "
+"rối loạn chuyển hóa."
+
+msgid "Ví dụ: 120"
+msgstr "Ví dụ: 120"
+
+msgid "Huyết áp"
+msgstr "Huyết áp"
+
+msgid ""
+"Huyết áp tâm trương: Cao huyết áp thường đi chung với bệnh tiểu đường type "
+"2."
+msgstr ""
+"Huyết áp tâm trương: Cao huyết áp thường đi chung với bệnh tiểu đường type "
+"2."
+
+msgid "Ví dụ: 80"
+msgstr "Ví dụ: 80"
+
+msgid "Chỉ số bổ sung"
+msgstr "Chỉ số bổ sung"
+
+msgid "Độ dày nếp gấp da"
+msgstr "Độ dày nếp gấp da"
+
+msgid ""
+"Chỉ số này ước tính lượng mỡ cơ thể, yếu tố tác động tới kháng Insulin."
+msgstr ""
+"Chỉ số này ước tính lượng mỡ cơ thể, yếu tố tác động tới kháng Insulin."
+
+msgid "Ví dụ: 20"
+msgstr "Ví dụ: 20"
+
+msgid "Insulin"
+msgstr "Insulin"
+
+msgid ""
+"Cấp độ Insulin trong huyết thanh: Giúp máy học tính toán vòng chuyển hóa "
+"đường."
+msgstr ""
+"Cấp độ Insulin trong huyết thanh: Giúp máy học tính toán vòng chuyển hóa "
+"đường."
+
+msgid "Ví dụ: 85"
+msgstr "Ví dụ: 85"
+
+msgid "BMI"
+msgstr "BMI"
+
+msgid ""
+"Chỉ số khối cơ thể (Cân nặng / Chiều cao^2): Thừa cân đóng vai trò trực tiếp"
+" gây bệnh."
+msgstr ""
+"Chỉ số khối cơ thể (Cân nặng / Chiều cao^2): Thừa cân đóng vai trò trực tiếp"
+" gây bệnh."
+
+msgid "Ví dụ: 24.5"
+msgstr "Ví dụ: 24.5"
+
+msgid "Chỉ số tiền sử gia đình"
+msgstr "Chỉ số tiền sử gia đình"
+
+msgid ""
+"Phả hệ bệnh tiểu đường: Yếu tố di truyền chiếm trọng số rất lớn trong cây "
+"quyết định của AI."
+msgstr ""
+"Phả hệ bệnh tiểu đường: Yếu tố di truyền chiếm trọng số rất lớn trong cây "
+"quyết định của AI."
+
+msgid "Ví dụ: 0.5"
+msgstr "Ví dụ: 0.5"
+
+msgid "Tuổi"
+msgstr "Tuổi"
+
+msgid "Ví dụ: 35"
+msgstr "Ví dụ: 35"
+
+msgid "Thực hiện sàng lọc"
+msgstr "Thực hiện sàng lọc"
+
+msgid "Hộp thư bệnh nhân"
+msgstr "Hộp thư bệnh nhân"
+
+msgid "Khám:"
+msgstr "Khám:"
+
+msgid "Chưa có bệnh nhân nào."
+msgstr "Chưa có bệnh nhân nào."
+
+msgid "Đã khóa chat"
+msgstr "Đã khóa chat"
+
+msgid "Nhập tin nhắn..."
+msgstr "Nhập tin nhắn..."
+
+msgid "Chọn một bệnh nhân để bắt đầu trò chuyện"
+msgstr "Chọn một bệnh nhân để bắt đầu trò chuyện"

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
-{% load bootstrap %}
+{% load bootstrap i18n %}
 
-{% block title %} Doctor Registration {% endblock %}
+{% block title %} {% trans "Đăng ký Bác sĩ" %} {% endblock %}
 
 {% block content %}
 
@@ -16,9 +16,9 @@
 		<div aria-label="breadcrumb">
 			<ol class="breadcrumb">
 				<li class="breadcrumb-item">
-					<a href="/">Home</a>
+					<a href="/">{% trans "Trang chủ" %}</a>
 				</li>
-				<li class="breadcrumb-item active" aria-current="page"> Doctor Register
+				<li class="breadcrumb-item active" aria-current="page"> {% trans "Đăng ký Bác sĩ" %}
                 </li>
 			</ol>
 		</div>
@@ -31,14 +31,14 @@
 
                 <div class="col-lg-5 mb-5 mb-lg-0">
 
-                 <center><h3>Doctor Registration</h3> </center>
+                 <center><h3>{% trans "Đăng ký Bác sĩ" %}</h3> </center>
                     <form action="" method="POST">{% csrf_token %}
 
                         {{ form|bootstrap }}
 
                         <div class="row form-group">
                             <div class="col-md-12">
-                                <input type="submit" value="Register" class="btn btn-primary btn-md text-white">
+                                <input type="submit" value="{% trans 'Đăng ký' %}" class="btn btn-primary btn-md text-white">
                             </div>
                         </div>
 

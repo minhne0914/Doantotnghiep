@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
-{% load static %}
-{% block title %}Appointment List{% endblock %}
+{% load static i18n %}
+{% block title %}{% trans "Danh sách Lịch khám" %}{% endblock %}
 
 
 
@@ -18,9 +18,9 @@
 		<div aria-label="breadcrumb">
 			<ol class="breadcrumb">
 				<li class="breadcrumb-item">
-					<a href="/">Home</a>
+					<a href="/">{% trans "Trang chủ" %}</a>
 				</li>
-				<li class="breadcrumb-item active" aria-current="page">Our Doctors</li>
+				<li class="breadcrumb-item active" aria-current="page">{% trans "Đội ngũ Bác sĩ" %}</li>
 			</ol>
 		</div>
 	</div>
@@ -33,13 +33,64 @@
 	<section class="team py-5">
 		<div class="container py-xl-5 py-lg-3">
 			<div class="w3ls-titles text-center mb-5">
-				<h3 class="title">Our Doctors</h3>
+				<h3 class="title">{% trans "Đội ngũ Bác sĩ" %}</h3>
 				<span>
 					<i class="fas fa-user-md"></i>
 				</span>
-				<p class="mt-2">Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+				<div class="row justify-content-center mt-4">
+                    <div class="col-lg-10">
+                        <form method="GET" action="{% url 'doctor' %}" class="bg-light p-4 rounded shadow-sm text-left">
+                            <div class="form-row align-items-center">
+                                <div class="col-md-4 mb-3">
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                        </div>
+                                        <input type="text" class="form-control" name="search" placeholder="{% trans 'Tên Bác sĩ / Cơ sở...' %}" value="{{ search_val }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fas fa-stethoscope"></i></span>
+                                        </div>
+                                        <select name="department" class="custom-select form-control">
+                                            <option value="">{% trans "Tất cả chuyên khoa" %}</option>
+                                            {% for val, name in departments %}
+                                                <option value="{{ val }}" {% if val == dept_val %}selected{% endif %}>{{ name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                        </div>
+                                        <input type="date" class="form-control" name="date" value="{{ date_val }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <button type="submit" class="btn btn-primary btn-block" style="height: 100%; border-radius: 4px;"><i class="fas fa-filter mr-1"></i> {% trans "Lọc" %}</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
 			</div>
+			
 			<div class="row inner-sec-w3layouts-agileinfo">
+                {% if not doctor %}
+                <div class="col-12 text-center py-5">
+                    <div class="empty-state p-5 bg-light rounded">
+                        <i class="fas fa-user-md fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">{% trans "Không tìm thấy lịch khám nào khớp với bộ lọc của bạn." %}</h4>
+                        <p class="mb-4">{% trans "Vui lòng thử thay đổi chuyên khoa, khoảng thời gian, hoặc kiểm tra lại từ khóa." %}</p>
+                        <a href="{% url 'doctor' %}" class="btn btn-outline-primary"><i class="fas fa-redo mr-1"></i> {% trans "Xem lại tất cả bác sĩ" %}</a>
+                    </div>
+                </div>
+                {% endif %}
+                
                 {% for apt in doctor %}
 				<div class="col-md-4 team-grids text-center mb-5">
                    
@@ -50,43 +101,84 @@
 							<h4><a style="color: inherit; text-decoration: none;" href="{% url 'doctor-profile-detail' apt.user.id %}">{{ apt.full_name }}</a></h4>
 						</div>
 					
-                        <h6 class="text-warning"><i class="fas fa-star"></i> {{ apt.avg_rating }} Đánh giá</h6>
-                        <h6>{{ apt.department }} Expert</h6>
+                        <h6 class="text-warning"><i class="fas fa-star"></i> {{ apt.avg_rating }} {% trans "Đánh giá" %}</h6>
+                        <h6>{{ apt.department }} {% trans "Chuyên ngành" %}</h6>
                         <h6>{{ apt.qualification_name }}, {{ apt.institute_name }}</h6>
-						<h6>Day: {{ apt.date|date:"d/m/Y" }}</h6>
-                        <h6>Available {{ apt.start_time }} to {{ apt.end_time }}
-                            in {{ apt.hospital_name }}</h6>
+						<h6>{% trans "Ngày khám:" %} {{ apt.date|date:"d/m/Y" }}</h6>
+                        <h6>{% trans "Khung giờ" %} {{ apt.start_time }} {% trans "đến" %} {{ apt.end_time }}
+                            {% trans "tại" %} {{ apt.hospital_name }}</h6>
                         <h6>
-                            AT {{ apt.location }} </i>
-                            <a href="{% url 'take-appointment' apt.id %}"> Take
-                                Appointment</a>
+                            {% trans "Địa chỉ:" %} {{ apt.location }} </i>
+                            <a href="{% url 'take-appointment' apt.id %}"> {% trans "Đặt lịch khám" %}</a>
                        </h6>
                        {% elif request.user.is_authenticated and request.user.role == 'doctor'   %}
                        <div class="caption">
                         <h4><a style="color: inherit; text-decoration: none;" href="{% url 'doctor-profile-detail' apt.user.id %}">{{ apt.full_name }}</a></h4>
                     </div>
                 
-                    <h6 class="text-warning"><i class="fas fa-star"></i> {{ apt.avg_rating }} Đánh giá</h6>
-                    <h6>{{ apt.department }} Expert</h6>
+                    <h6 class="text-warning"><i class="fas fa-star"></i> {{ apt.avg_rating }} {% trans "Đánh giá" %}</h6>
+                    <h6>{{ apt.department }} {% trans "Chuyên ngành" %}</h6>
                     <h6>{{ apt.qualification_name }}, {{ apt.institute_name }}</h6>
-                    <h6>Available {{ apt.start_time }} to {{ apt.end_time }}
-                        in {{ apt.hospital_name }}</h6>
+                    <h6>{% trans "Khung giờ" %} {{ apt.start_time }} {% trans "đến" %} {{ apt.end_time }}
+                        {% trans "tại" %} {{ apt.hospital_name }}</h6>
                     <h6>
-                        AT {{ apt.location }}
+                        {% trans "Địa chỉ:" %} {{ apt.location }}
                    </h6>
                    {% else %}
-                   <h6>{{ apt.department }} Expert</h6>
+                   <h6>{{ apt.department }} {% trans "Chuyên ngành" %}</h6>
                    <h6>{{ apt.qualification_name }}, {{ apt.institute_name }}</h6>
-                   <h6>Available {{ apt.start_time }} to {{ apt.end_time }}
-                       in {{ apt.hospital_name }}</h6>
+                   <h6>{% trans "Khung giờ" %} {{ apt.start_time }} {% trans "đến" %} {{ apt.end_time }}
+                       {% trans "tại" %} {{ apt.hospital_name }}</h6>
                    <h6>
-                       AT {{ apt.location }}
+                       {% trans "Địa chỉ:" %} {{ apt.location }}
                   </h6>
                   {% endif %}
 					</div>
 				</div>
 				{% endfor %}
 			</div>
+
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Page navigation" class="mt-5">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{{ filter_qs }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo; {% trans "Trang trước" %}</span>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Previous">
+                            <span aria-hidden="true">&laquo; {% trans "Trang trước" %}</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}{{ filter_qs }}">{{ num }}</a></li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{{ filter_qs }}" aria-label="Next">
+                            <span aria-hidden="true">{% trans "Trang sau" %} &raquo;</span>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Next">
+                            <span aria-hidden="true">{% trans "Trang sau" %} &raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
 		</div>
 	</section>
 	<!-- team -->

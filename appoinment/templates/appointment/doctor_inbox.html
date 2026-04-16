@@ -1,5 +1,5 @@
 {% extends 'app.html' %}
-{% load static %}
+{% load static i18n %}
 
 {% block content %}
 <style>
@@ -165,7 +165,7 @@
         <!-- Sidebar Danh sách -->
         <div class="inbox-list">
             <div class="inbox-header">
-                Hộp thư bệnh nhân
+                {% trans "Hộp thư bệnh nhân" %}
             </div>
             <div class="inbox-items">
                 {% for b in bookings %}
@@ -177,12 +177,12 @@
                     {% endif %}
                     <div class="inbox-item-details">
                         <div class="inbox-item-name">{{ b.full_name }}</div>
-                        <div class="inbox-item-preview">Khám: {{ b.time|time:"H:i" }} {{ b.date|date:"d/m" }}</div>
+                        <div class="inbox-item-preview">{% trans "Khám:" %} {{ b.time|time:"H:i" }} {{ b.date|date:"d/m" }}</div>
                     </div>
                 </a>
                 {% empty %}
                 <div class="p-4 text-center text-muted">
-                    Chưa có bệnh nhân nào.
+                    {% trans "Chưa có bệnh nhân nào." %}
                 </div>
                 {% endfor %}
             </div>
@@ -203,7 +203,7 @@
                 </div>
                 
                 {% if not chat_enabled %}
-                <span class="badge badge-warning ml-auto">Đã khóa chat</span>
+                <span class="badge badge-warning ml-auto">{% trans "Đã khóa chat" %}</span>
                 {% endif %}
             </div>
 
@@ -225,7 +225,7 @@
 
             {% if chat_enabled %}
             <div class="chat-input-area">
-                <input type="text" id="chat-input" placeholder="Nhập tin nhắn..." autocomplete="off">
+                <input type="text" id="chat-input" placeholder="{% trans 'Nhập tin nhắn...' %}" autocomplete="off">
                 <button id="chat-send"><i class="fas fa-paper-plane"></i></button>
             </div>
             {% endif %}
@@ -247,7 +247,8 @@
                 chatSocket.onmessage = function(e) {
                     const data = JSON.parse(e.data);
                     
-                    const isMe = data.sender_id === {{ request.user.id }};
+                    const myUserId = parseInt("{{ request.user.id|default:'0' }}", 10);
+                    const isMe = data.sender_id === myUserId;
                     const msgDiv = document.createElement('div');
                     msgDiv.className = 'message ' + (isMe ? 'message-me' : 'message-other');
                     
@@ -281,7 +282,7 @@
         {% else %}
         <div class="no-chat-selected">
             <i class="far fa-comments"></i>
-            <h5>Chọn một bệnh nhân để bắt đầu trò chuyện</h5>
+            <h5>{% trans "Chọn một bệnh nhân để bắt đầu trò chuyện" %}</h5>
         </div>
         {% endif %}
     </div>

@@ -1,0 +1,429 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Tiếng Việt"
+msgstr "Vietnamese"
+
+msgid "English"
+msgstr "English"
+
+msgid "Bệnh tim mạch"
+msgstr "Heart Disease"
+
+msgid "Bệnh tiểu đường"
+msgstr "Diabetes Disease"
+
+msgid "Ung thư vú"
+msgstr "Breast Cancer"
+
+msgid "Nha khoa"
+msgstr "Dentistry"
+
+msgid "Khoa Nội tim mạch"
+msgstr "Cardiology"
+
+msgid "Tai Mũi Họng"
+msgstr "ENT Specialists"
+
+msgid "Tâm lý / Chiêm tinh học"
+msgstr "Psychology / Astrology"
+
+msgid "Nội thần kinh"
+msgstr "Neurology"
+
+msgid "Xét nghiệm huyết học"
+msgstr "Blood Screening"
+
+msgid "Nhãn khoa / Mắt"
+msgstr "Eye Care"
+
+msgid "Vật lý trị liệu"
+msgstr "Physical Therapy"
+
+msgid "Danh sách Lịch khám"
+msgstr "Appointment List"
+
+msgid "Trang chủ"
+msgstr "Home"
+
+msgid "Đội ngũ Bác sĩ"
+msgstr "Our Doctors"
+
+msgid "Tên Bác sĩ / Cơ sở..."
+msgstr "Doctor / Hospital Name..."
+
+msgid "Tất cả chuyên khoa"
+msgstr "All Departments"
+
+msgid "Lọc"
+msgstr "Filter"
+
+msgid "Không tìm thấy lịch khám nào khớp với bộ lọc của bạn."
+msgstr "No appointments matching your filters were found."
+
+msgid ""
+"Vui lòng thử thay đổi chuyên khoa, khoảng thời gian, hoặc kiểm tra lại từ "
+"khóa."
+msgstr ""
+"Please try changing the department, time interval, or check your keyword "
+"again."
+
+msgid "Xem lại tất cả bác sĩ"
+msgstr "View all doctors"
+
+msgid "Đánh giá"
+msgstr "Rating"
+
+msgid "Chuyên ngành"
+msgstr "Specialist"
+
+msgid "Ngày khám:"
+msgstr "Date:"
+
+msgid "Khung giờ"
+msgstr "Available from"
+
+msgid "đến"
+msgstr "to"
+
+msgid "tại"
+msgstr "at"
+
+msgid "Địa chỉ:"
+msgstr "Location:"
+
+msgid "Đặt lịch khám"
+msgstr "Take Appointment"
+
+msgid "Trang trước"
+msgstr "Previous"
+
+msgid "Trang sau"
+msgstr "Next"
+
+msgid "Trung Tâm Y Tế ĐH Công Nghiệp Hà Nội"
+msgstr "Haui Medical Center"
+
+msgid "Sàng lọc nguy cơ"
+msgstr "Risk Screening"
+
+msgid "Nguy cơ tiểu đường"
+msgstr "Diabetes Risk"
+
+msgid "Nguy cơ ung thư vú"
+msgstr "Breast Cancer Risk"
+
+msgid "Nguy cơ bệnh tim"
+msgstr "Heart Disease Risk"
+
+msgid "Nguy cơ bệnh thận"
+msgstr "Kidney Disease Risk"
+
+msgid "Nguy cơ viêm phổi"
+msgstr "Pneumonia Risk"
+
+msgid "Bác sĩ"
+msgstr "Doctors"
+
+msgid "Cài đặt"
+msgstr "Settings"
+
+msgid "Lịch hẹn"
+msgstr "Appointments"
+
+msgid "Tạo lịch khám"
+msgstr "Create Appointment"
+
+msgid "Đăng xuất"
+msgstr "Logout"
+
+msgid "Lịch sử sức khỏe"
+msgstr "Health History"
+
+msgid "Lịch hẹn của tôi"
+msgstr "My Appointments"
+
+msgid "Hồ sơ bệnh án"
+msgstr "Medical Records"
+
+msgid "Chỉnh sửa hồ sơ"
+msgstr "Edit Profile"
+
+msgid "Đăng ký"
+msgstr "Register"
+
+msgid "Bệnh nhân"
+msgstr "Patient"
+
+msgid "Đăng nhập"
+msgstr "Login"
+
+msgid "Đăng ký Bác sĩ"
+msgstr "Doctor Registration"
+
+msgid "Đăng ký Bệnh nhân"
+msgstr "Patient Registration"
+
+msgid "Giới tính"
+msgstr "Gender"
+
+msgid "Nam"
+msgstr "Male"
+
+msgid "Nữ"
+msgstr "Female"
+
+msgid "Địa chỉ"
+msgstr "Address"
+
+msgid "Liên kết nhanh"
+msgstr "Quick Links"
+
+msgid "Dịch vụ y tế mà bạn"
+msgstr "Medical services that you"
+
+msgid "có thể tin cậy"
+msgstr "can trust"
+
+msgid ""
+"Dự báo chẩn đoán bệnh lý đa khoa bằng các mô hình Học Máy chuẩn xác và bảo "
+"mật. Trợ lý Ảo AI tư vấn cá nhân hóa."
+msgstr ""
+"Predictive diagnosis using accurate ML models. Personalized Virtual AI "
+"assistant."
+
+msgid "Tìm hiểu thêm"
+msgstr "Read More"
+
+msgid "Chất lượng y tế"
+msgstr "Medical excellence"
+
+msgid "mỗi ngày"
+msgstr "every day"
+
+msgid ""
+"Triển khai Machine Learning cho Chẩn đoán Ung Thư Vú, Bệnh Tim, Tiểu Đường "
+"và mô hình Học Sâu (Deep Learning) cho Viêm phổi."
+msgstr ""
+"Deploy ML for Breast Cancer, Heart Disease, Diabetes and Deep Learning for "
+"Pneumonia."
+
+msgid "Bệnh viện của"
+msgstr "The Hospital of the"
+
+msgid "tương lai"
+msgstr "future, today"
+
+msgid ""
+"Xây dựng Bệnh Án Điện Tử EMR và Hệ thống cảnh báo tự động SMS/Email, tối ưu "
+"quy trình làm việc của Bác Sĩ."
+msgstr ""
+"Develop EMR and automatic SMS/Email alerts to optimize doctors' workflows."
+
+msgid "Công nghệ Đột phá"
+msgstr "Breakthrough Technology"
+
+msgid "Bác sĩ và Trợ Lý Ảo"
+msgstr "Doctors and Virtual Assistants"
+
+msgid ""
+"Hệ thống không chỉ có các Y bác sĩ chuyên môn cao mà còn được trợ lực bởi "
+"sức mạnh của Generative AI (LLM)."
+msgstr ""
+"Our system features both top specialists and the power of Generative AI "
+"(LLM)."
+
+msgid "Dịch vụ ưu việt"
+msgstr "Our Best Services"
+
+msgid ""
+"Chúng tôi cung cấp các giải pháp công nghệ hiện đại nhất áp dụng trong chăm "
+"sóc sức khỏe."
+msgstr "We provide the most modern technological solutions in healthcare."
+
+msgid "Chẩn Đoán Đa Khoa"
+msgstr "General Diagnostics"
+
+msgid "Ứng dụng Random Forest & KNN phân lớp rủi ro bệnh lý tức thì."
+msgstr "Apply Random Forest & KNN for instant risk classification."
+
+msgid "Trợ lý Y tế AI"
+msgstr "AI Health Assistant"
+
+msgid "Chatbot thông minh Google Gemini tư vấn 24/7 theo bệnh án."
+msgstr "Smart Gemini Chatbot consults 24/7 alongside medical records."
+
+msgid "Bệnh Án EMR"
+msgstr "EMR Records"
+
+msgid "Quản lý hồ sơ điện tử, đơn thuốc, lịch trình theo dõi an toàn."
+msgstr "Manage e-records, prescriptions, and follow-ups securely."
+
+msgid "Lịch Khám Online"
+msgstr "Online Check-ups"
+
+msgid "Chống trùng lịch, tự động nhắc hẹn bệnh nhân qua Email."
+msgstr "Prevent overlap, auto-remind patients via Email."
+
+msgid "Chẩn đoán Hình Ảnh"
+msgstr "Imaging Diagnosis"
+
+msgid "Phát hiện viêm phổi X-Quang chuẩn xác bằng công nghệ CNN."
+msgstr "Accurate X-Ray pneumonia detection via CNN technology."
+
+msgid "Biểu Đồ Sức Khỏe"
+msgstr "Health Dashboards"
+
+msgid "Theo dõi tiến trình sinh tồn qua Dashboard thời gian thực."
+msgstr "Monitor vitals via real-time dashboards."
+
+msgid "Sàng Lọc Nguy Cơ Tiểu Đường"
+msgstr "Diabetes Risk Screening"
+
+msgid "Sàng lọc nguy cơ tiểu đường"
+msgstr "Diabetes Risk Screening"
+
+msgid "Lưu ý minh bạch:"
+msgstr "Disclaimer:"
+
+msgid ""
+"Mô hình Dữ liệu Khoa học Máy tính (Machine Learning) dựa theo tiêu chuẩn bộ "
+"PIMA Indians Diabetes Database. Kết quả dự đoán chỉ mang tính học thuật và "
+"tham khảo ban đầu, không thay thế cho chẩn đoán y khoa chuyên nghiệp."
+msgstr ""
+"Model based on PIMA Indians dataset. Results are for academic reference and "
+"do not replace professional diagnosis."
+
+msgid "Kết quả sàng lọc"
+msgstr "Screening Results"
+
+msgid "Nguy cơ cao hơn bình thường"
+msgstr "Higher than normal risk"
+
+msgid "Nguy cơ thấp hơn"
+msgstr "Lower risk"
+
+msgid ""
+"Hệ thống phát hiện nguy cơ tiểu đường ở mức cần lưu ý. Bạn nên thực hiện xét"
+" nghiệm và thăm khám sớm để xác nhận."
+msgstr "High risk detected. Get tested and consult a doctor soon."
+
+msgid ""
+"Hệ thống chưa ghi nhận dấu hiệu nguy cơ nổi bật từ các chỉ số đã nhập, nhưng"
+" bạn vẫn nên theo dõi sức khỏe định kỳ."
+msgstr "No prominent risk signs detected. Maintain routine check-ups."
+
+msgid "Thông tin chuyển hóa"
+msgstr "Metabolic Information"
+
+msgid "Số lần mang thai"
+msgstr "Pregnancies"
+
+msgid ""
+"Tại sao cần số này? Tình trạng thai kỳ trước đây có liên quan đến tiểu đường"
+" thai kỳ."
+msgstr "Why? Past pregnancies correlate with gestational diabetes."
+
+msgid "Ví dụ: 2"
+msgstr "e.g., 2"
+
+msgid "Glucose"
+msgstr "Glucose"
+
+msgid ""
+"Nồng độ đường huyết: Đây là yếu tố quan trọng nhất để AI học máy nhận biết "
+"rối loạn chuyển hóa."
+msgstr "Blood sugar level: Central to ML's metabolic detection."
+
+msgid "Ví dụ: 120"
+msgstr "e.g., 120"
+
+msgid "Huyết áp"
+msgstr "Blood Pressure"
+
+msgid ""
+"Huyết áp tâm trương: Cao huyết áp thường đi chung với bệnh tiểu đường type "
+"2."
+msgstr "Diastolic measure: Typically coexists with type 2 diabetes."
+
+msgid "Ví dụ: 80"
+msgstr "e.g., 80"
+
+msgid "Chỉ số bổ sung"
+msgstr "Additional Metrics"
+
+msgid "Độ dày nếp gấp da"
+msgstr "Skin Thickness"
+
+msgid ""
+"Chỉ số này ước tính lượng mỡ cơ thể, yếu tố tác động tới kháng Insulin."
+msgstr "Estimates body fat, impacting insulin resistance."
+
+msgid "Ví dụ: 20"
+msgstr "e.g., 20"
+
+msgid "Insulin"
+msgstr "Insulin"
+
+msgid ""
+"Cấp độ Insulin trong huyết thanh: Giúp máy học tính toán vòng chuyển hóa "
+"đường."
+msgstr "Serum insulin level: Helps ML map sugar metabolism."
+
+msgid "Ví dụ: 85"
+msgstr "e.g., 85"
+
+msgid "BMI"
+msgstr "BMI"
+
+msgid ""
+"Chỉ số khối cơ thể (Cân nặng / Chiều cao^2): Thừa cân đóng vai trò trực tiếp"
+" gây bệnh."
+msgstr "Body Mass Index: Overweight directly affects disease risk."
+
+msgid "Ví dụ: 24.5"
+msgstr "e.g., 24.5"
+
+msgid "Chỉ số tiền sử gia đình"
+msgstr "Diabetes Pedigree"
+
+msgid ""
+"Phả hệ bệnh tiểu đường: Yếu tố di truyền chiếm trọng số rất lớn trong cây "
+"quyết định của AI."
+msgstr "Genetic factor carries heavy weight in AI's logic tree."
+
+msgid "Ví dụ: 0.5"
+msgstr "e.g., 0.5"
+
+msgid "Tuổi"
+msgstr "Age"
+
+msgid "Ví dụ: 35"
+msgstr "e.g., 35"
+
+msgid "Thực hiện sàng lọc"
+msgstr "Run Screening"
+
+msgid "Hộp thư bệnh nhân"
+msgstr "Patient Inbox"
+
+msgid "Khám:"
+msgstr "Appt:"
+
+msgid "Chưa có bệnh nhân nào."
+msgstr "No patients yet."
+
+msgid "Đã khóa chat"
+msgstr "Chat locked"
+
+msgid "Nhập tin nhắn..."
+msgstr "Type a message..."
+
+msgid "Chọn một bệnh nhân để bắt đầu trò chuyện"
+msgstr "Select a patient to start chatting"

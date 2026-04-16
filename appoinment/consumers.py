@@ -14,18 +14,10 @@ class DirectChatConsumer(AsyncJsonWebsocketConsumer):
         self.booking_id = self.scope['url_route']['kwargs']['booking_id']
         
         # Verify access
-        self.booking = await self._get_booking()
+        self.booking, doctor_id, patient_id = await self._get_booking_details()
         if not self.booking:
             await self.close()
             return
-            
-        # Group name specific to this doctor-patient pair
-        if self.user.role == 'doctor':
-            doctor_id = self.user.id
-            patient_id = self.booking.user.id
-        else:
-            doctor_id = self.booking.appointment.user.id
-            patient_id = self.user.id
             
         self.room_group_name = f'chat_doc{doctor_id}_pat{patient_id}'
 
@@ -81,36 +73,37 @@ class DirectChatConsumer(AsyncJsonWebsocketConsumer):
         })
 
     @database_sync_to_async
-    def _get_booking(self):
+    def _get_booking_details(self):
         try:
-            booking = TakeAppointment.objects.get(id=self.booking_id)
+            booking = TakeAppointment.objects.select_related('appointment', 'appointment__user').get(id=self.booking_id)
             # Ensure user is either patient or doctor for this booking
-            if self.user.role == 'patient' and booking.user == self.user:
-                return booking
-            if self.user.role == 'doctor' and booking.appointment.user == self.user:
-                return booking
-            return None
+            if self.user.role == 'patient' and booking.user_id == self.user.id:
+                return booking, booking.appointment.user_id, booking.user_id
+            if self.user.role == 'doctor' and booking.appointment.user_id == self.user.id:
+                return booking, booking.appointment.user_id, booking.user_id
+            return None, None, None
         except TakeAppointment.DoesNotExist:
-            return None
+            return None, None, None
 
     @database_sync_to_async
     def _save_message(self, content):
         return DirectMessage.objects.create(
-            booking=self.booking,
-            sender=self.user,
+            booking_id=self.booking_id,
+            sender_id=self.user.id,
             content=content
         )
 
     @database_sync_to_async
     def _push_chat_notification(self, msg_content):
         from notifications.realtime import push_realtime_notification
-        other_user = self.booking.user if self.user.role == 'doctor' else self.booking.appointment.user
-        sender_name = ("BS. " + self.user.last_name) if self.user.role == 'doctor' else self.booking.full_name
+        booking = TakeAppointment.objects.select_related('user', 'appointment__user').get(id=self.booking_id)
+        other_user = booking.user if self.user.role == 'doctor' else booking.appointment.user
+        sender_name = ("BS. " + self.user.last_name) if self.user.role == 'doctor' else booking.full_name
         
         if other_user.role == 'doctor':
-             link = f"/doctor/inbox/{self.booking.id}/"
+             link = f"/doctor/inbox/{booking.id}/"
         else:
-             link = f"/appointment/{self.booking.id}/chat/"
+             link = f"/appointment/{booking.id}/chat/"
              
         push_realtime_notification(
             user=other_user,
