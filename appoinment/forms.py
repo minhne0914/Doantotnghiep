@@ -7,33 +7,19 @@ from .models import Appointment, TakeAppointment
 class CreateAppointmentForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['full_name'].label = "Họ và tên bác sĩ"
-        self.fields['image'].label = "Ảnh đại diện"
-        self.fields['department'].label = "Chuyên khoa"
         self.fields['date'].label = "Ngày khám"
         self.fields['start_time'].label = "Giờ bắt đầu"
         self.fields['end_time'].label = "Giờ kết thúc"
-        self.fields['location'].label = "Địa chỉ"
-        self.fields['hospital_name'].label = "Bệnh viện / phòng khám"
-        self.fields['qualification_name'].label = "Bằng cấp"
-        self.fields['institute_name'].label = "Nơi đào tạo"
 
-        self.fields['full_name'].widget.attrs.update({'placeholder': 'Ví dụ: Nguyễn Văn A'})
-        self.fields['department'].widget.attrs.update({'placeholder': 'Chọn chuyên khoa'})
         self.fields['date'].widget = forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
         self.fields['start_time'].widget = forms.TimeInput(format='%H:%M', attrs={'type': 'time', 'class': 'form-control'})
         self.fields['end_time'].widget = forms.TimeInput(format='%H:%M', attrs={'type': 'time', 'class': 'form-control'})
         self.fields['start_time'].widget.attrs.update({'placeholder': 'Ví dụ: 09:00'})
         self.fields['end_time'].widget.attrs.update({'placeholder': 'Ví dụ: 17:00'})
-        self.fields['location'].widget.attrs.update({'placeholder': 'Ví dụ: Quận 1, TP.HCM'})
-        self.fields['hospital_name'].widget.attrs.update({'placeholder': 'Nhập tên bệnh viện hoặc phòng khám'})
-        self.fields['qualification_name'].widget.attrs.update({'placeholder': 'Ví dụ: BSCKI, ThS, MBBS'})
-        self.fields['institute_name'].widget.attrs.update({'placeholder': 'Ví dụ: Đại học Y Dược'})
 
     class Meta:
         model = Appointment
-        fields = ['full_name', 'image', 'department', 'date', 'start_time', 'end_time', 'location',
-                  'hospital_name', 'qualification_name', 'institute_name']
+        fields = ['date', 'start_time', 'end_time']
 
     def clean_date(self):
         appointment_date = self.cleaned_data['date']
@@ -43,11 +29,20 @@ class CreateAppointmentForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        date = cleaned_data.get('date')
         start_time = cleaned_data.get('start_time')
         end_time = cleaned_data.get('end_time')
 
         if start_time and end_time and end_time <= start_time:
             self.add_error('end_time', "Giờ kết thúc phải sau giờ bắt đầu.")
+            
+        if date and start_time:
+            import datetime
+            dt = datetime.datetime.combine(date, start_time)
+            now = timezone.localtime()
+            if dt < now + datetime.timedelta(hours=1):
+                self.add_error('start_time', "Giờ bắt đầu quá gần. Phải tạo ca khám cho tương lai cách hiện tại ít nhất 1 tiếng đồng hồ.")
+
         return cleaned_data
 
 

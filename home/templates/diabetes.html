@@ -91,28 +91,28 @@
           </div>
         </div>
         <div class="advice-card mt-3">
-          <h5 class="text-info"><i class="fas fa-heartbeat"></i> Gợi ý sức khỏe dành riêng cho bạn</h5>
+          <h5 class="text-info"><i class="fas fa-heartbeat"></i> {% trans "Gợi ý sức khỏe dành riêng cho bạn" %}</h5>
           {% if advices %}
           <ul class="mb-0">
             {% for advice in advices %}
-              <li style="margin-bottom: 8px;"><b>{{ advice }}</b></li>
+              <li style="margin-bottom: 8px;"><b>{% trans advice %}</b></li>
             {% endfor %}
           </ul>
           {% endif %}
           
-          <h5 class="mt-4">Khuyến cáo chung nên làm gì tiếp theo?</h5>
+          <h5 class="mt-4">{% trans "Khuyến cáo chung nên làm gì tiếp theo?" %}</h5>
           {% if context == 'Positive' %}
           <ul class="mb-0 text-muted">
-            <li>Đặt lịch khám sớm để làm xét nghiệm đường huyết và được bác sĩ đánh giá chính xác.</li>
-            <li>Theo dõi các dấu hiệu như khát nhiều, tiểu nhiều, mệt mỏi, sụt cân hoặc nhìn mờ.</li>
-            <li>Giảm đồ uống có đường, kiểm soát khẩu phần ăn và duy trì vận động phù hợp.</li>
-            <li>Đi cấp cứu nếu có dấu hiệu kiệt sức, lú lẫn, khó thở hoặc mất nước nặng.</li>
+            <li>{% trans "Đặt lịch khám sớm để làm xét nghiệm đường huyết và được bác sĩ đánh giá chính xác." %}</li>
+            <li>{% trans "Theo dõi các dấu hiệu như khát nhiều, tiểu nhiều, mệt mỏi, sụt cân hoặc nhìn mờ." %}</li>
+            <li>{% trans "Giảm đồ uống có đường, kiểm soát khẩu phần ăn và duy trì vận động phù hợp." %}</li>
+            <li>{% trans "Đi cấp cứu nếu có dấu hiệu kiệt sức, lú lẫn, khó thở hoặc mất nước nặng." %}</li>
           </ul>
           {% else %}
           <ul class="mb-0 text-muted">
-            <li>Duy trì chế độ ăn lành mạnh, ngủ đủ và tập luyện đều để giảm nguy cơ sau này.</li>
-            <li>Nên sàng lọc lại nếu có tiền sử gia đình, tăng cân nhanh hoặc xuất hiện triệu chứng mới.</li>
-            <li>Không nên dùng kết quả này như kết luận cuối cùng về tình trạng bệnh.</li>
+            <li>{% trans "Duy trì chế độ ăn lành mạnh, ngủ đủ và tập luyện đều để giảm nguy cơ sau này." %}</li>
+            <li>{% trans "Nên sàng lọc lại nếu có tiền sử gia đình, tăng cân nhanh hoặc xuất hiện triệu chứng mới." %}</li>
+            <li>{% trans "Không nên dùng kết quả này như kết luận cuối cùng về tình trạng bệnh." %}</li>
           </ul>
           {% endif %}
         </div>

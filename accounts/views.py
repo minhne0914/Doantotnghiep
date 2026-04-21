@@ -178,8 +178,25 @@ class EditDoctorProfileView(UpdateView):
                 image = request.FILES['image']
                 image.name = generate_unique_image_name(image.name)
                 form.instance.image = SimpleUploadedFile(image.name, image.read())
-            form.save()
-            extended_form.save()
+            user_obj = form.save()
+            profile_obj = extended_form.save()
+            
+            # Auto-snapshot updating all future & pending Appointment slots to match the new profile sync.
+            from appoinment.models import Appointment
+            from django.utils import timezone
+            
+            future_apps = Appointment.objects.filter(user=request.user, date__gte=timezone.localdate())
+            future_apps.update(
+                full_name=f"{user_obj.first_name} {user_obj.last_name}",
+                department=profile_obj.specialization or "Chưa cập nhật",
+                qualification_name=profile_obj.qualifications or "Chưa cập nhật",
+            )
+            # Update image for future appointments
+            if 'image' in request.FILES:
+                for app in future_apps:
+                    app.image = user_obj.image
+                    app.save(update_fields=['image'])
+                    
             messages.success(request, 'Hồ sơ đã được cập nhật thành công.')
             return redirect(self.success_url)
             

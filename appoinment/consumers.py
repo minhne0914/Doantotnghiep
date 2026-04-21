@@ -38,15 +38,21 @@ class DirectChatConsumer(AsyncJsonWebsocketConsumer):
 
     # Receive message from WebSocket
     async def receive_json(self, content, **kwargs):
-        message = content.get('message')
-        if not message:
+        message = content.get('message', '')
+        attachment_data = content.get('attachment_data')
+        attachment_name = content.get('attachment_name')
+        
+        if not message and not attachment_data:
             return
 
         # Save to DB
-        new_msg = await self._save_message(message)
+        new_msg = await self._save_message(message, attachment_data, attachment_name)
         
+        # Build attachment URL if any
+        attachment_url = await self._get_attachment_url(new_msg.id)
+
         # Push realtime notification to the other user
-        await self._push_chat_notification(message)
+        await self._push_chat_notification(message if message else '🖼️ [Hình ảnh/File đính kèm]')
 
         # Send message to room group
         await self.channel_layer.group_send(
@@ -55,6 +61,7 @@ class DirectChatConsumer(AsyncJsonWebsocketConsumer):
                 'type': 'chat_message',
                 'id': new_msg.id,
                 'message': new_msg.content,
+                'attachment_url': attachment_url,
                 'sender_id': self.user.id,
                 'sender_name': self.user.first_name + " " + self.user.last_name,
                 'timestamp': new_msg.created_at.strftime("%H:%M %d/%m/%Y")
@@ -67,10 +74,18 @@ class DirectChatConsumer(AsyncJsonWebsocketConsumer):
         await self.send_json({
             'id': event['id'],
             'message': event['message'],
+            'attachment_url': event.get('attachment_url'),
             'sender_id': event['sender_id'],
             'sender_name': event['sender_name'],
             'timestamp': event['timestamp']
         })
+
+    @database_sync_to_async
+    def _get_attachment_url(self, msg_id):
+        msg = DirectMessage.objects.get(id=msg_id)
+        if msg.attachments:
+            return msg.attachments.url
+        return None
 
     @database_sync_to_async
     def _get_booking_details(self):
@@ -86,12 +101,22 @@ class DirectChatConsumer(AsyncJsonWebsocketConsumer):
             return None, None, None
 
     @database_sync_to_async
-    def _save_message(self, content):
-        return DirectMessage.objects.create(
+    def _save_message(self, content, attachment_data=None, attachment_name=None):
+        msg = DirectMessage.objects.create(
             booking_id=self.booking_id,
             sender_id=self.user.id,
-            content=content
+            content=content,
+            is_read=False
         )
+        if attachment_data and attachment_name:
+            import base64
+            from django.core.files.base import ContentFile
+            if ';base64,' in attachment_data:
+                format, b64_str = attachment_data.split(';base64,') 
+                data = ContentFile(base64.b64decode(b64_str), name=attachment_name)
+                msg.attachments = data
+                msg.save()
+        return msg
 
     @database_sync_to_async
     def _push_chat_notification(self, msg_content):

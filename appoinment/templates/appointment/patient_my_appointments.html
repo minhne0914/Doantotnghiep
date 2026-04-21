@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
-
-{% block title %}Lịch hẹn của tôi{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Lịch hẹn của tôi" %}{% endblock %}
 
 {% block content %}
 <div class="inner-banner-w3ls"><div class="container"></div></div>
 <div class="breadcrumb-agile">
     <div aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Lịch hẹn của tôi</li>
+            <li class="breadcrumb-item"><a href="/">{% trans "Trang chủ" %}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{% trans "Lịch hẹn của tôi" %}</li>
         </ol>
     </div>
 </div>
@@ -185,14 +185,14 @@
     <div class="appointments-hero">
         <div class="row align-items-center">
             <div class="col-lg-8">
-                <h2 class="appointments-title">Quản lý lịch khám của bạn dễ dàng hơn</h2>
+                <h2 class="appointments-title">{% trans "Quản lý lịch khám của bạn dễ dàng hơn" %}</h2>
                 <p class="appointments-subtitle">
-                    Theo dõi lịch hẹn sắp tới, đổi hoặc hủy lịch trước tối thiểu {{ change_deadline_hours }} giờ và xem lại toàn bộ thay đổi theo thời gian.
+                    {% blocktrans %}Theo dõi lịch hẹn sắp tới, đổi hoặc hủy lịch trước tối thiểu {{ change_deadline_hours }} giờ và xem lại toàn bộ thay đổi theo thời gian.{% endblocktrans %}
                 </p>
             </div>
             <div class="col-lg-4 mt-4 mt-lg-0 text-lg-right hero-actions">
                 <a href="{% url 'patient-emr-timeline' %}" class="btn btn-outline-primary">
-                    <i class="fas fa-notes-medical mr-2"></i>Lịch sử bệnh án
+                    <i class="fas fa-notes-medical mr-2"></i>{% trans "Lịch sử bệnh án" %}
                 </a>
             </div>
         </div>
@@ -204,24 +204,24 @@
         <div class="appointment-card-ui">
             <div class="appointment-topbar">
                 <div>
-                    <div class="doctor-name-ui">{{ booking.appointment.full_name }}</div>
-                    <div class="doctor-meta-ui">{{ booking.appointment.department }} • {{ booking.appointment.hospital_name }}</div>
+                    <div class="doctor-name-ui">BS. {{ booking.appointment.user.first_name }} {{ booking.appointment.user.last_name }}</div>
+                    <div class="doctor-meta-ui">{{ booking.appointment.user.doctor_profile.specialization|default:booking.appointment.department }} • {{ booking.appointment.hospital_name }}</div>
                 </div>
                 <span class="status-pill-ui status-{{ booking.badge_class }}-ui">{{ booking.badge_label }}</span>
             </div>
 
             <div class="appointment-grid-ui">
                 <div class="appointment-metric-ui">
-                    <span>Ngày khám</span>
+                    <span>{% trans "Ngày khám" %}</span>
                     <strong>{{ booking.date|date:"d/m/Y" }}</strong>
                 </div>
                 <div class="appointment-metric-ui">
-                    <span>Giờ khám</span>
+                    <span>{% trans "Giờ khám" %}</span>
                     <strong>{{ booking.time|time:"H:i" }}</strong>
                 </div>
                 <div class="appointment-metric-ui">
-                    <span>Ghi chú</span>
-                    <strong>{{ booking.message|default:"Chưa có ghi chú" }}</strong>
+                    <span>{% trans "Ghi chú" %}</span>
+                    <strong>{{ booking.message|default:_("Chưa có ghi chú") }}</strong>
                 </div>
             </div>
 
@@ -234,45 +234,45 @@
             <div class="appointment-actions-ui">
                 {% if booking.can_modify %}
                 <a href="{% url 'patient-reschedule-appointment' booking.id %}" class="btn btn-info">
-                    <i class="fas fa-calendar-alt mr-2"></i>Đổi lịch
+                    <i class="fas fa-calendar-alt mr-2"></i>{% trans "Đổi lịch" %}
                 </a>
                 <a href="{% url 'patient-cancel-appointment' booking.id %}" class="btn btn-danger">
-                    <i class="fas fa-times-circle mr-2"></i>Hủy lịch
+                    <i class="fas fa-times-circle mr-2"></i>{% trans "Hủy lịch" %}
                 </a>
                 <a href="{% url 'chat-room' booking.id %}" class="btn btn-warning">
-                    <i class="fas fa-comment-dots mr-2"></i>Nhắn tin
+                    <i class="fas fa-comment-dots mr-2"></i>{% trans "Nhắn tin" %}
                 </a>
                 {% elif booking.status == 'completed' %}
                 <a href="{% url 'patient-emr-timeline' %}" class="btn btn-primary">
-                    <i class="fas fa-file-medical-alt mr-2"></i>Xem bệnh án
+                    <i class="fas fa-file-medical-alt mr-2"></i>{% trans "Xem bệnh án" %}
                 </a>
                 {% if not booking.has_review %}
                 <a href="{% url 'submit-doctor-review' booking.id %}" class="btn btn-success">
-                    <i class="fas fa-star mr-2"></i>Đánh giá Bác sĩ
+                    <i class="fas fa-star mr-2"></i>{% trans "Đánh giá Bác sĩ" %}
                 </a>
                 {% endif %}
                 {% else %}
-                <span class="text-muted align-self-center">Lịch này hiện không còn thao tác khả dụng.</span>
+                <span class="text-muted align-self-center">{% trans "Lịch này hiện không còn thao tác khả dụng." %}</span>
                 {% endif %}
             </div>
 
             {% if booking.change_history %}
             <details>
                 <summary class="history-toggle-ui">
-                    <i class="fas fa-history"></i>Xem lịch sử thay đổi
+                    <i class="fas fa-history"></i>{% trans "Xem lịch sử thay đổi" %}
                 </summary>
                 <div class="history-list-ui">
                     {% for item in booking.change_history %}
                     <div class="history-item-ui">
-                        <div><strong>{{ item.get_action_display }}</strong> lúc {{ item.created_at|date:"d/m/Y H:i" }}</div>
+                        <div><strong>{% trans item.get_action_display %}</strong> {% trans "lúc" %} {{ item.created_at|date:"d/m/Y H:i" }}</div>
                         {% if item.old_date or item.old_time %}
-                        <div class="text-muted mt-1">Từ: {{ item.old_date|date:"d/m/Y" }} {{ item.old_time|time:"H:i" }}</div>
+                        <div class="text-muted mt-1">{% trans "Từ:" %} {{ item.old_date|date:"d/m/Y" }} {{ item.old_time|time:"H:i" }}</div>
                         {% endif %}
                         {% if item.new_date or item.new_time %}
-                        <div class="text-muted">Đến: {{ item.new_date|date:"d/m/Y" }} {{ item.new_time|time:"H:i" }}</div>
+                        <div class="text-muted">{% trans "Đến:" %} {{ item.new_date|date:"d/m/Y" }} {{ item.new_time|time:"H:i" }}</div>
                         {% endif %}
                         {% if item.reason %}
-                        <div class="mt-1">Lý do: {{ item.reason }}</div>
+                        <div class="mt-1">{% trans "Lý do:" %} {{ item.reason }}</div>
                         {% endif %}
                     </div>
                     {% endfor %}
@@ -284,8 +284,8 @@
     </div>
     {% else %}
     <div class="empty-card-ui">
-        <h4 class="mb-3">Bạn chưa có lịch hẹn nào</h4>
-        <p class="mb-0">Khi đặt lịch thành công, các lịch khám sắp tới sẽ xuất hiện ở đây để bạn theo dõi và điều chỉnh.</p>
+        <h4 class="mb-3">{% trans "Bạn chưa có lịch hẹn nào" %}</h4>
+        <p class="mb-0">{% trans "Khi đặt lịch thành công, các lịch khám sắp tới sẽ xuất hiện ở đây để bạn theo dõi và điều chỉnh." %}</p>
     </div>
     {% endif %}
 </div>

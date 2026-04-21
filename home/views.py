@@ -15,6 +15,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
+from django.utils.translation import gettext_lazy as _
 from PIL import Image, UnidentifiedImageError
 
 from notifications.realtime import push_realtime_notification
@@ -95,21 +96,21 @@ def get_pneumonia_model():
 
 def run_prediction(model, user_data, prediction_name):
     if model is None:
-        return None, 'Mo hinh du doan hien khong kha dung. Vui long thu lai sau.'
+        return None, _('Mo hinh du doan hien khong kha dung. Vui long thu lai sau.')
 
     try:
         return model.predict(user_data)[0], ''
-    except Exception:
-        logger.exception('Prediction failed for %s', prediction_name)
-        return None, 'He thong du doan tam thoi gap su co. Vui long thu lai sau.'
+    except Exception as e:
+        logger.error('Error running model %s: %s', prediction_name, e, exc_info=True)
+        return None, _("He thong du doan tam thoi gap su co. Vui long thu lai sau.")
 
 
 def validate_uploaded_xray(uploaded_file):
     if uploaded_file is None:
-        return 'Vui long chon anh X-quang truoc khi sang loc.'
+        return _('Vui long chon anh X-quang truoc khi sang loc.')
 
     if uploaded_file.size > getattr(settings, 'MAX_XRAY_UPLOAD_BYTES', 5 * 1024 * 1024):
-        return 'Anh tai len vuot qua gioi han dung luong cho phep.'
+        return _('Anh tai len vuot qua gioi han dung luong cho phep.')
 
     content_type = (getattr(uploaded_file, 'content_type', '') or '').lower()
     if content_type and content_type not in getattr(
@@ -117,11 +118,11 @@ def validate_uploaded_xray(uploaded_file):
         'ALLOWED_XRAY_CONTENT_TYPES',
         ('image/jpeg', 'image/png', 'image/webp'),
     ):
-        return 'Dinh dang anh khong hop le. Chi chap nhan JPG, PNG hoac WEBP.'
+        return _('Dinh dang anh khong hop le. Chi chap nhan JPG, PNG hoac WEBP.')
 
     suffix = Path(uploaded_file.name or '').suffix.lower()
     if suffix and suffix not in ALLOWED_XRAY_EXTENSIONS:
-        return 'Ten file anh khong hop le. Chi chap nhan JPG, PNG hoac WEBP.'
+        return _('Ten file anh khong hop le. Chi chap nhan JPG, PNG hoac WEBP.')
 
     try:
         uploaded_file.seek(0)
@@ -130,7 +131,7 @@ def validate_uploaded_xray(uploaded_file):
         uploaded_file.seek(0)
     except (UnidentifiedImageError, OSError):
         logger.warning('Invalid xray upload received: %s', getattr(uploaded_file, 'name', '<unknown>'))
-        return 'File tai len khong phai la anh hop le.'
+        return _('File tai len khong phai la anh hop le.')
 
     return ''
 
@@ -155,7 +156,8 @@ def render_prediction_page(request, template_name, form, user_data, disease_type
                 advices = advice_builder(form.cleaned_data)
         else:
             errors = [f"{field}: {', '.join(e)}" for field, e in form.errors.items()]
-            error = f"Loi nhap lieu: {' | '.join(errors)}" if errors else 'Du lieu khong hop le.'
+            from django.utils.translation import gettext as _
+            error = str(_("Loi nhap lieu: ")) + ' | '.join(errors) if errors else str(_('Du lieu khong hop le.'))
 
     return render(request, template_name, {'context': value, 'error': error, 'advices': advices})
 
@@ -183,13 +185,13 @@ def diabetes(request):
     def advices(data):
         items = []
         if data['glucose'] >= 140:
-            items.append('Duong huyet cua ban kha cao. Hay han che do ngot va tinh bot hap thu nhanh.')
+            items.append(_('Duong huyet cua ban kha cao. Hay han che do ngot va tinh bot hap thu nhanh.'))
         if data['bmi'] >= 25:
-            items.append('BMI cho thay ban dang thua can. Nen duy tri van dong deu dan khoang 30 phut moi ngay.')
+            items.append(_('BMI cho thay ban dang thua can. Nen duy tri van dong deu dan khoang 30 phut moi ngay.'))
         if data['bloodpressure'] >= 130:
-            items.append('Huyet ap dang o muc can luu y. Hay giam an man va theo doi huyet ap thuong xuyen.')
+            items.append(_('Huyet ap dang o muc can luu y. Hay giam an man va theo doi huyet ap thuong xuyen.'))
         if not items:
-            items.append('Tiep tuc duy tri loi song lanh manh va kham suc khoe dinh ky.')
+            items.append(_('Tiep tuc duy tri loi song lanh manh va kham suc khoe dinh ky.'))
         return items
 
     return render_prediction_page(request, 'diabetes.html', form, payload, 'Diabetes', 'Positive', 'Negative', advices, 'diabetes')
@@ -243,15 +245,15 @@ def heart(request):
     def advices(data):
         items = []
         if data['trestbps'] >= 130:
-            items.append('Huyet ap nghi dang o muc cao. Ban nen giam an man va theo doi huyet ap tai nha.')
+            items.append(_('Huyet ap nghi dang o muc cao. Ban nen giam an man va theo doi huyet ap tai nha.'))
         if data['chol'] >= 240:
-            items.append('Cholesterol dang cao. Hay han che thuc an nhieu mo va noi tang dong vat.')
+            items.append(_('Cholesterol dang cao. Hay han che thuc an nhieu mo va noi tang dong vat.'))
         if data['fbs'] == 1:
-            items.append('Duong huyet luc doi dang canh bao nguy co tim mach cao hon binh thuong.')
+            items.append(_('Duong huyet luc doi dang canh bao nguy co tim mach cao hon binh thuong.'))
         if data['exang'] == 1 or data['cp'] > 0:
-            items.append('Neu co dau nguc hoac kho tho khi gang suc, ban nen di kham tim mach som.')
+            items.append(_('Neu co dau nguc hoac kho tho khi gang suc, ban nen di kham tim mach som.'))
         if not items:
-            items.append('Tiep tuc duy tri che do an lanh manh va tap luyen nhe nhang deu dan.')
+            items.append(_('Tiep tuc duy tri che do an lanh manh va tap luyen nhe nhang deu dan.'))
         return items
 
     return render_prediction_page(request, 'heart.html', form, payload, 'Heart Disease', 'have', "don't have", advices, 'heart')
@@ -290,15 +292,15 @@ def kidney(request):
             save_medical_history(request, 'Kidney Disease', value, form.cleaned_data)
 
             if serum_creatinine > 1.2 or blood_urea > 40:
-                advices.append('Ure hoac creatinine dang vuot nguong tham khao. Ban nen kiem tra chuc nang than som.')
+                advices.append(_('Ure hoac creatinine dang vuot nguong tham khao. Ban nen kiem tra chuc nang than som.'))
             if hypertension == 1:
-                advices.append('Tang huyet ap la yeu to nguy co lon voi than. Hay theo doi huyet ap deu dan.')
+                advices.append(_('Tang huyet ap la yeu to nguy co lon voi than. Hay theo doi huyet ap deu dan.'))
             if albumin > 0:
-                advices.append('Co dau hieu ro ri protein qua nuoc tieu, nen tham khao bac si de duoc danh gia them.')
+                advices.append(_('Co dau hieu ro ri protein qua nuoc tieu, nen tham khao bac si de duoc danh gia them.'))
             if hemoglobin < 12:
-                advices.append('Hemoglobin thap co the lien quan den thieu mau. Ban nen kiem tra them khi di kham.')
+                advices.append(_('Hemoglobin thap co the lien quan den thieu mau. Ban nen kiem tra them khi di kham.'))
             if not advices:
-                advices.append('Duy tri uong du nuoc va tranh lam dung thuoc giam dau hoac thuoc khong ro nguon goc.')
+                advices.append(_('Duy tri uong du nuoc va tranh lam dung thuoc giam dau hoac thuoc khong ro nguon goc.'))
         else:
             errors = [f"{field}: {', '.join(e)}" for field, e in form.errors.items()]
             error = f"Loi nhap lieu: {' | '.join(errors)}" if errors else 'Du lieu khong hop le.'

@@ -262,3 +262,7 @@ TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER', '')
 
 # Appointment policy
 APPOINTMENT_CHANGE_DEADLINE_HOURS = int(os.getenv('APPOINTMENT_CHANGE_DEADLINE_HOURS', 4))
+
+# Prevent Celery Eager mode from crashing views on SMTP errors
+CELERY_TASK_EAGER_PROPAGATES = False
+CELERY_EAGER_PROPAGATES_EXCEPTIONS = False

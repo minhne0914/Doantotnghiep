@@ -176,8 +176,25 @@
                         <img src="{% static 'images/default-avatar.png' %}" alt="Avatar">
                     {% endif %}
                     <div class="inbox-item-details">
-                        <div class="inbox-item-name">{{ b.full_name }}</div>
-                        <div class="inbox-item-preview">{% trans "Khám:" %} {{ b.time|time:"H:i" }} {{ b.date|date:"d/m" }}</div>
+                        <div class="inbox-item-name">
+                            {{ b.full_name }}
+                            {% if b.has_unread %}
+                                <span class="badge badge-danger float-right ml-1" style="font-size:0.6rem; margin-top:2px;">Mới</span>
+                            {% endif %}
+                        </div>
+                        <div class="inbox-item-preview" style="{% if b.has_unread %}font-weight: 700; color: #000;{% endif %}">
+                            {% if b.latest_msg %}
+                                 {% if b.latest_msg.sender.id == request.user.id %}
+                                     Bạn: 
+                                 {% endif %}
+                                 {{ b.latest_msg.content|truncatechars:30 }}
+                                 {% if b.latest_msg.attachments %}
+                                     <i class="fas fa-file-image ml-1"></i>
+                                 {% endif %}
+                            {% else %}
+                                <i>{% trans "Bắt đầu cuộc trò chuyện" %}</i>
+                            {% endif %}
+                        </div>
                     </div>
                 </a>
                 {% empty %}
@@ -211,11 +228,17 @@
                 {% for msg in chat_messages %}
                     {% if msg.sender.id == request.user.id %}
                     <div class="message message-me">
+                        {% if msg.attachments %}
+                            <div class="mb-2"><img src="{{ msg.attachments.url }}" alt="Attachment" style="max-width:200px; border-radius:10px;"></div>
+                        {% endif %}
                         <div>{{ msg.content }}</div>
                         <div class="message-timestamp">{{ msg.created_at|date:"H:i d/m/Y" }}</div>
                     </div>
                     {% else %}
                     <div class="message message-other">
+                        {% if msg.attachments %}
+                            <div class="mb-2"><img src="{{ msg.attachments.url }}" alt="Attachment" style="max-width:200px; border-radius:10px;"></div>
+                        {% endif %}
                         <div>{{ msg.content }}</div>
                         <div class="message-timestamp">{{ msg.created_at|date:"H:i d/m/Y" }}</div>
                     </div>
@@ -225,6 +248,9 @@
 
             {% if chat_enabled %}
             <div class="chat-input-area">
+                <input type="file" id="chat-attachment" accept="image/*" style="display:none;">
+                <button type="button" id="btn-attach" style="background:#f8f9fa; color:#6c757d; border:1px solid #ced4da;" onclick="document.getElementById('chat-attachment').click();"><i class="fas fa-paperclip"></i></button>
+                <div id="attachment-preview" style="display:none; position:absolute; bottom:70px; left:20px; background:#fff; padding:10px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.1);"><img id="img-preview" src="" style="height:60px;"><button id="rm-attach" style="position:absolute; top:-10px; right:-10px; background:red; width:25px; height:25px; font-size:12px;">x</button></div>
                 <input type="text" id="chat-input" placeholder="{% trans 'Nhập tin nhắn...' %}" autocomplete="off">
                 <button id="chat-send"><i class="fas fa-paper-plane"></i></button>
             </div>
@@ -253,6 +279,7 @@
                     msgDiv.className = 'message ' + (isMe ? 'message-me' : 'message-other');
                     
                     msgDiv.innerHTML = `
+                        ${data.attachment_url ? `<div class="mb-2"><img src="${data.attachment_url}" style="max-width:200px; border-radius:10px;"></div>` : ''}
                         <div>${data.message}</div>
                         <div class="message-timestamp">${data.timestamp}</div>
                     `;
@@ -261,13 +288,43 @@
                     chatBox.scrollTop = chatBox.scrollHeight;
                 };
 
+                let currentAttachmentData = null;
+                let currentAttachmentName = null;
+
+                const attachInput = document.getElementById('chat-attachment');
+                const attachPreview = document.getElementById('attachment-preview');
+                const imgPreview = document.getElementById('img-preview');
+                document.getElementById('rm-attach').onclick = function() {
+                    attachInput.value = '';
+                    currentAttachmentData = null;
+                    currentAttachmentName = null;
+                    attachPreview.style.display = 'none';
+                };
+
+                attachInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if(file) {
+                        const reader = new FileReader();
+                        reader.onload = function(evt) {
+                            currentAttachmentData = evt.target.result;
+                            currentAttachmentName = file.name;
+                            imgPreview.src = evt.target.result;
+                            attachPreview.style.display = 'block';
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+
                 function sendMessage() {
                     const message = chatInput.value.trim();
-                    if (message) {
+                    if (message || currentAttachmentData) {
                         chatSocket.send(JSON.stringify({
-                            'message': message
+                            'message': message,
+                            'attachment_data': currentAttachmentData,
+                            'attachment_name': currentAttachmentName
                         }));
                         chatInput.value = '';
+                        document.getElementById('rm-attach').click();
                     }
                 }
 

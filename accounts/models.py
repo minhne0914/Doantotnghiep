@@ -30,6 +30,14 @@ class User(AbstractUser):
 
     objects = UserManager()
 
+    def save(self, *args, **kwargs):
+        if self.pk is not None and not getattr(self, '_bypass_role_check', False):
+            # Prevent role hijacking: if user exists, lock the role unless explicitly bypassed
+            orig = User.objects.get(pk=self.pk)
+            if orig.role != self.role:
+                self.role = orig.role
+        super().save(*args, **kwargs)
+
 
 class DoctorProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='doctor_profile')

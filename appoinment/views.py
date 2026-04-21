@@ -125,7 +125,22 @@ class AppointmentCreateView(CreateView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        form.instance.user = self.request.user
+        user = self.request.user
+        form.instance.user = user
+        form.instance.full_name = f"{user.first_name} {user.last_name}"
+        form.instance.image = user.image
+        try:
+            profile = user.doctor_profile
+            form.instance.department = profile.specialization or "Chưa cập nhật"
+            form.instance.qualification_name = profile.qualifications or "Chưa cập nhật"
+            # Giả định location và hospital sẽ dùng tạm chuỗi trống hoặc fallback vì model hiện tại chưa có 
+            # Nhưng ta cần cung cấp giá trị mặc định để tránh lỗi NotNull Constraint
+            form.instance.location = "Chưa cập nhật"
+            form.instance.institute_name = "Chưa cập nhật"
+            form.instance.hospital_name = "Chưa cập nhật"
+        except Exception:
+            pass
+        
         return super().form_valid(form)
 
 
@@ -140,7 +155,11 @@ class AppointmentListView(ListView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
-        return self.model.objects.filter(user=self.request.user, is_active=True).order_by('-id')
+        return self.model.objects.filter(
+            user=self.request.user,
+            is_active=True,
+            date__gte=timezone.localdate()
+        ).order_by('-id')
 
 
 class DoctorPageView(ListView):
@@ -168,7 +187,9 @@ class DoctorPageView(ListView):
                 search_date = datetime.strptime(date_param, '%Y-%m-%d').date()
                 queryset = queryset.filter(date=search_date)
             except ValueError:
-                pass
+                queryset = queryset.filter(date=today)
+        else:
+            queryset = queryset.filter(date=today)
                 
         doctor_ids = {app.user_id for app in queryset}
         if not doctor_ids:
@@ -241,12 +262,67 @@ class TakeAppointmentView(CreateView):
         appointment = self.get_appointment()
         form.fields['appointment'].queryset = Appointment.objects.filter(pk=appointment.pk, is_active=True)
         form.fields['appointment'].initial = appointment
-        self.extra_context.update({
-            'appointment_date': appointment.date,
-            'appointment_name': appointment.full_name,
-            'appointment_department': appointment.department,
-        })
         return form
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        appointment = self.get_appointment()
+        active_bookings = TakeAppointment.objects.filter(
+            appointment=appointment,
+            date=appointment.date,
+            status__in=TakeAppointment.ACTIVE_STATUSES
+        ).values_list('time', flat=True)
+        
+        import datetime
+        from django.utils import timezone
+        
+        start_dt = datetime.datetime.combine(appointment.date, appointment.start_time)
+        end_dt = datetime.datetime.combine(appointment.date, appointment.end_time)
+        
+        slots = []
+        current_dt = start_dt
+        now_local = timezone.localtime()
+        
+        break_start = datetime.time(11, 30)
+        break_end = datetime.time(13, 0)
+        
+        while current_dt + datetime.timedelta(minutes=30) <= end_dt:
+            slot_time = current_dt.time()
+            if break_start <= slot_time < break_end:
+                current_dt += datetime.timedelta(minutes=30)
+                continue
+                
+            is_taken = False
+            for b_time in active_bookings:
+                b_dt = datetime.datetime.combine(appointment.date, b_time)
+                if abs((b_dt - current_dt).total_seconds()) < 1800:
+                    is_taken = True
+                    break
+                    
+            is_past = False
+            if appointment.date < now_local.date():
+                is_past = True
+            elif appointment.date == now_local.date() and current_dt.time() <= now_local.time():
+                is_past = True
+                
+            slots.append({
+                'time_str': slot_time.strftime('%H:%M'),
+                'is_taken': is_taken,
+                'is_past': is_past,
+            })
+            current_dt += datetime.timedelta(minutes=30)
+            
+        context['available_slots'] = slots
+        context['appointment_date'] = appointment.date
+        user = appointment.user
+        context['appointment_name'] = f"BS. {user.first_name} {user.last_name}"
+        try:
+            profile = user.doctor_profile
+            specialization = profile.specialization or appointment.department
+        except Exception:
+            specialization = appointment.department
+        context['appointment_department'] = specialization
+        return context
 
     def form_valid(self, form):
         appointment = self.get_appointment()
@@ -259,6 +335,9 @@ class TakeAppointmentView(CreateView):
         if selected_time is None:
             form.add_error('time', 'Vui lòng chọn giờ khám.')
             return self.form_invalid(form)
+        if appointment.date < timezone.localdate():
+            form.add_error('appointment', 'Lịch này đã ở trong quá khứ, không thể đăng ký.')
+            return self.form_invalid(form)
         if appointment.date == timezone.localdate() and selected_time <= timezone.localtime().time():
             form.add_error('time', 'Giờ khám phải lớn hơn thời điểm hiện tại.')
             return self.form_invalid(form)
@@ -268,15 +347,20 @@ class TakeAppointmentView(CreateView):
 
         with transaction.atomic():
             locked_appointment = Appointment.objects.select_for_update().get(pk=appointment.pk)
-            duplicated = TakeAppointment.objects.select_for_update().filter(
+            active_bookings = TakeAppointment.objects.select_for_update().filter(
                 appointment=locked_appointment,
                 date=locked_appointment.date,
-                time=selected_time,
                 status__in=TakeAppointment.ACTIVE_STATUSES,
             )
-            if duplicated.exists():
-                form.add_error('time', 'Khung giờ này đã được đặt. Vui lòng chọn giờ khác.')
-                return self.form_invalid(form)
+            import datetime
+            selected_dt = datetime.datetime.combine(locked_appointment.date, selected_time)
+            
+            for booking in active_bookings:
+                b_dt = datetime.datetime.combine(booking.date, booking.time)
+                # Ensure 30 minutes (1800 seconds) gap between any two bookings
+                if abs((b_dt - selected_dt).total_seconds()) < 1800:
+                    form.add_error('time', 'Khung giờ này đã có người đặt hoặc quá sát với ca khác. Vui lòng chọn giờ cách ít nhất 30 phút.')
+                    return self.form_invalid(form)
 
             form.instance.user = self.request.user
             form.instance.appointment = locked_appointment
@@ -401,15 +485,20 @@ class PatientRescheduleView(UpdateView):
                 form.add_error('time', 'Giờ mới phải nằm trong khung khám của bác sĩ.')
                 return self.form_invalid(form)
 
-            duplicated = TakeAppointment.objects.select_for_update().filter(
+            active_bookings = TakeAppointment.objects.select_for_update().filter(
                 appointment=new_slot,
                 date=new_slot.date,
-                time=new_time,
                 status__in=TakeAppointment.ACTIVE_STATUSES,
             ).exclude(pk=locked_booking.pk)
-            if duplicated.exists():
-                form.add_error('time', 'Khung giờ mới đã có người khác chọn. Vui lòng thử giờ khác.')
-                return self.form_invalid(form)
+            import datetime
+            selected_dt = datetime.datetime.combine(new_slot.date, new_time)
+
+            for booking in active_bookings:
+                b_dt = datetime.datetime.combine(booking.date, booking.time)
+                # Ensure 30 minutes (1800 seconds) gap between any two bookings
+                if abs((b_dt - selected_dt).total_seconds()) < 1800:
+                    form.add_error('time', 'Khung giờ mới đã có người đặt hoặc quá sát với ca khác. Vui lòng chọn giờ cách ít nhất 30 phút.')
+                    return self.form_invalid(form)
 
             locked_booking.appointment = new_slot
             locked_booking.date = new_slot.date
@@ -559,6 +648,7 @@ class PatientListView(ListView):
         queryset = self.model.objects.filter(
             appointment__user=self.request.user,
             status__in=[TakeAppointment.STATUS_PENDING, TakeAppointment.STATUS_CONFIRMED, TakeAppointment.STATUS_ARRIVED],
+            date__gte=timezone.localdate()
         ).order_by('date', 'time')
         search = self.request.GET.get('search', '').strip()
         if search:
@@ -773,6 +863,14 @@ class ChatRoomView(View):
             booking__appointment__user=doctor,
             booking__user=patient
         ).order_by('created_at')
+
+        # Mark as read
+        DirectMessage.objects.filter(
+            booking__appointment__user=doctor,
+            booking__user=patient,
+            sender=other_user,
+            is_read=False
+        ).update(is_read=True)
         
         context = {
             'booking': self.booking,
@@ -809,6 +907,16 @@ class DoctorInboxView(View):
         for b in all_bookings:
             if b.user_id not in seen_users:
                 seen_users.add(b.user_id)
+                b.latest_msg = DirectMessage.objects.filter(
+                    booking__user=b.user,
+                    booking__appointment__user=request.user
+                ).order_by('-created_at').first()
+                b.has_unread = DirectMessage.objects.filter(
+                    booking__user=b.user,
+                    booking__appointment__user=request.user,
+                    sender=b.user,
+                    is_read=False
+                ).exists()
                 unique_bookings.append(b)
 
         active_booking = None
@@ -822,6 +930,14 @@ class DoctorInboxView(View):
                 booking__user=active_booking.user
             ).order_by('created_at')
             chat_enabled = active_booking.status in active_statuses
+            
+            # Mark messages as read
+            DirectMessage.objects.filter(
+                booking__appointment__user=request.user,
+                booking__user=active_booking.user,
+                sender=active_booking.user,
+                is_read=False
+            ).update(is_read=True)
 
         context = {
             'bookings': unique_bookings,
