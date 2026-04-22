@@ -146,7 +146,7 @@ class AppointmentCreateView(CreateView):
 
 class AppointmentListView(ListView):
     model = Appointment
-    template_name = 'appointment/appointment.html'
+    template_name = 'appointment/calendar.html'
     context_object_name = 'appointment'
 
     @method_decorator(login_required(login_url=reverse_lazy('login')))
@@ -947,3 +947,80 @@ class DoctorInboxView(View):
             'user_image': request.user.image.url if request.user.image else None,
         }
         return render(request, self.template_name, context)
+
+class DoctorCalendarEventsAPI(View):
+    @method_decorator(login_required(login_url=reverse_lazy('login')))
+    @method_decorator(user_is_doctor)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        start_str = request.GET.get('start')
+        end_str = request.GET.get('end')
+        
+        events = []
+        try:
+            start_date = datetime.fromisoformat(start_str.split('T')[0]).date() if start_str else timezone.localdate()
+            end_date = datetime.fromisoformat(end_str.split('T')[0]).date() if end_str else timezone.localdate() + timedelta(days=30)
+        except Exception:
+            start_date = timezone.localdate()
+            end_date = timezone.localdate() + timedelta(days=30)
+
+        # 1. Background Events (Phân ca làm việc của Bác sĩ)
+        doctor_shifts = Appointment.objects.filter(
+            user=request.user,
+            is_active=True,
+            date__gte=start_date,
+            date__lte=end_date
+        )
+        for shift in doctor_shifts:
+            events.append({
+                'id': f'shift_{shift.id}',
+                'start': f"{shift.date.isoformat()}T{shift.start_time.isoformat()}",
+                'end': f"{shift.date.isoformat()}T{shift.end_time.isoformat()}",
+                'display': 'background',
+                'backgroundColor': '#e2e8f0', # Màu xám nhạt (Tailwind slate-200)
+            })
+            
+        # 2. Normal Events (Cuộc hẹn đã đặt)
+        color_map = {
+            TakeAppointment.STATUS_PENDING: '#f59e0b', # amber
+            TakeAppointment.STATUS_CONFIRMED: '#10b981', # emerald
+            TakeAppointment.STATUS_ARRIVED: '#3b82f6', # blue
+            TakeAppointment.STATUS_COMPLETED: '#6b7280', # gray
+            TakeAppointment.STATUS_CANCELLED: '#ef4444', # red
+        }
+        
+        bookings = TakeAppointment.objects.filter(
+            appointment__user=request.user,
+            date__gte=start_date,
+            date__lte=end_date
+        ).select_related('user', 'appointment')
+        
+        for booking in bookings:
+            start_dt = datetime.combine(booking.date, booking.time)
+            end_dt = start_dt + timedelta(minutes=30)
+            # Thêm [Hủy] vào title nếu đã hủy để dễ nhìn trên lịch
+            title_prefix = ""
+            if booking.status == TakeAppointment.STATUS_CANCELLED:
+                title_prefix = "[Đã Hủy] "
+            
+            events.append({
+                'id': f'booking_{booking.id}',
+                'title': f"{title_prefix}{booking.user.first_name} {booking.user.last_name}",
+                'start': start_dt.isoformat(),
+                'end': end_dt.isoformat(),
+                'backgroundColor': color_map.get(booking.status, '#3788d8'),
+                'borderColor': 'transparent',
+                'textColor': '#fff',
+                'extendedProps': {
+                    'booking_id': booking.id,
+                    'patient_name': f"{booking.user.first_name} {booking.user.last_name}",
+                    'phone': booking.phone_number or 'Chưa cập nhật',
+                    'message': booking.message or 'Không có',
+                    'status': booking.get_status_display(),
+                    'raw_status': booking.status
+                }
+            })
+            
+        return JsonResponse(events, safe=False)

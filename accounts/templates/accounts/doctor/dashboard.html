@@ -156,16 +156,7 @@
                         </div>
                     </div>
 
-                    <div class="card shadow-sm border-0 mt-4">
-                        <div class="card-header">
-                            <h3 class="card-title mb-0">Thông báo mới nhất</h3>
-                        </div>
-                        <div class="card-body">
-                            <div id="notificationsList">
-                                <div class="text-muted">Đang tải thông báo...</div>
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -287,20 +278,36 @@
     }
 
     function renderNotifications(notifications) {
-        const container = document.getElementById('notificationsList');
-        if (!notifications.length) {
-            container.innerHTML = '<div class="text-muted">Chưa có thông báo mới.</div>';
+        const notiBadge = document.getElementById("header-noti-badge");
+        const notiCountHeader = document.getElementById("header-noti-count");
+        const notiList = document.getElementById("header-noti-list");
+        const notiEmpty = document.getElementById("header-noti-empty");
+
+        if (!notifications || !notifications.length) {
+            if (notiEmpty) notiEmpty.style.display = 'block';
             return;
         }
-        container.innerHTML = notifications.map((item) => `
-            <div class="notification-item ${item.title.includes('hủy') ? 'is-cancelled' : ''}">
-                <div class="d-flex justify-content-between align-items-start">
-                    <strong>${item.title}</strong>
-                    <span class="small text-muted">${item.created_at}</span>
+
+        if (notiEmpty) {
+            notiEmpty.style.display = 'none';
+        }
+
+        notiList.innerHTML = notifications.map((item) => `
+            <a href="#" class="dropdown-item">
+                <div class="d-flex w-100 justify-content-between">
+                    <small class="text-muted"><i class="fas fa-bell text-warning mr-1"></i> ${item.created_at || 'Vừa xong'}</small>
                 </div>
-                <div class="mt-2">${item.description}</div>
-            </div>
+                <div class="text-truncate" style="font-weight: bold; font-size: 0.9rem;">${item.title}</div>
+                <small class="text-muted text-wrap d-block" style="line-height:1.2; padding-top:4px;">${item.description}</small>
+            </a>
+            <div class="dropdown-divider"></div>
         `).join('');
+
+        if (notiCountHeader) notiCountHeader.innerText = notifications.length + " Thông báo";
+        if (notiBadge) {
+            notiBadge.innerText = notifications.length;
+            notiBadge.style.display = 'inline-block';
+        }
     }
 
     function setSummary(summary) {
