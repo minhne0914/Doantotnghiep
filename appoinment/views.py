@@ -133,11 +133,8 @@ class AppointmentCreateView(CreateView):
             profile = user.doctor_profile
             form.instance.department = profile.specialization or "Chưa cập nhật"
             form.instance.qualification_name = profile.qualifications or "Chưa cập nhật"
-            # Giả định location và hospital sẽ dùng tạm chuỗi trống hoặc fallback vì model hiện tại chưa có 
-            # Nhưng ta cần cung cấp giá trị mặc định để tránh lỗi NotNull Constraint
-            form.instance.location = "Chưa cập nhật"
-            form.instance.institute_name = "Chưa cập nhật"
-            form.instance.hospital_name = "Chưa cập nhật"
+            # Location và hospital_name nay đã được điền trực tiếp từ Form
+            form.instance.institute_name = form.instance.hospital_name
         except Exception:
             pass
         

@@ -10,16 +10,20 @@ class CreateAppointmentForm(forms.ModelForm):
         self.fields['date'].label = "Ngày khám"
         self.fields['start_time'].label = "Giờ bắt đầu"
         self.fields['end_time'].label = "Giờ kết thúc"
+        self.fields['hospital_name'].label = "Tên Bệnh viện / Cơ sở y tế"
+        self.fields['location'].label = "Địa chỉ khám"
 
         self.fields['date'].widget = forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
         self.fields['start_time'].widget = forms.TimeInput(format='%H:%M', attrs={'type': 'time', 'class': 'form-control'})
         self.fields['end_time'].widget = forms.TimeInput(format='%H:%M', attrs={'type': 'time', 'class': 'form-control'})
+        self.fields['hospital_name'].widget = forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'VD: Phòng khám Đa khoa Quốc tế'})
+        self.fields['location'].widget = forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'VD: 123 Đường Điện Biên Phủ, Quận 1'})
         self.fields['start_time'].widget.attrs.update({'placeholder': 'Ví dụ: 09:00'})
         self.fields['end_time'].widget.attrs.update({'placeholder': 'Ví dụ: 17:00'})
 
     class Meta:
         model = Appointment
-        fields = ['date', 'start_time', 'end_time']
+        fields = ['date', 'start_time', 'end_time', 'hospital_name', 'location']
 
     def clean_date(self):
         appointment_date = self.cleaned_data['date']

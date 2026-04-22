@@ -83,7 +83,7 @@
                         {% for review in reviews %}
                         <div class="post">
                           <div class="user-block">
-                            <img class="img-circle img-bordered-sm" src="{% if review.patient.image %}{{ review.patient.image.url }}{% else %}{% static 'path/to/default/avatar.png' %}{% endif %}" alt="user image">
+                            <img class="img-circle img-bordered-sm" style="width: 40px; height: 40px; object-fit: cover;" src="{% if review.patient.image %}{{ review.patient.image.url }}{% else %}{% static 'path/to/default/avatar.png' %}{% endif %}" alt="user image">
                             <span class="username">
                               <a href="#">{{ review.patient.first_name }} {{ review.patient.last_name }}</a>
                             </span>
