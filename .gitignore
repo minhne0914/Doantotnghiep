@@ -1,0 +1,12 @@
+venv/
+.venv/
+.venv-runtime/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+db.sqlite3
+.env
+*.exe
+*.h5

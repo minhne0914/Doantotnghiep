@@ -1,0 +1,27 @@
+Doctor : 
+	+Danh sách bệnh nhân đặt lịch	
+	+ Xem lịch hẹn 
+	+ tạo cuộc hẹn 
+User : + Tạo tk 
+	+ Đặt lịch khám
+	
+	+ chuẩn đoán bệnh bằng những thông số đã cho
+
+Note lại yêu cầu cần sửa 
+
+làm lại ui dashboad bác sĩ 
+thêm màn index profile bác sĩ 
+bac sĩ cần có img 
+người dùng cần có img
+
+
+
++tạo lịch chưa đúng yêu cầu 
++ dặt lịch chưa hợp lí 
++ thông tin bác sĩ đặt lịch sai 
++ sau khi update thì nên báo cáo thành công hoặc chưa 
++ nên làm tạo lịch trong ngày và nên check nếu hết hạn thông báo hết hạn hoặc xóa nó đi 
+
+
+Không có edit đặt lịch 
+người dùng có thể xóa đặt lịch

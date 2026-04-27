@@ -1,0 +1,11 @@
+{% extends "emails/base_email.html" %}
+{% block content %}
+<h3 style="margin-top:0;">Lịch khám đã được đổi</h3>
+<p>Lịch khám của bạn đã được cập nhật sang thời gian mới.</p>
+<ul>
+    <li>Ngày cũ: {{ previous_date }}</li>
+    <li>Giờ cũ: {{ previous_time }}</li>
+    <li>Ngày mới: {{ appointment_info.date }}</li>
+    <li>Giờ mới: {{ appointment_info.time }}</li>
+</ul>
+{% endblock %}

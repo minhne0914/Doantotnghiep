@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %} Sàng Lọc Nguy Cơ Bệnh Thận {% endblock %}
+{% block style %}
+<style>
+  .screening-shell { padding: 48px 0 64px; }
+  .screening-card { background: #fff; border-radius: 24px; box-shadow: 0 18px 50px rgba(20, 60, 90, 0.12); overflow: hidden; }
+  .screening-head { background: linear-gradient(135deg, #4338ca, #3730a3); color: #fff; padding: 28px 28px 24px; }
+  .screening-head p { margin: 10px 0 0; color: rgba(255,255,255,.86); }
+  .screening-body { padding: 28px; background: #f7f8ff; }
+  .field-card, .result-card, .advice-card { background: #fff; border-radius: 18px; padding: 22px; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); margin-bottom: 20px; }
+  .field-card h5, .result-card h5, .advice-card h5 { margin-bottom: 16px; color: #0f172a; }
+  .screening-body label { color: #0f172a; font-weight: 600; margin-bottom: 8px; }
+  .screening-body .form-control { border-radius: 12px; min-height: 46px; }
+  .result-badge { display: inline-block; padding: 10px 18px; border-radius: 999px; font-weight: 700; margin-top: 8px; }
+  .result-high { background: #fee2e2; color: #b91c1c; }
+  .result-low { background: #dcfce7; color: #166534; }
+  .screening-note { border-left: 4px solid #f59e0b; background: #fffbeb; color: #92400e; padding: 14px 16px; border-radius: 12px; margin-top: 16px; }
+  .submit-btn { border-radius: 14px; padding: 12px 20px; font-weight: 700; width: 100%; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="inner-banner-w3ls"><div class="container"></div></div>
+<div class="breadcrumb-agile">
+  <div aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Sàng lọc nguy cơ bệnh thận</li>
+    </ol>
+  </div>
+</div>
+<section class="screening-shell">
+  <div class="container">
+    <div class="screening-card">
+      <div class="screening-head">
+        <h3 class="mb-0">Sàng lọc nguy cơ bệnh thận</h3>
+        <p>Công cụ này giúp tham khảo nhanh dựa trên một số chỉ số liên quan đến chức năng thận, không thay thế xét nghiệm chuyên sâu.</p>
+      </div>
+      <div class="screening-body">
+        {% if error %}
+        <div class="alert alert-danger" role="alert">
+          {{ error }}
+        </div>
+        {% endif %}
+        {% if context %}
+        <div class="result-card">
+          <h5>Kết quả sàng lọc</h5>
+          <span class="result-badge {% if context == 'Elevated' %}result-high{% else %}result-low{% endif %}">
+            {% if context == 'Elevated' %}Nguy cơ cần chú ý{% else %}Nguy cơ thấp hơn{% endif %}
+          </span>
+          <div class="screening-note">
+            {% if context == 'Elevated' %}
+            Hệ thống ghi nhận mức nguy cơ bệnh thận cần theo dõi thêm từ các chỉ số bạn đã nhập.
+            {% else %}
+            Kết quả hiện tại chưa gợi ý nguy cơ nổi bật, nhưng bạn vẫn nên theo dõi sức khỏe định kỳ.
+            {% endif %}
+          </div>
+        </div>
+        <div class="advice-card mt-3">
+          <h5 class="text-info"><i class="fas fa-heartbeat"></i> Gợi ý sức khỏe dành riêng cho bạn</h5>
+          {% if advices %}
+          <ul class="mb-0">
+            {% for advice in advices %}
+              <li style="margin-bottom: 8px;"><b>{{ advice }}</b></li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+          
+          <h5 class="mt-4">Khuyến cáo chung nên làm gì tiếp theo?</h5>
+          {% if context == 'Elevated' %}
+          <ul class="mb-0 text-muted">
+            <li>Đi khám sớm để làm xét nghiệm chức năng thận và được bác sĩ tư vấn chi tiết.</li>
+            <li>Theo dõi các dấu hiệu như phù, nước tiểu có bọt, mệt kéo dài, buồn nôn hoặc tiểu ít.</li>
+            <li>Kiểm tra huyết áp đều đặn và kiểm soát tốt nếu bạn có tiểu đường hoặc tăng huyết áp.</li>
+            <li>Đi cấp cứu nếu khó thở, yếu nhiều, đau ngực hoặc lượng nước tiểu giảm rõ rệt.</li>
+          </ul>
+          {% else %}
+          <ul class="mb-0 text-muted">
+            <li>Uống đủ nước, duy trì huyết áp ổn định và tái kiểm tra định kỳ nếu có yếu tố nguy cơ.</li>
+            <li>Nên sàng lọc lại nếu có triệu chứng mới hoặc kết quả xét nghiệm thay đổi.</li>
+            <li>Kết quả này chỉ hỗ trợ tham khảo, không thay cho xét nghiệm và chẩn đoán chính thức.</li>
+          </ul>
+          {% endif %}
+        </div>
+        {% endif %}
+        <form method="POST" action="{% url 'kidney' %}">
+          {% csrf_token %}
+          <div class="field-card">
+            <h5>Thông tin đầu vào</h5>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="serum_creatinine">Creatinine huyết thanh (mg/dL)</label>
+                  <input type="number" step=".01" class="form-control" id="serum_creatinine" value="1.0" name="serum_creatinine" placeholder="Ví dụ: 1.2">
+                </div>
+                <div class="form-group">
+                  <label for="blood_urea">Ure máu (mg/dL)</label>
+                  <input type="number" step=".01" class="form-control" id="blood_urea" value="30" name="blood_urea" placeholder="Ví dụ: 45">
+                </div>
+                <div class="form-group mb-0">
+                  <label for="albumin">Albumin (0 - 5)</label>
+                  <input type="number" step="1" min="0" max="5" class="form-control" id="albumin" value="0" name="albumin" placeholder="Ví dụ: 2">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="hemoglobin">Hemoglobin (g/dL)</label>
+                  <input type="number" step=".1" class="form-control" id="hemoglobin" value="13.5" name="hemoglobin" placeholder="Ví dụ: 11.5">
+                </div>
+                <div class="form-group">
+                  <label for="specific_gravity">Tỷ trọng nước tiểu</label>
+                  <input type="number" step=".001" class="form-control" id="specific_gravity" value="1.020" name="specific_gravity" placeholder="Ví dụ: 1.015">
+                </div>
+                <div class="form-group mb-0">
+                  <label for="hypertension">Tiền sử tăng huyết áp</label>
+                  <select class="form-control" id="hypertension" name="hypertension">
+                    <option value="0">Không</option>
+                    <option value="1">Có</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary submit-btn">Thực hiện sàng lọc</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

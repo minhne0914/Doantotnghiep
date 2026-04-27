@@ -1,0 +1,477 @@
+{% extends 'app.html' %}
+{% block content %}
+<div class="content-wrapper" style="min-height: 100vh;">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Dashboard bác sĩ</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+                        <li class="breadcrumb-item active">Dashboard</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body d-flex flex-column flex-lg-row justify-content-between align-items-lg-center">
+                            <div>
+                                <h3 class="mb-2">Tổng quan khám bệnh hôm nay</h3>
+                                <p class="text-muted mb-0">Theo dõi lịch khám, bệnh nhân mới và trạng thái khám theo thời gian thực.</p>
+                            </div>
+                            <div class="mt-3 mt-lg-0 text-lg-right">
+                                <div class="small text-muted">Cập nhật lần cuối</div>
+                                <div id="lastUpdated" class="font-weight-bold">Đang tải...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row" id="summaryCards">
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-info">
+                        <div class="inner">
+                            <h3 id="summaryTotal">0</h3>
+                            <p>Lịch hẹn hôm nay</p>
+                        </div>
+                        <div class="icon"><i class="fas fa-calendar-day"></i></div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-success">
+                        <div class="inner">
+                            <h3 id="summaryCompleted">0</h3>
+                            <p>Đã khám xong</p>
+                        </div>
+                        <div class="icon"><i class="fas fa-check-circle"></i></div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-warning">
+                        <div class="inner">
+                            <h3 id="summaryRemaining">0</h3>
+                            <p>Còn lại</p>
+                        </div>
+                        <div class="icon"><i class="fas fa-user-clock"></i></div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-secondary">
+                        <div class="inner">
+                            <h3 id="summaryCancelled">0</h3>
+                            <p>Đã hủy</p>
+                        </div>
+                        <div class="icon"><i class="fas fa-ban"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-xl-8">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h3 class="card-title mb-0">Lịch khám hôm nay</h3>
+                            <button id="manualRefreshBtn" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-sync-alt mr-1"></i>Làm mới
+                            </button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive d-none d-md-block">
+                                <table class="table table-hover mb-0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Giờ</th>
+                                            <th>Bệnh nhân</th>
+                                            <th>Liên hệ</th>
+                                            <th>Trạng thái</th>
+                                            <th>Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="appointmentsTableBody">
+                                        <tr><td colspan="5" class="text-center py-4 text-muted">Đang tải dữ liệu...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="appointmentsMobileList" class="d-md-none p-3"></div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-lg-6">
+                            <div class="card shadow-sm border-0">
+                                <div class="card-header">
+                                    <h3 class="card-title mb-0">Số lượt khám 7 ngày gần nhất</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div style="position: relative; height: 230px;">
+                                        <canvas id="weeklyVisitsChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 mt-4 mt-lg-0">
+                            <div class="card shadow-sm border-0">
+                                <div class="card-header">
+                                    <h3 class="card-title mb-0">Số lượt khám trong tháng</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div style="position: relative; height: 230px;">
+                                        <canvas id="monthlyVisitsChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-4 mt-4 mt-xl-0">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header">
+                            <h3 class="card-title mb-0">Bệnh nhân mới vs quay lại</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-12">
+                                    <h6 class="text-muted text-center mb-0">7 ngày gần nhất</h6>
+                                    <div style="position: relative; height: 180px;">
+                                        <canvas id="weeklyPatientMixChart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="col-12 mt-5">
+                                    <h6 class="text-muted text-center mb-0">Trong tháng</h6>
+                                    <div style="position: relative; height: 180px;">
+                                        <canvas id="monthlyPatientMixChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+    .appointment-card {
+        border: 1px solid #e9ecef;
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 12px;
+        background: #fff;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+    }
+    .appointment-actions .btn {
+        margin-right: 6px;
+        margin-bottom: 6px;
+    }
+    .notification-item {
+        border-left: 4px solid #17a2b8;
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-bottom: 12px;
+    }
+    .notification-item.is-cancelled {
+        border-left-color: #6c757d;
+    }
+    .overdue-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: #dc3545;
+        margin-right: 6px;
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const dashboardApiUrl = "{{ dashboard_api_url }}";
+    const statusUrlTemplate = "{{ dashboard_status_url_template }}";
+    const pollIntervalMs = 180000;
+
+    let weeklyVisitsChart;
+    let monthlyVisitsChart;
+    let weeklyPatientMixChart;
+    let monthlyPatientMixChart;
+
+    function getCookie(name) {
+        const cookieValue = document.cookie
+            .split('; ')
+            .find(row => row.startsWith(name + '='));
+        return cookieValue ? decodeURIComponent(cookieValue.split('=')[1]) : '';
+    }
+
+    function buildStatusBadge(appointment) {
+        return `<span class="badge badge-${appointment.status_badge}">${appointment.status_label}</span>`;
+    }
+
+    function buildActionButtons(appointment) {
+        const buttons = [];
+        if (appointment.status === 'pending' || appointment.status === 'confirmed') {
+            buttons.push(`<button class="btn btn-sm btn-warning js-status-action" data-id="${appointment.id}" data-action="confirm_arrival">Xác nhận đã đến</button>`);
+        }
+        if (appointment.status === 'arrived') {
+            buttons.push(`<a class="btn btn-sm btn-success" href="${appointment.emr_url}">Mở bệnh án</a>`);
+            buttons.push(`<button class="btn btn-sm btn-primary js-status-action" data-id="${appointment.id}" data-action="mark_completed">Đánh dấu xong</button>`);
+        }
+        if (appointment.status === 'completed') {
+            buttons.push(`<a class="btn btn-sm btn-outline-success" href="${appointment.emr_url}">Xem bệnh án</a>`);
+        }
+        buttons.push(`<a class="btn btn-sm btn-outline-info" href="${appointment.summary_url}">Xem hồ sơ</a>`);
+        if ((appointment.status === 'pending' || appointment.status === 'confirmed') && !appointment.has_emr) {
+            buttons.push(`<a class="btn btn-sm btn-outline-success" href="${appointment.emr_url}">Ghi bệnh án</a>`);
+        }
+        return `<div class="appointment-actions">${buttons.join('')}</div>`;
+    }
+
+    function renderAppointments(appointments) {
+        const tableBody = document.getElementById('appointmentsTableBody');
+        const mobileList = document.getElementById('appointmentsMobileList');
+
+        if (!appointments.length) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">Hôm nay chưa có lịch khám nào.</td></tr>';
+            mobileList.innerHTML = '<div class="text-muted">Hôm nay chưa có lịch khám nào.</div>';
+            return;
+        }
+
+        tableBody.innerHTML = appointments.map((appointment) => `
+            <tr>
+                <td>${appointment.time}</td>
+                <td>
+                    <div class="font-weight-bold">${appointment.patient_name}</div>
+                    <div class="small text-muted">${appointment.message || 'Không có ghi chú'}</div>
+                </td>
+                <td>${appointment.phone_number || 'Chưa cập nhật'}</td>
+                <td>
+                    ${appointment.is_overdue ? '<span class="overdue-dot"></span>' : ''}
+                    ${buildStatusBadge(appointment)}
+                </td>
+                <td>${buildActionButtons(appointment)}</td>
+            </tr>
+        `).join('');
+
+        mobileList.innerHTML = appointments.map((appointment) => `
+            <div class="appointment-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-1">${appointment.patient_name}</h5>
+                    <div>${buildStatusBadge(appointment)}</div>
+                </div>
+                <div class="text-muted small mb-2">${appointment.time} | ${appointment.phone_number || 'Chưa cập nhật'}</div>
+                <div class="mb-2">${appointment.message || 'Không có ghi chú từ bệnh nhân.'}</div>
+                ${appointment.is_overdue ? '<div class="text-danger small mb-2"><i class="fas fa-circle mr-1"></i>Lịch đang quá giờ chờ</div>' : ''}
+                ${buildActionButtons(appointment)}
+            </div>
+        `).join('');
+    }
+
+    function renderNotifications(notifications) {
+        const notiBadge = document.getElementById("header-noti-badge");
+        const notiCountHeader = document.getElementById("header-noti-count");
+        const notiList = document.getElementById("header-noti-list");
+        const notiEmpty = document.getElementById("header-noti-empty");
+
+        if (!notifications || !notifications.length) {
+            if (notiEmpty) notiEmpty.style.display = 'block';
+            return;
+        }
+
+        if (notiEmpty) {
+            notiEmpty.style.display = 'none';
+        }
+
+        notiList.innerHTML = notifications.map((item) => `
+            <a href="#" class="dropdown-item">
+                <div class="d-flex w-100 justify-content-between">
+                    <small class="text-muted"><i class="fas fa-bell text-warning mr-1"></i> ${item.created_at || 'Vừa xong'}</small>
+                </div>
+                <div class="text-truncate" style="font-weight: bold; font-size: 0.9rem;">${item.title}</div>
+                <small class="text-muted text-wrap d-block" style="line-height:1.2; padding-top:4px;">${item.description}</small>
+            </a>
+            <div class="dropdown-divider"></div>
+        `).join('');
+
+        if (notiCountHeader) notiCountHeader.innerText = notifications.length + " Thông báo";
+        if (notiBadge) {
+            notiBadge.innerText = notifications.length;
+            notiBadge.style.display = 'inline-block';
+        }
+    }
+
+    function setSummary(summary) {
+        document.getElementById('summaryTotal').textContent = summary.today_total;
+        document.getElementById('summaryCompleted').textContent = summary.completed;
+        document.getElementById('summaryRemaining').textContent = summary.remaining;
+        document.getElementById('summaryCancelled').textContent = summary.cancelled;
+    }
+
+    function upsertLineChart(chartRef, canvasId, label, labels, values, color) {
+        if (chartRef) {
+            chartRef.data.labels = labels;
+            chartRef.data.datasets[0].data = values;
+            chartRef.update();
+            return chartRef;
+        }
+        return new Chart(document.getElementById(canvasId), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: label,
+                    data: values,
+                    borderColor: color,
+                    backgroundColor: color.replace('1)', '0.16)'),
+                    fill: true,
+                    tension: 0.35,
+                    borderWidth: 3,
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            }
+        });
+    }
+
+    function upsertDoughnutChart(chartRef, canvasId, data) {
+        if (chartRef) {
+            chartRef.data.datasets[0].data = [data.new, data.returning];
+            chartRef.update();
+            return chartRef;
+        }
+        return new Chart(document.getElementById(canvasId), {
+            type: 'doughnut',
+            data: {
+                labels: ['Bệnh nhân mới', 'Bệnh nhân quay lại'],
+                datasets: [{
+                    data: [data.new, data.returning],
+                    backgroundColor: ['#0ea5e9', '#22c55e'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
+
+    function renderCharts(charts) {
+        if (typeof Chart === 'undefined') {
+            return;
+        }
+        weeklyVisitsChart = upsertLineChart(
+            weeklyVisitsChart,
+            'weeklyVisitsChart',
+            'Lượt khám',
+            charts.weekly_visits.labels,
+            charts.weekly_visits.data,
+            'rgba(37, 99, 235, 1)'
+        );
+        monthlyVisitsChart = upsertLineChart(
+            monthlyVisitsChart,
+            'monthlyVisitsChart',
+            'Lượt khám',
+            charts.monthly_visits.labels,
+            charts.monthly_visits.data,
+            'rgba(249, 115, 22, 1)'
+        );
+        weeklyPatientMixChart = upsertDoughnutChart(
+            weeklyPatientMixChart,
+            'weeklyPatientMixChart',
+            charts.weekly_patient_mix
+        );
+        monthlyPatientMixChart = upsertDoughnutChart(
+            monthlyPatientMixChart,
+            'monthlyPatientMixChart',
+            charts.monthly_patient_mix
+        );
+    }
+
+    async function fetchDashboardData() {
+        const response = await fetch(dashboardApiUrl, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        if (!response.ok) {
+            throw new Error('Không thể tải dữ liệu dashboard.');
+        }
+        return response.json();
+    }
+
+    async function refreshDashboard() {
+        try {
+            const payload = await fetchDashboardData();
+            setSummary(payload.summary);
+            renderAppointments(payload.today_appointments);
+            renderCharts(payload.charts);
+            renderNotifications(payload.latest_notifications);
+            document.getElementById('lastUpdated').textContent = payload.generated_at;
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    async function updateAppointmentStatus(bookingId, action) {
+        const url = statusUrlTemplate.replace('/0/status/', `/${bookingId}/status/`);
+        const formData = new FormData();
+        formData.append('action', action);
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        });
+
+        const payload = await response.json();
+        if (!response.ok) {
+            alert(payload.error || 'Không thể cập nhật trạng thái.');
+            return;
+        }
+        setSummary(payload.summary);
+        renderAppointments(payload.today_appointments);
+        renderCharts(payload.charts);
+        renderNotifications(payload.latest_notifications);
+        document.getElementById('lastUpdated').textContent = payload.generated_at;
+    }
+
+    document.addEventListener('click', function (event) {
+        const button = event.target.closest('.js-status-action');
+        if (!button) return;
+        event.preventDefault();
+        updateAppointmentStatus(button.dataset.id, button.dataset.action);
+    });
+
+    document.getElementById('manualRefreshBtn').addEventListener('click', function () {
+        refreshDashboard();
+    });
+
+    document.addEventListener('medic:realtime-notification', function (event) {
+        const notification = event.detail || {};
+        if (notification.category === 'appointment') {
+            refreshDashboard();
+        }
+    });
+
+    refreshDashboard();
+    setInterval(refreshDashboard, pollIntervalMs);
+</script>
+{% endblock %}

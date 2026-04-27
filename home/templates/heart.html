@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% block title %} Sàng Lọc Nguy Cơ Bệnh Tim {% endblock %}
+{% block style %}
+<style>
+  .screening-shell { padding: 48px 0 64px; }
+  .screening-card { background: #fff; border-radius: 24px; box-shadow: 0 18px 50px rgba(20, 60, 90, 0.12); overflow: hidden; }
+  .screening-head { background: linear-gradient(135deg, #b91c1c, #991b1b); color: #fff; padding: 28px 28px 24px; }
+  .screening-head p { margin: 10px 0 0; color: rgba(255,255,255,.86); }
+  .screening-body { padding: 28px; background: #fffaf7; }
+  .field-card, .result-card, .advice-card { background: #fff; border-radius: 18px; padding: 22px; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); margin-bottom: 20px; }
+  .field-card h5, .result-card h5, .advice-card h5 { margin-bottom: 16px; color: #0f172a; }
+  .screening-body label { color: #0f172a; font-weight: 600; margin-bottom: 8px; }
+  .screening-body .form-control { border-radius: 12px; min-height: 46px; }
+  .result-badge { display: inline-block; padding: 10px 18px; border-radius: 999px; font-weight: 700; margin-top: 8px; }
+  .result-high { background: #fee2e2; color: #b91c1c; }
+  .result-low { background: #dcfce7; color: #166534; }
+  .screening-note { border-left: 4px solid #f59e0b; background: #fffbeb; color: #92400e; padding: 14px 16px; border-radius: 12px; margin-top: 16px; }
+  .submit-btn { border-radius: 14px; padding: 12px 20px; font-weight: 700; width: 100%; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="inner-banner-w3ls"><div class="container"></div></div>
+<div class="breadcrumb-agile">
+  <div aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Sàng lọc nguy cơ bệnh tim</li>
+    </ol>
+  </div>
+</div>
+<section class="screening-shell">
+  <div class="container">
+    <div class="screening-card">
+      <div class="screening-head">
+        <h3 class="mb-0">Sàng lọc nguy cơ bệnh tim</h3>
+        <p>Kết quả chỉ hỗ trợ tham khảo ban đầu và nên được bác sĩ tim mạch đánh giá lại nếu có dấu hiệu nghi ngờ.</p>
+      </div>
+      <div class="screening-body">
+        {% if error %}
+        <div class="alert alert-danger" role="alert">
+          {{ error }}
+        </div>
+        {% endif %}
+        {% if context %}
+        <div class="result-card">
+          <h5>Kết quả sàng lọc</h5>
+          <span class="result-badge {% if context == 'have' %}result-high{% else %}result-low{% endif %}">
+            {% if context == 'have' %}Nguy cơ cần theo dõi sớm{% else %}Nguy cơ thấp hơn{% endif %}
+          </span>
+          <div class="screening-note">
+            {% if context == 'have' %}
+            Hệ thống ghi nhận mức nguy cơ bệnh tim cần lưu ý từ các chỉ số đã nhập.
+            {% else %}
+            Hệ thống chưa ghi nhận dấu hiệu nguy cơ rõ rệt từ các chỉ số hiện tại.
+            {% endif %}
+          </div>
+        </div>
+        <div class="advice-card mt-3">
+          <h5 class="text-info"><i class="fas fa-heartbeat"></i> Gợi ý sức khỏe dành riêng cho bạn</h5>
+          {% if advices %}
+          <ul class="mb-0">
+            {% for advice in advices %}
+              <li style="margin-bottom: 8px;"><b>{{ advice }}</b></li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+          
+          <h5 class="mt-4">Khuyến cáo chung nên làm gì tiếp theo?</h5>
+          {% if context == 'have' %}
+          <ul class="mb-0 text-muted">
+            <li>Đặt lịch khám sớm nếu bạn có đau ngực, khó thở, hồi hộp hoặc chóng mặt.</li>
+            <li>Đi cấp cứu ngay nếu đau ngực dữ dội, ngất, khó thở nặng hoặc đau lan lên vai, cổ, hàm.</li>
+            <li>Kiểm tra lại huyết áp, cholesterol, đường huyết và lối sống cùng bác sĩ.</li>
+            <li>Không dựa hoàn toàn vào công cụ sàng lọc để tự kết luận tình trạng tim mạch.</li>
+          </ul>
+          {% else %}
+          <ul class="mb-0 text-muted">
+            <li>Duy trì tập luyện, ăn lành mạnh, ngủ đủ và tái khám định kỳ.</li>
+            <li>Nên sàng lọc lại nếu xuất hiện triệu chứng mới hoặc có tiền sử tăng huyết áp, đái tháo đường, hút thuốc.</li>
+            <li>Nếu thấy cơ thể bất thường, bạn vẫn nên đi khám dù kết quả hiện tại ở mức thấp hơn.</li>
+          </ul>
+          {% endif %}
+        </div>
+        {% endif %}
+        <form method="POST" action="{% url 'heart' %}">
+          {% csrf_token %}
+          <div class="field-card">
+            <h5>Thông tin đầu vào</h5>
+            <div class="row">
+              <div class="col-lg-4">
+                <div class="form-group">
+                  <label for="age">Tuổi</label>
+                  <input type="number" step="1" class="form-control" id="age" value="0" name="age" placeholder="Ví dụ: 45">
+                </div>
+                <div class="form-group">
+                  <label for="sex">Giới tính</label>
+                  <input type="number" step=".00001" class="form-control" id="sex" value="0" name="sex" placeholder="Ví dụ: 1">
+                </div>
+                <div class="form-group">
+                  <label for="cp">CP</label>
+                  <input type="number" step=".00001" class="form-control" id="cp" value="0" name="cp">
+                </div>
+                <div class="form-group mb-0">
+                  <label for="trestbps">Huyết áp nghỉ</label>
+                  <input type="number" step=".00001" class="form-control" id="trestbps" value="0" name="trestbps">
+                </div>
+              </div>
+              <div class="col-lg-4">
+                <div class="form-group">
+                  <label for="chol">Cholesterol</label>
+                  <input type="number" step=".00001" class="form-control" id="chol" value="0" name="chol">
+                </div>
+                <div class="form-group">
+                  <label for="fbs">Đường huyết lúc đói</label>
+                  <input type="number" step=".00001" class="form-control" id="fbs" value="0" name="fbs">
+                </div>
+                <div class="form-group">
+                  <label for="restecg">Điện tâm đồ nghỉ</label>
+                  <input type="number" step=".00001" class="form-control" id="restecg" value="0" name="restecg">
+                </div>
+                <div class="form-group mb-0">
+                  <label for="thalach">Nhịp tim tối đa</label>
+                  <input type="number" step=".00001" class="form-control" id="thalach" value="0" name="thalach">
+                </div>
+              </div>
+              <div class="col-lg-4">
+                <div class="form-group">
+                  <label for="exang">Đau thắt ngực khi gắng sức</label>
+                  <input type="number" step=".00001" class="form-control" id="exang" value="0" name="exang">
+                </div>
+                <div class="form-group">
+                  <label for="oldpeak">Oldpeak</label>
+                  <input type="number" step=".00001" class="form-control" id="oldpeak" value="0" name="oldpeak">
+                </div>
+                <div class="form-group">
+                  <label for="slope">Slope</label>
+                  <input type="number" step=".00001" class="form-control" id="slope" value="0" name="slope">
+                </div>
+                <div class="form-group">
+                  <label for="ca">CA</label>
+                  <input type="number" step=".00001" class="form-control" id="ca" value="0" name="ca">
+                </div>
+                <div class="form-group mb-0">
+                  <label for="thal">Thal</label>
+                  <input type="number" step=".00001" class="form-control" id="thal" value="0" name="thal">
+                </div>
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary submit-btn">Thực hiện sàng lọc</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

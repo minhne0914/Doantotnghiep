@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block title %} Sàng Lọc Nguy Cơ Ung Thư Vú {% endblock %}
+{% block style %}
+<style>
+  .screening-shell { padding: 48px 0 64px; }
+  .screening-card { background: #fff; border-radius: 24px; box-shadow: 0 18px 50px rgba(20, 60, 90, 0.12); overflow: hidden; }
+  .screening-head { background: linear-gradient(135deg, #be185d, #9d174d); color: #fff; padding: 28px 28px 24px; }
+  .screening-head p { margin: 10px 0 0; color: rgba(255,255,255,.86); }
+  .screening-body { padding: 28px; background: #fff7fb; }
+  .field-card, .result-card, .advice-card { background: #fff; border-radius: 18px; padding: 22px; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); margin-bottom: 20px; }
+  .field-card h5, .result-card h5, .advice-card h5 { margin-bottom: 16px; color: #0f172a; }
+  .screening-body label { color: #0f172a; font-weight: 600; margin-bottom: 8px; }
+  .screening-body .form-control { border-radius: 12px; min-height: 46px; }
+  .result-badge { display: inline-block; padding: 10px 18px; border-radius: 999px; font-weight: 700; margin-top: 8px; }
+  .result-high { background: #fee2e2; color: #b91c1c; }
+  .result-low { background: #dcfce7; color: #166534; }
+  .screening-note { border-left: 4px solid #f59e0b; background: #fffbeb; color: #92400e; padding: 14px 16px; border-radius: 12px; margin-top: 16px; }
+  .submit-btn { border-radius: 14px; padding: 12px 20px; font-weight: 700; width: 100%; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="inner-banner-w3ls"><div class="container"></div></div>
+<div class="breadcrumb-agile">
+  <div aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Sàng lọc nguy cơ ung thư vú</li>
+    </ol>
+  </div>
+</div>
+<section class="screening-shell">
+  <div class="container">
+    <div class="screening-card">
+      <div class="screening-head">
+        <h3 class="mb-0">Sàng lọc nguy cơ ung thư vú</h3>
+        <p>Kết quả giúp tham khảo bước đầu, không thay thế cho chẩn đoán hình ảnh hay thăm khám chuyên khoa.</p>
+      </div>
+      <div class="screening-body">
+        {% if error %}
+        <div class="alert alert-danger" role="alert">
+          {{ error }}
+        </div>
+        {% endif %}
+        {% if context %}
+        <div class="result-card">
+          <h5>Kết quả sàng lọc</h5>
+          <span class="result-badge {% if context == 'have' %}result-high{% else %}result-low{% endif %}">
+            {% if context == 'have' %}Nguy cơ cần lưu ý{% else %}Nguy cơ thấp hơn{% endif %}
+          </span>
+          <div class="screening-note">
+            {% if context == 'have' %}
+            Hệ thống ghi nhận mức nguy cơ bất thường từ các chỉ số đầu vào. Bạn nên kiểm tra chuyên sâu để xác nhận.
+            {% else %}
+            Hệ thống chưa ghi nhận dấu hiệu nguy cơ nổi bật từ các chỉ số đã nhập, nhưng vẫn nên tự theo dõi định kỳ.
+            {% endif %}
+          </div>
+        </div>
+        <div class="advice-card mt-3">
+          <h5 class="text-info"><i class="fas fa-heartbeat"></i> Gợi ý sức khỏe dành riêng cho bạn</h5>
+          {% if advices %}
+          <ul class="mb-0">
+            {% for advice in advices %}
+              <li style="margin-bottom: 8px;"><b>{{ advice }}</b></li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+          
+          <h5 class="mt-4">Khuyến cáo chung nên làm gì tiếp theo?</h5>
+          {% if context == 'have' %}
+          <ul class="mb-0 text-muted">
+            <li>Đặt lịch khám chuyên khoa vú hoặc ung bướu sớm để được đánh giá kỹ hơn.</li>
+            <li>Không trì hoãn nếu bạn thấy khối u mới, tiết dịch đầu ti, đau kéo dài hoặc thay đổi da vùng ngực.</li>
+            <li>Mang theo kết quả sàng lọc này như tài liệu tham khảo khi đi khám.</li>
+            <li>Không nên tự kết luận bệnh chỉ dựa trên hệ thống sàng lọc trực tuyến.</li>
+          </ul>
+          {% else %}
+          <ul class="mb-0 text-muted">
+            <li>Duy trì tự kiểm tra định kỳ và khám tầm soát theo độ tuổi hoặc tiền sử gia đình.</li>
+            <li>Nếu vẫn có dấu hiệu bất thường ở ngực, bạn nên đi khám dù kết quả sàng lọc đang ở mức thấp hơn.</li>
+            <li>Tiếp tục theo dõi sức khỏe và thực hiện tái kiểm tra khi cần thiết.</li>
+          </ul>
+          {% endif %}
+        </div>
+        {% endif %}
+        <form method="POST" action="{% url 'breast' %}">
+          {% csrf_token %}
+          <div class="field-card">
+            <h5>Thông tin đầu vào</h5>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="radius">Bán kính trung bình</label>
+                  <input type="number" step=".00001" class="form-control" id="radius" value="0" name="radius" placeholder="Ví dụ: 14.2">
+                </div>
+                <div class="form-group">
+                  <label for="texture">Độ nhám trung bình</label>
+                  <input type="number" step=".00001" class="form-control" id="texture" value="0" name="texture" placeholder="Ví dụ: 19.5">
+                </div>
+                <div class="form-group mb-0">
+                  <label for="perimeter">Chu vi trung bình</label>
+                  <input type="number" step=".00001" class="form-control" id="perimeter" value="0" name="perimeter" placeholder="Ví dụ: 92.0">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="area">Diện tích trung bình</label>
+                  <input type="number" step=".00001" class="form-control" id="area" value="0" name="area" placeholder="Ví dụ: 650">
+                </div>
+                <div class="form-group mb-0">
+                  <label for="smoothness">Độ trơn trung bình</label>
+                  <input type="number" step=".00001" class="form-control" id="smoothness" value="0" name="smoothness" placeholder="Ví dụ: 0.1">
+                </div>
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary submit-btn">Thực hiện sàng lọc</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Heart Disease Prediction Form</title>
+</head>
+<body>
+    <form method="post" action="{% url 'heart_disease_prediction' %}" id="predictionForm">
+        {% csrf_token %}
+        Age: <input type="number" name="age" value="40" min="29" max="77" step="1"><br>
+        <input type="submit" value="Predict">
+    </form>
+
+    {% if prediction_result %}
+        <h1>Prediction Result</h1>
+        <p>Input Data:</p>
+        <pre>{{ pretty_result|json_script:"pretty_result" }}</pre>
+        <p>Prediction:</p>
+        {% if answer == 0 %}
+            <p style="color: green;">Heart Disease was Not Detected</p>
+        {% else %}
+            <p style="color: red;">Heart Disease was Detected</p>
+        {% endif %}
+        <p>Note: This prediction is based on the Machine Learning Algorithm, Support Vector Machine.</p>
+    {% endif %}
+</body>
+</html>
