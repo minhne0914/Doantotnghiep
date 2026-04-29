@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Bệnh án điện tử{% endblock %}
+
+{% block content %}
+<div class="inner-banner-w3ls"><div class="container"></div></div>
+<div class="breadcrumb-agile">
+    <div aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'patient-list' %}">Bệnh nhân</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Bệnh án điện tử</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container mt-4 mb-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h3 class="mb-3">Bệnh án sau khám</h3>
+                    <p class="text-muted">
+                        Bệnh nhân: {{ booking.full_name }} |
+                        Bác sĩ: {{ booking.appointment.full_name }} |
+                        Ngày khám: {{ booking.date|date:"d/m/Y" }} {{ booking.time|time:"H:i" }}
+                    </p>
+
+                    {% if record_form.errors or vital_form.errors or prescription_formset.errors %}
+                    <div class="alert alert-danger">
+                        Vui lòng kiểm tra lại thông tin bệnh án, chỉ số sinh tồn và đơn thuốc trước khi lưu.
+                    </div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-4">
+                            <h5 class="mb-3">Thông tin lâm sàng</h5>
+                            {{ record_form.as_p }}
+                        </div>
+
+                        <div class="mb-4">
+                            <h5 class="mb-3">Chỉ số sinh tồn</h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">{{ vital_form.weight_kg.label_tag }}{{ vital_form.weight_kg }}</div>
+                                <div class="col-md-6 mb-3">{{ vital_form.height_cm.label_tag }}{{ vital_form.height_cm }}</div>
+                                <div class="col-md-6 mb-3">{{ vital_form.blood_pressure_systolic.label_tag }}{{ vital_form.blood_pressure_systolic }}</div>
+                                <div class="col-md-6 mb-3">{{ vital_form.blood_pressure_diastolic.label_tag }}{{ vital_form.blood_pressure_diastolic }}</div>
+                                <div class="col-md-6 mb-3">{{ vital_form.heart_rate.label_tag }}{{ vital_form.heart_rate }}</div>
+                                <div class="col-md-6 mb-3">{{ vital_form.temperature_c.label_tag }}{{ vital_form.temperature_c }}</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h5 class="mb-3">Đơn thuốc điện tử</h5>
+                            {{ prescription_formset.management_form }}
+                            {% for form in prescription_formset %}
+                            <div class="border rounded p-3 mb-3 bg-light">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">{{ form.medicine_name.label_tag }}{{ form.medicine_name }}</div>
+                                    <div class="col-md-6 mb-3">{{ form.dosage.label_tag }}{{ form.dosage }}</div>
+                                    <div class="col-md-6 mb-3">{{ form.frequency.label_tag }}{{ form.frequency }}</div>
+                                    <div class="col-md-6 mb-3">{{ form.duration.label_tag }}{{ form.duration }}</div>
+                                    <div class="col-md-8 mb-3">{{ form.instructions.label_tag }}{{ form.instructions }}</div>
+                                    <div class="col-md-2 mb-3">{{ form.order.label_tag }}{{ form.order }}</div>
+                                    <div class="col-md-2 mb-3">
+                                        {% if form.instance.pk %}
+                                        <label>Xóa</label>{{ form.DELETE }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save mr-2"></i>Lưu bệnh án và hoàn thành khám
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mt-4 mt-lg-0">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="mb-3">Tóm tắt tiền sử gần đây</h5>
+                    {% if patient_history %}
+                        {% for item in patient_history %}
+                        <div class="border rounded p-3 mb-3">
+                            <strong>{{ item.created_at|date:"d/m/Y H:i" }}</strong>
+                            <div class="mt-2"><strong>Chẩn đoán:</strong> {{ item.diagnosis|truncatewords:20 }}</div>
+                            <div><strong>Bác sĩ:</strong> {{ item.doctor.get_full_name|default:item.doctor.email }}</div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-muted">Bệnh nhân chưa có bệnh án trước đó.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

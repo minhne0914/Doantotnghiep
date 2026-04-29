@@ -1,0 +1,86 @@
+# =============================================================================
+# .gitignore cho dự án Medic
+# =============================================================================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*$py.class
+*.so
+
+# --- Virtual environments ---
+venv/
+.venv/
+.venv-runtime/
+env/
+ENV/
+.uv-cache/
+.uv-python/
+
+# --- Django ---
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+staticfiles/
+
+# Media: upload của user. Whitelist file demo bằng !path/to/file nếu cần.
+media/
+
+# --- Logs ---
+logs/
+
+# --- Environment & secrets ---
+.env
+.env.*
+!.env.example
+
+# --- IDE / Editor ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# --- Build artifacts ---
+build/
+dist/
+*.egg-info/
+.eggs/
+htmlcov/
+.coverage
+.pytest_cache/
+.mypy_cache/
+.tox/
+
+# --- File lớn / installer ---
+*.exe
+*.zip
+*.tar.gz
+*.dmg
+*.iso
+xampp-*.exe
+
+# --- ML model artifacts (uncomment nếu sinh tự động) ---
+# *.pkl
+# *.h5
+
+# --- Scratch / file tạm khi dev ---
+scratch_*.py
+note.txt
+test_form.py
+test_mail.py
+
+# --- OS / temp ---
+*.tmp
+*.bak
+*.cache
+
+# --- Database backups ---
+*.sql.gz
+*.dump
+db_healthcare/

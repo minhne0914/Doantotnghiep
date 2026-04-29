@@ -1,0 +1,782 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Anh tai len vuot qua gioi han dung luong cho phep."
+msgstr "Uploaded image exceeds the allowed file size limit."
+
+msgid "BMI"
+msgstr "BMI"
+
+msgid ""
+"BMI cho thay ban dang thua can. Nen duy tri van dong deu dan khoang 30 phut "
+"moi ngay."
+msgstr ""
+"Your BMI indicates overweight. Try to exercise regularly for about 30 "
+"minutes a day."
+
+msgid "Biểu Đồ Sức Khỏe"
+msgstr "Health Dashboards"
+
+msgid "Bác sĩ"
+msgstr "Doctors"
+
+msgid "Bác sĩ duyệt"
+msgstr "Approved"
+
+msgid "Bác sĩ và Trợ Lý Ảo"
+msgstr "Doctors and Virtual Assistants"
+
+msgid "Bình thường"
+msgstr "Normal"
+
+msgid "Bạn chưa có lịch hẹn nào"
+msgstr "You have no appointments yet"
+
+msgid "Bệnh nhân"
+msgstr "Patient"
+
+msgid "Bệnh tim mạch"
+msgstr "Heart Disease"
+
+msgid "Bệnh tiểu đường"
+msgstr "Diabetes Disease"
+
+msgid "Bệnh viện của"
+msgstr "The Hospital of the"
+
+msgid "Bệnh Án EMR"
+msgstr "EMR Records"
+
+msgid "Chatbot thông minh Google Gemini tư vấn 24/7 theo bệnh án."
+msgstr "Smart Gemini Chatbot consults 24/7 alongside medical records."
+
+msgid ""
+"Cholesterol dang cao. Hay han che thuc an nhieu mo va noi tang dong vat."
+msgstr "Cholesterol is high. Limit fatty foods and animal organs."
+
+msgid "Chuyên ngành"
+msgstr "Specialist"
+
+msgid ""
+"Chúng tôi cung cấp các giải pháp công nghệ hiện đại nhất áp dụng trong chăm "
+"sóc sức khỏe."
+msgstr "We provide the most modern technological solutions in healthcare."
+
+msgid "Chưa có bệnh nhân nào."
+msgstr "No patients yet."
+
+msgid "Chưa có ghi chú"
+msgstr "No notes applied"
+
+msgid "Chưa có lịch hẹn nào"
+msgstr "No appointments yet"
+
+msgid "Chất lượng y tế"
+msgstr "Medical excellence"
+
+msgid "Chẩn Đoán Đa Khoa"
+msgstr "General Diagnostics"
+
+msgid "Chẩn đoán Hình Ảnh"
+msgstr "Imaging Diagnosis"
+
+msgid "Chỉ số bổ sung"
+msgstr "Additional Metrics"
+
+msgid ""
+"Chỉ số khối cơ thể (Cân nặng / Chiều cao^2): Thừa cân đóng vai trò trực tiếp"
+" gây bệnh."
+msgstr "Body Mass Index: Overweight directly affects disease risk."
+
+msgid ""
+"Chỉ số này ước tính lượng mỡ cơ thể, yếu tố tác động tới kháng Insulin."
+msgstr "Estimates body fat, impacting insulin resistance."
+
+msgid "Chỉ số tiền sử gia đình"
+msgstr "Diabetes Pedigree"
+
+msgid "Chỉnh sửa hồ sơ"
+msgstr "Edit Profile"
+
+msgid "Chọn một bệnh nhân để bắt đầu trò chuyện"
+msgstr "Select a patient to start chatting"
+
+msgid "Chống trùng lịch, tự động nhắc hẹn bệnh nhân qua Email."
+msgstr "Prevent overlap, auto-remind patients via Email."
+
+msgid "Chờ xác nhận"
+msgstr "Pending"
+
+msgid ""
+"Co dau hieu ro ri protein qua nuoc tieu, nen tham khao bac si de duoc danh "
+"gia them."
+msgstr ""
+"Signs of protein leakage in urine, consult a doctor for further evaluation."
+
+msgid ""
+"Cung cấp các chỉ số sức khỏe cơ bản để đánh giá nguy cơ tiểu đường của bạn."
+msgstr "Provide basic health metrics to assess your diabetes risk."
+
+msgid ""
+"Cung cấp các chỉ số từ kết quả sinh thiết (FNA) để dự đoán khối u lành tính "
+"hay ác tính."
+msgstr ""
+"Provide cell indices from biopsy results (FNA) to predict benign or "
+"malignant tumors."
+
+msgid ""
+"Cung cấp thông tin xét nghiệm máu và nước tiểu để đánh giá nguy cơ bệnh thận"
+" mãn tính."
+msgstr ""
+"Provide blood and urine test information to assess the risk of chronic "
+"kidney disease."
+
+msgid "Cài đặt"
+msgstr "Settings"
+
+msgid "Công nghệ Đột phá"
+msgstr "Breakthrough Technology"
+
+msgid ""
+"Cấp độ Insulin trong huyết thanh: Giúp máy học tính toán vòng chuyển hóa "
+"đường."
+msgstr "Serum insulin level: Helps ML map sugar metabolism."
+
+msgid "Danh sách Lịch khám"
+msgstr "Appointment List"
+
+msgid "Dinh dang anh khong hop le. Chi chap nhan JPG, PNG hoac WEBP."
+msgstr "Invalid image format. Only JPG, PNG, or WEBP are accepted."
+
+msgid "Du lieu khong hop le."
+msgstr "Invalid data."
+
+msgid ""
+"Duong huyet cua ban kha cao. Hay han che do ngot va tinh bot hap thu nhanh."
+msgstr ""
+"Your blood sugar is quite high. Limit sweets and fast-absorbing carbs."
+
+msgid ""
+"Duong huyet luc doi dang canh bao nguy co tim mach cao hon binh thuong."
+msgstr "Fasting blood sugar warns of higher-than-normal cardiovascular risk."
+
+msgid ""
+"Duy tri uong du nuoc va tranh lam dung thuoc giam dau hoac thuoc khong ro "
+"nguon goc."
+msgstr ""
+"Drink plenty of water and avoid overusing painkillers or unknown "
+"medications."
+
+msgid ""
+"Duy trì chế độ ăn lành mạnh, ngủ đủ và tập luyện đều để giảm nguy cơ sau "
+"này."
+msgstr ""
+"Maintain a healthy diet, get enough sleep, and exercise regularly to reduce "
+"future risks."
+
+msgid "Dương tính"
+msgstr "Positive"
+
+msgid "Dịch vụ y tế mà bạn"
+msgstr "Medical services that you"
+
+msgid "Dịch vụ ưu việt"
+msgstr "Our Best Services"
+
+msgid ""
+"Dự báo chẩn đoán bệnh lý đa khoa bằng các mô hình Học Máy chuẩn xác và bảo "
+"mật. Trợ lý Ảo AI tư vấn cá nhân hóa."
+msgstr ""
+"Predictive diagnosis using accurate ML models. Personalized Virtual AI "
+"assistant."
+
+msgid "English"
+msgstr "English"
+
+msgid "File tai len khong phai la anh hop le."
+msgstr "Uploaded file is not a valid image."
+
+msgid "Ghi chú"
+msgstr "Notes"
+
+msgid ""
+"Giảm đồ uống có đường, kiểm soát khẩu phần ăn và duy trì vận động phù hợp."
+msgstr ""
+"Reduce sugary drinks, control portions, and maintain appropriate exercise."
+
+msgid "Giới tính"
+msgstr "Gender"
+
+msgid "Giờ khám"
+msgstr "Time"
+
+msgid "Glucose"
+msgstr "Glucose"
+
+msgid "Gợi ý sức khỏe dành riêng cho bạn"
+msgstr "Personalized health suggestions"
+
+msgid "He thong du doan tam thoi gap su co. Vui long thu lai sau."
+msgstr "The prediction system is temporarily down. Please try again later."
+
+msgid ""
+"Hemoglobin thap co the lien quan den thieu mau. Ban nen kiem tra them khi di"
+" kham."
+msgstr ""
+"Low hemoglobin may be linked to anemia. Check it further when visiting a "
+"doctor."
+
+msgid "Hoàn thành"
+msgstr "Completed"
+
+msgid ""
+"Huyet ap dang o muc can luu y. Hay giam an man va theo doi huyet ap thuong "
+"xuyen."
+msgstr ""
+"Your blood pressure requires attention. Reduce salt intake and monitor it "
+"frequently."
+
+msgid ""
+"Huyet ap nghi dang o muc cao. Ban nen giam an man va theo doi huyet ap tai "
+"nha."
+msgstr ""
+"Resting blood pressure is high. Cut down on salt and monitor your blood "
+"pressure at home."
+
+msgid "Huyết áp"
+msgstr "Blood Pressure"
+
+msgid ""
+"Huyết áp tâm trương: Cao huyết áp thường đi chung với bệnh tiểu đường type "
+"2."
+msgstr "Diastolic measure: Typically coexists with type 2 diabetes."
+
+msgid ""
+"Hệ thống chưa ghi nhận dấu hiệu nguy cơ nổi bật từ các chỉ số đã nhập, nhưng"
+" bạn vẫn nên theo dõi sức khỏe định kỳ."
+msgstr "No prominent risk signs detected. Maintain routine check-ups."
+
+msgid ""
+"Hệ thống không chỉ có các Y bác sĩ chuyên môn cao mà còn được trợ lực bởi "
+"sức mạnh của Generative AI (LLM)."
+msgstr ""
+"Our system features both top specialists and the power of Generative AI "
+"(LLM)."
+
+msgid ""
+"Hệ thống phát hiện nguy cơ tiểu đường ở mức cần lưu ý. Bạn nên thực hiện xét"
+" nghiệm và thăm khám sớm để xác nhận."
+msgstr "High risk detected. Get tested and consult a doctor soon."
+
+msgid "Hồ sơ bệnh án"
+msgstr "Medical Records"
+
+msgid "Hộp thư bệnh nhân"
+msgstr "Patient Inbox"
+
+msgid "Hủy lịch"
+msgstr "Cancel Appointment"
+
+msgid "Hủy lịch hẹn"
+msgstr "Cancelled"
+
+msgid "Insulin"
+msgstr "Insulin"
+
+msgid ""
+"Khi đặt lịch thành công, các lịch khám sắp tới sẽ xuất hiện ở đây để bạn "
+"theo dõi và điều chỉnh."
+msgstr ""
+"Upcoming appointments will appear here after a successful booking for you to"
+" track and adjust."
+
+msgid "Khoa Nội tim mạch"
+msgstr "Cardiology"
+
+msgid "Khung giờ"
+msgstr "Available from"
+
+msgid "Khuyến cáo chung nên làm gì tiếp theo?"
+msgstr "General recommendations on what to do next?"
+
+msgid "Khám:"
+msgstr "Appt:"
+
+msgid "Không mắc bệnh Thận"
+msgstr "No Kidney Disease"
+
+msgid "Không mắc bệnh Tim"
+msgstr "No Heart Disease"
+
+msgid "Không nên dùng kết quả này như kết luận cuối cùng về tình trạng bệnh."
+msgstr "Do not treat this result as a definitive diagnosis of your condition."
+
+msgid "Không tìm thấy lịch khám nào khớp với bộ lọc của bạn."
+msgstr "No appointments matching your filters were found."
+
+msgid ""
+"Kiểm tra sức khỏe tim mạch dựa trên các yếu tố nguy cơ và chỉ số lâm sàng."
+msgstr ""
+"Check cardiovascular health based on risk factors and clinical indices."
+
+msgid "Kết quả phân tích X-quang"
+msgstr "X-ray Analysis Results"
+
+msgid "Kết quả sàng lọc"
+msgstr "Screening Results"
+
+msgid "Kết quả đánh giá khối u"
+msgstr "Tumor Assessment Results"
+
+msgid "Liên kết nhanh"
+msgstr "Quick Links"
+
+msgid "Loi nhap lieu: "
+msgstr "Input Error: "
+
+msgid "Lành tính"
+msgstr "Benign (Non-cancerous)"
+
+msgid "Lý do:"
+msgstr "Reason:"
+
+msgid "Lưu ý minh bạch:"
+msgstr "Disclaimer:"
+
+msgid "Lịch Khám Online"
+msgstr "Online Check-ups"
+
+msgid "Lịch hẹn"
+msgstr "Appointments"
+
+msgid "Lịch hẹn của tôi"
+msgstr "My Appointments"
+
+msgid "Lịch này hiện không còn thao tác khả dụng."
+msgstr "No available actions for this appointment."
+
+msgid "Lịch sử bệnh án"
+msgstr "Medical History"
+
+msgid "Lịch sử sức khỏe"
+msgstr "Health History"
+
+msgid "Lọc"
+msgstr "Filter"
+
+msgid "Lời khuyên sức khỏe"
+msgstr "Health Advice"
+
+msgid "Mo hinh du doan hien khong kha dung. Vui long thu lai sau."
+msgstr ""
+"The prediction model is currently unavailable. Please try again later."
+
+msgid ""
+"Mô hình Dữ liệu Khoa học Máy tính (Machine Learning) dựa theo tiêu chuẩn bộ "
+"PIMA Indians Diabetes Database. Kết quả dự đoán chỉ mang tính học thuật và "
+"tham khảo ban đầu, không thay thế cho chẩn đoán y khoa chuyên nghiệp."
+msgstr ""
+"Model based on PIMA Indians dataset. Results are for academic reference and "
+"do not replace professional diagnosis."
+
+msgid "Mắc bệnh Thận"
+msgstr "Kidney Disease Detected"
+
+msgid "Mắc bệnh Tim"
+msgstr "Heart Disease Detected"
+
+msgid "Nam"
+msgstr "Male"
+
+msgid ""
+"Neu co dau nguc hoac kho tho khi gang suc, ban nen di kham tim mach som."
+msgstr ""
+"If you experience chest pain or shortness of breath on exertion, see a "
+"cardiologist soon."
+
+msgid "Nguy cơ bệnh thận"
+msgstr "Kidney Disease Risk"
+
+msgid "Nguy cơ bệnh tim"
+msgstr "Heart Disease Risk"
+
+msgid "Nguy cơ cao hơn bình thường"
+msgstr "Higher than normal risk"
+
+msgid "Nguy cơ thấp hơn"
+msgstr "Lower risk"
+
+msgid "Nguy cơ tiểu đường"
+msgstr "Diabetes Risk"
+
+msgid "Nguy cơ tiểu đường:"
+msgstr "Diabetes Risk:"
+
+msgid "Nguy cơ ung thư vú"
+msgstr "Breast Cancer Risk"
+
+msgid "Nguy cơ viêm phổi"
+msgstr "Pneumonia Risk"
+
+msgid "Ngày khám"
+msgstr "Exam Date"
+
+msgid "Ngày khám:"
+msgstr "Date:"
+
+msgid "Nha khoa"
+msgstr "Dentistry"
+
+msgid "Nhãn khoa / Mắt"
+msgstr "Eye Care"
+
+msgid "Nhập chỉ số sức khỏe của bạn"
+msgstr "Enter your health indicators"
+
+msgid "Nhập chỉ số tế bào"
+msgstr "Enter cell metrics"
+
+msgid "Nhập tin nhắn..."
+msgstr "Type a message..."
+
+msgid "Nhắn tin"
+msgstr "Message"
+
+msgid ""
+"Nên sàng lọc lại nếu có tiền sử gia đình, tăng cân nhanh hoặc xuất hiện "
+"triệu chứng mới."
+msgstr ""
+"Re-screen if there's a family history, rapid weight gain, or new symptoms "
+"appear."
+
+msgid ""
+"Nồng độ đường huyết: Đây là yếu tố quan trọng nhất để AI học máy nhận biết "
+"rối loạn chuyển hóa."
+msgstr "Blood sugar level: Central to ML's metabolic detection."
+
+msgid "Nội thần kinh"
+msgstr "Neurology"
+
+msgid "Nữ"
+msgstr "Female"
+
+msgid "Phát hiện viêm phổi X-Quang chuẩn xác bằng công nghệ CNN."
+msgstr "Accurate X-Ray pneumonia detection via CNN technology."
+
+msgid ""
+"Phả hệ bệnh tiểu đường: Yếu tố di truyền chiếm trọng số rất lớn trong cây "
+"quyết định của AI."
+msgstr "Genetic factor carries heavy weight in AI's logic tree."
+
+msgid "Quản lý hồ sơ điện tử, đơn thuốc, lịch trình theo dõi an toàn."
+msgstr "Manage e-records, prescriptions, and follow-ups securely."
+
+msgid "Quản lý lịch khám của bạn dễ dàng hơn"
+msgstr "Manage your medical appointments easily"
+
+msgid "Sàng Lọc Nguy Cơ Tiểu Đường"
+msgstr "Diabetes Risk Screening"
+
+msgid "Sàng lọc Bệnh Thận"
+msgstr "Kidney Disease Screening"
+
+msgid "Sàng lọc Bệnh Tim mạch"
+msgstr "Heart Disease Screening"
+
+msgid "Sàng lọc Tiểu đường"
+msgstr "Diabetes Screening"
+
+msgid "Sàng lọc Ung thư Vú"
+msgstr "Breast Cancer Screening"
+
+msgid "Sàng lọc Viêm phổi"
+msgstr "Pneumonia Screening"
+
+msgid "Sàng lọc ngay"
+msgstr "Screen Now"
+
+msgid "Sàng lọc nguy cơ"
+msgstr "Risk Screening"
+
+msgid "Sàng lọc nguy cơ tiểu đường"
+msgstr "Diabetes Risk Screening"
+
+msgid "Số lần mang thai"
+msgstr "Pregnancies"
+
+msgid "Tai Mũi Họng"
+msgstr "ENT Specialists"
+
+msgid ""
+"Tang huyet ap la yeu to nguy co lon voi than. Hay theo doi huyet ap deu dan."
+msgstr ""
+"High blood pressure is a major risk factor for kidneys. Monitor your blood "
+"pressure."
+
+msgid "Ten file anh khong hop le. Chi chap nhan JPG, PNG hoac WEBP."
+msgstr "Invalid image file name. Only JPG, PNG, or WEBP are accepted."
+
+msgid "Thay đổi thời gian"
+msgstr "Time changed"
+
+msgid ""
+"Theo dõi các dấu hiệu như khát nhiều, tiểu nhiều, mệt mỏi, sụt cân hoặc nhìn"
+" mờ."
+msgstr ""
+"Monitor symptoms like excessive thirst, frequent urination, fatigue, weight "
+"loss, or blurred vision."
+
+msgid "Theo dõi tiến trình sinh tồn qua Dashboard thời gian thực."
+msgstr "Monitor vitals via real-time dashboards."
+
+msgid "Thông tin chuyển hóa"
+msgstr "Metabolic Information"
+
+msgid "Thể hiện thông tin qua hình ảnh"
+msgstr "Imaging Information"
+
+msgid "Thực hiện sàng lọc"
+msgstr "Run Screening"
+
+msgid "Tiep tuc duy tri loi song lanh manh va kham suc khoe dinh ky."
+msgstr ""
+"Continue maintaining a healthy lifestyle and regular health check-ups."
+
+msgid "Tiếng Việt"
+msgstr "Vietnamese"
+
+msgid "Trang chủ"
+msgstr "Home"
+
+msgid "Trang sau"
+msgstr "Next"
+
+msgid "Trang trước"
+msgstr "Previous"
+
+msgid ""
+"Triển khai Machine Learning cho Chẩn đoán Ung Thư Vú, Bệnh Tim, Tiểu Đường "
+"và mô hình Học Sâu (Deep Learning) cho Viêm phổi."
+msgstr ""
+"Deploy ML for Breast Cancer, Heart Disease, Diabetes and Deep Learning for "
+"Pneumonia."
+
+msgid "Trung Tâm Y Tế ĐH Công Nghiệp Hà Nội"
+msgstr "Haui Medical Center"
+
+msgid "Trạng thái"
+msgstr "Status"
+
+msgid "Trợ lý Y tế AI"
+msgstr "AI Health Assistant"
+
+msgid "Tuổi"
+msgstr "Age"
+
+msgid "Tâm lý / Chiêm tinh học"
+msgstr "Psychology / Astrology"
+
+msgid "Tên Bác sĩ / Cơ sở..."
+msgstr "Doctor / Hospital Name..."
+
+msgid "Tìm hiểu thêm"
+msgstr "Read More"
+
+msgid "Tình trạng thận:"
+msgstr "Kidney Condition:"
+
+msgid "Tình trạng tim mạch:"
+msgstr "Cardiovascular Condition:"
+
+msgid ""
+"Tại sao cần số này? Tình trạng thai kỳ trước đây có liên quan đến tiểu đường"
+" thai kỳ."
+msgstr "Why? Past pregnancies correlate with gestational diabetes."
+
+msgid "Tạo lịch hẹn"
+msgstr "Created"
+
+msgid "Tạo lịch khám"
+msgstr "Create Appointment"
+
+msgid "Tạo mới"
+msgstr "Created"
+
+msgid "Tải lên ảnh X-quang ngực"
+msgstr "Upload Chest X-ray"
+
+msgid ""
+"Tải lên ảnh X-quang phổi để hệ thống sử dụng AI phân tích nguy cơ Viêm phổi."
+msgstr ""
+"Upload a chest X-ray image for the system to analyze pneumonia risk using "
+"AI."
+
+msgid "Tất cả chuyên khoa"
+msgstr "All Departments"
+
+msgid "Từ:"
+msgstr "From:"
+
+msgid "Ung thư vú"
+msgstr "Breast Cancer"
+
+msgid ""
+"Ure hoac creatinine dang vuot nguong tham khao. Ban nen kiem tra chuc nang "
+"than som."
+msgstr ""
+"Urea or creatinine levels exceed reference range. Check your kidney function"
+" soon."
+
+msgid "Viêm phổi"
+msgstr "Pneumonia"
+
+msgid "Vui long chon anh X-quang truoc khi sang loc."
+msgstr "Please select an X-ray image before screening."
+
+msgid ""
+"Vui lòng thử thay đổi chuyên khoa, khoảng thời gian, hoặc kiểm tra lại từ "
+"khóa."
+msgstr ""
+"Please try changing the department, time interval, or check your keyword "
+"again."
+
+msgid "Ví dụ: 0.5"
+msgstr "e.g., 0.5"
+
+msgid "Ví dụ: 120"
+msgstr "e.g., 120"
+
+msgid "Ví dụ: 2"
+msgstr "e.g., 2"
+
+msgid "Ví dụ: 20"
+msgstr "e.g., 20"
+
+msgid "Ví dụ: 24.5"
+msgstr "e.g., 24.5"
+
+msgid "Ví dụ: 35"
+msgstr "e.g., 35"
+
+msgid "Ví dụ: 80"
+msgstr "e.g., 80"
+
+msgid "Ví dụ: 85"
+msgstr "e.g., 85"
+
+msgid "Vật lý trị liệu"
+msgstr "Physical Therapy"
+
+msgid "Xem bệnh án"
+msgstr "View Medical Record"
+
+msgid "Xem lại tất cả bác sĩ"
+msgstr "View all doctors"
+
+msgid "Xem lịch sử thay đổi"
+msgstr "View change history"
+
+msgid ""
+"Xây dựng Bệnh Án Điện Tử EMR và Hệ thống cảnh báo tự động SMS/Email, tối ưu "
+"quy trình làm việc của Bác Sĩ."
+msgstr ""
+"Develop EMR and automatic SMS/Email alerts to optimize doctors' workflows."
+
+msgid "Xét nghiệm huyết học"
+msgstr "Blood Screening"
+
+msgid "có thể tin cậy"
+msgstr "can trust"
+
+msgid "lúc"
+msgstr "at"
+
+msgid "mỗi ngày"
+msgstr "every day"
+
+msgid "tương lai"
+msgstr "future, today"
+
+msgid "tại"
+msgstr "at"
+
+msgid "Ác tính"
+msgstr "Malignant (Cancerous)"
+
+msgid "Âm tính"
+msgstr "Negative"
+
+msgid ""
+"Đi cấp cứu nếu có dấu hiệu kiệt sức, lú lẫn, khó thở hoặc mất nước nặng."
+msgstr ""
+"Seek emergency care if showing signs of severe exhaustion, confusion, "
+"shortness of breath, or dehydration."
+
+msgid "Đánh giá"
+msgstr "Rating"
+
+msgid "Đánh giá Bác sĩ"
+msgstr "Rate Doctor"
+
+msgid "Đã hủy"
+msgstr "Cancelled"
+
+msgid "Đã khóa chat"
+msgstr "Chat locked"
+
+msgid "Đã xác nhận"
+msgstr "Confirmed"
+
+msgid "Đăng ký"
+msgstr "Register"
+
+msgid "Đăng ký Bác sĩ"
+msgstr "Doctor Registration"
+
+msgid "Đăng ký Bệnh nhân"
+msgstr "Patient Registration"
+
+msgid "Đăng nhập"
+msgstr "Login"
+
+msgid "Đăng xuất"
+msgstr "Logout"
+
+msgid "Đặt lịch khám"
+msgstr "Take Appointment"
+
+msgid ""
+"Đặt lịch khám sớm để làm xét nghiệm đường huyết và được bác sĩ đánh giá "
+"chính xác."
+msgstr ""
+"Schedule a checkup early for blood tests and accurate medical assessment."
+
+msgid "Đến:"
+msgstr "To:"
+
+msgid "Địa chỉ"
+msgstr "Address"
+
+msgid "Địa chỉ:"
+msgstr "Location:"
+
+msgid "Đổi lịch"
+msgstr "Reschedule"
+
+msgid "Độ dày nếp gấp da"
+msgstr "Skin Thickness"
+
+msgid "Đội ngũ Bác sĩ"
+msgstr "Our Doctors"
+
+msgid "đến"
+msgstr "to"
+
+msgid "Ứng dụng Random Forest & KNN phân lớp rủi ro bệnh lý tức thì."
+msgstr "Apply Random Forest & KNN for instant risk classification."

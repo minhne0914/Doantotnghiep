@@ -1,0 +1,274 @@
+{% extends 'base.html' %}
+
+{% block title %}Lịch sử sức khỏe{% endblock %}
+
+{% block style %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .history-shell { padding: 48px 0 64px; }
+    .history-card {
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 18px 50px rgba(20, 60, 90, 0.10);
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+    .history-title {
+        margin-bottom: 18px;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .history-title h4, .history-title h5 { margin: 0; }
+    .badge-risk { background: #fee2e2; color: #b91c1c; }
+    .badge-safe { background: #dcfce7; color: #166534; }
+    .metric-list { margin: 0; padding-left: 18px; }
+    .metric-list li { margin-bottom: 6px; }
+    .chat-history-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 250px;
+    }
+    .chat-history-item {
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 14px 16px;
+        background: #f8fafc;
+    }
+    .chat-history-item.bot { background: #f0fdfa; border-color: #99f6e4; }
+    .chat-history-meta {
+        font-size: 12px;
+        color: #64748b;
+        margin-bottom: 6px;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+    }
+    .empty-card {
+        border: 1px dashed #cbd5e1;
+        border-radius: 16px;
+        padding: 18px;
+        text-align: center;
+        color: #64748b;
+        background: #f8fafc;
+    }
+    .page-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .chat-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 16px;
+        flex-wrap: wrap;
+    }
+    .chat-pagination .btn {
+        min-width: 110px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="inner-banner-w3ls"><div class="container"></div></div>
+
+<section class="history-shell">
+    <div class="container">
+        <div class="history-card">
+            <div class="history-title">
+                <div>
+                    <h4>Lịch sử sàng lọc sức khỏe</h4>
+                    <p class="text-muted mb-0">Theo dõi các lần sàng lọc gần đây, biến động chỉ số và lịch sử tư vấn với Medic AI.</p>
+                </div>
+                <div class="page-actions">
+                    <a href="{% url 'export_health_history' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-download mr-1"></i>Tải lịch sử sức khỏe
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="history-card">
+                    <div class="history-title">
+                        <h5>Biểu đồ đường huyết</h5>
+                    </div>
+                    <canvas id="diabetesChart"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="history-card">
+                    <div class="history-title">
+                        <h5>Biểu đồ huyết áp lúc nghỉ</h5>
+                    </div>
+                    <canvas id="heartChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="history-card">
+                    <div class="history-title">
+                        <h5>Chi tiết các lần sàng lọc</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Thời gian</th>
+                                    <th>Loại bệnh</th>
+                                    <th>Kết quả</th>
+                                    <th>Chi tiết</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for h in histories %}
+                                <tr>
+                                    <td>{{ h.created_at|date:"d/m/Y H:i" }}</td>
+                                    <td>{{ h.disease_type }}</td>
+                                    <td>
+                                        {% if h.prediction_result == 'Positive' or h.prediction_result == 'have' or h.prediction_result == 'Elevated' %}
+                                        <span class="badge badge-risk p-2 rounded">Có nguy cơ ({{ h.prediction_result }})</span>
+                                        {% else %}
+                                        <span class="badge badge-safe p-2 rounded">Thấp hơn ({{ h.prediction_result }})</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-info" type="button" data-toggle="collapse" data-target="#details-{{ h.id }}">
+                                            Xem chỉ số
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="collapse" id="details-{{ h.id }}">
+                                    <td colspan="4" class="bg-light">
+                                        {% if h.input_data %}
+                                        <ul class="metric-list">
+                                            {% for key, value in h.input_data.items %}
+                                            <li><strong>{{ key }}:</strong> {{ value }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                        {% else %}
+                                        <div class="text-muted">Không có dữ liệu chi tiết cho lần sàng lọc này.</div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4">
+                                        <div class="empty-card">Chưa có lịch sử sàng lọc nào. Hãy bắt đầu với một bài sàng lọc để hệ thống ghi nhận dữ liệu.</div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="history-card">
+                    <div class="history-title">
+                        <h5>Lịch sử hội thoại với Medic AI</h5>
+                        {% if chat_page_obj.paginator.count %}
+                        <small class="text-muted">{{ chat_page_obj.paginator.count }} tin nhắn</small>
+                        {% endif %}
+                    </div>
+
+                    {% if chat_messages %}
+                    <div class="chat-history-list">
+                        {% for chat in chat_messages %}
+                        <div class="chat-history-item {{ chat.sender }}">
+                            <div class="chat-history-meta">
+                                <span>{% if chat.sender == 'user' %}Bạn{% else %}Medic AI{% endif %}</span>
+                                <span>{{ chat.created_at|date:"H:i d/m/Y" }}</span>
+                            </div>
+                            <div>{{ chat.message|linebreaksbr }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="chat-pagination">
+                        <div class="text-muted">
+                            Trang {{ chat_page_obj.number }} / {{ chat_page_obj.paginator.num_pages }}
+                        </div>
+                        <div class="d-flex" style="gap: 8px;">
+                            {% if chat_page_obj.has_previous %}
+                            <a class="btn btn-outline-secondary btn-sm" href="?chat_page={{ chat_page_obj.previous_page_number }}">Trang trước</a>
+                            {% else %}
+                            <button class="btn btn-outline-secondary btn-sm" disabled>Trang trước</button>
+                            {% endif %}
+
+                            {% if chat_page_obj.has_next %}
+                            <a class="btn btn-outline-secondary btn-sm" href="?chat_page={{ chat_page_obj.next_page_number }}">Trang sau</a>
+                            {% else %}
+                            <button class="btn btn-outline-secondary btn-sm" disabled>Trang sau</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="empty-card">Chưa có hội thoại nào được lưu. Hãy mở khung chat ở góc dưới để bắt đầu.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const diabetesData = JSON.parse('{{ diabetes_data_json|escapejs }}');
+    if (diabetesData.length > 0) {
+        new Chart(document.getElementById('diabetesChart'), {
+            type: 'line',
+            data: {
+                labels: diabetesData.map(item => item.date),
+                datasets: [{
+                    label: 'Glucose',
+                    data: diabetesData.map(item => item.glucose),
+                    borderColor: '#0891b2',
+                    backgroundColor: 'rgba(8, 145, 178, 0.15)',
+                    tension: 0.25,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: true } },
+                scales: { y: { beginAtZero: false } }
+            }
+        });
+    }
+
+    const heartData = JSON.parse('{{ blood_pressure_data_json|escapejs }}');
+    if (heartData.length > 0) {
+        new Chart(document.getElementById('heartChart'), {
+            type: 'line',
+            data: {
+                labels: heartData.map(item => item.date),
+                datasets: [{
+                    label: 'Huyết áp',
+                    data: heartData.map(item => item.bloodpressure),
+                    borderColor: '#dc2626',
+                    backgroundColor: 'rgba(220, 38, 38, 0.12)',
+                    tension: 0.25,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: true } },
+                scales: { y: { beginAtZero: false } }
+            }
+        });
+    }
+</script>
+{% endblock %}

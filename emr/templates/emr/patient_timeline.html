@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Lịch sử bệnh án{% endblock %}
+
+{% block content %}
+<div class="inner-banner-w3ls"><div class="container"></div></div>
+<div class="breadcrumb-agile">
+    <div aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Lịch sử bệnh án</li>
+        </ol>
+    </div>
+</div>
+
+<div class="container mt-4 mb-5">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+        <h3 class="mb-3 mb-md-0">Timeline bệnh án điện tử</h3>
+        <a href="{% url 'patient-my-appointments' %}" class="btn btn-outline-primary">
+            <i class="fas fa-calendar-check mr-2"></i>Quay lại lịch hẹn
+        </a>
+    </div>
+
+    {% for record in records %}
+    <div class="card mb-4 shadow-sm border-0">
+        <div class="card-body">
+            <div class="d-flex justify-content-between flex-wrap">
+                <h5 class="mb-2">{{ record.created_at|date:"d/m/Y H:i" }}</h5>
+                <span class="badge badge-info">Bác sĩ: {{ record.doctor.get_full_name|default:record.doctor.email }}</span>
+            </div>
+            <p class="mt-3"><strong>Triệu chứng:</strong> {{ record.symptoms }}</p>
+            <p><strong>Chẩn đoán:</strong> {{ record.diagnosis }}</p>
+            <p><strong>Ghi chú lâm sàng:</strong> {{ record.clinical_notes|default:"Không có" }}</p>
+            <p><strong>Kế hoạch theo dõi:</strong> {{ record.follow_up_plan|default:"Không có" }}</p>
+
+            {% if record.vital_sign %}
+            <div class="mt-3">
+                <h6>Chỉ số sinh tồn</h6>
+                <ul class="mb-0">
+                    <li>Cân nặng: {{ record.vital_sign.weight_kg }} kg</li>
+                    <li>Chiều cao: {{ record.vital_sign.height_cm }} cm</li>
+                    <li>Huyết áp: {{ record.vital_sign.blood_pressure_systolic }}/{{ record.vital_sign.blood_pressure_diastolic }} mmHg</li>
+                    <li>Nhịp tim: {{ record.vital_sign.heart_rate }} bpm</li>
+                    <li>Nhiệt độ: {{ record.vital_sign.temperature_c }} °C</li>
+                    <li>BMI: {{ record.vital_sign.bmi }}</li>
+                </ul>
+            </div>
+            {% endif %}
+
+            <div class="mt-3">
+                <h6>Đơn thuốc</h6>
+                {% if record.prescriptions.all %}
+                <ul class="mb-0">
+                    {% for item in record.prescriptions.all %}
+                    <li>
+                        <strong>{{ item.medicine_name }}</strong> -
+                        {{ item.dosage }}, {{ item.frequency }}, {{ item.duration }}.
+                        {{ item.instructions }}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="text-muted">Không có đơn thuốc.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="alert alert-info">Bạn chưa có bệnh án điện tử nào.</div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load bootstrap %}
+{% block title %}Đặt lịch khám{% endblock %}
+
+{% block style %}
+<style>
+    .input-group-addon {
+        padding: 6px 12px;
+        font-size: 14px;
+        font-weight: normal;
+        line-height: 1;
+        color: #555;
+        text-align: center;
+        background-color: #eee;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    .glyphicon {
+        position: relative;
+        top: 5px;
+        display: inline-block;
+        font-family: 'Glyphicons Halflings';
+        font-style: normal;
+        font-weight: normal;
+        line-height: 1;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    .time-slots-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 12px;
+        margin-top: 8px;
+    }
+    .slot-btn {
+        width: 100%;
+        border-radius: 8px;
+        font-weight: 600;
+        padding: 10px 5px;
+        transition: all 0.2s ease;
+    }
+    .slot-btn small {
+        font-weight: normal;
+        font-size: 0.8em;
+    }
+    .slot-btn.active {
+        background-color: #0c4a6e;
+        color: white;
+        box-shadow: 0 4px 8px rgba(12, 74, 110, 0.3);
+        border-color: #0c4a6e;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="inner-banner-w3ls">
+    <div class="container"></div>
+</div>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-5 mb-5 mb-lg-0">
+            <center><h3>Đặt lịch khám</h3></center>
+
+            <form action="" method="POST" id="bookingForm">{% csrf_token %}
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    {% for field, error_list in form.errors.items %}
+                        <strong>{{ field }}:</strong> {{ error_list|join:", " }}<br>
+                    {% endfor %}
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+                <div class="mb-3">
+                    <label class="form-label">Chuyên khoa</label>
+                    <input type="text" class="form-control" readonly value="{{ appointment_department }}">
+                </div>
+                <div class="mb-3">
+                    <label for="appointment" class="form-label">Bác sĩ</label>
+                    {{ form.appointment }}
+                    <input type="text" class="form-control" readonly value="{{ appointment_name }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Họ và tên</label>
+                    <input type="text" name="full_name" maxlength="100" class="form-control" readonly required id="id_full_name" value="{{ user.first_name }} {{ user.last_name }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Ngày khám</label>
+                    <div class="input-group date">
+                        <input type="text" class="form-control" value="{{ appointment_date|date:'d/m/Y' }}" readonly disabled id="id_date">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Chọn giờ khám</label>
+                    <input type="hidden" name="time" id="time" required>
+                    
+                    <div class="time-slots-grid">
+                        {% for slot in available_slots %}
+                            {% if slot.is_past %}
+                                <button type="button" class="btn btn-outline-secondary slot-btn" disabled title="Ca khám đã qua">
+                                    {{ slot.time_str }}
+                                </button>
+                            {% elif slot.is_taken %}
+                                <button type="button" class="btn btn-secondary slot-btn" disabled title="Ca khám đã có người đặt">
+                                    {{ slot.time_str }} <br><small>(Đã kín)</small>
+                                </button>
+                            {% else %}
+                                <button type="button" class="btn btn-outline-primary slot-btn available-slot" data-time="{{ slot.time_str }}">
+                                    {{ slot.time_str }}
+                                </button>
+                            {% endif %}
+                        {% empty %}
+                            <p class="text-danger w-100 mb-0">Không có ca khám nào khả dụng trong ngày này hoặc bác sĩ đang trong giờ nghỉ.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Số điện thoại</label>
+                    <input type="text" name="phone_number" maxlength="120" class="form-control" required id="id_phone_number" value="{{ user.phone_number }}" readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Ghi chú</label>
+                    <textarea name="message" cols="40" rows="3" placeholder="Nhập ghi chú ngắn cho bác sĩ" class="form-control" required id="id_message"></textarea>
+                </div>
+                <div class="row form-group">
+                    <div class="col-md-12" style="align-items: center;">
+                        <input type="submit" value="Xác nhận đặt lịch" class="btn btn-primary btn-md text-white">
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('.available-slot').click(function () {
+            $('.available-slot').removeClass('active');
+            $(this).addClass('active');
+            $('#time').val($(this).data('time'));
+        });
+
+        $('form').on('submit', function (e) {
+            e.preventDefault();
+            const form = this;
+            const fullName = $('#id_full_name').val();
+            const phoneNumber = $('#id_phone_number').val();
+            const date = $('#id_date').val();
+            const time = $('#time').val();
+            const doctor = '{{ appointment_name|default:""|escapejs }}';
+
+            if (!time) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi',
+                    text: 'Vui lòng chọn một khung giờ khám còn trống phía trên!'
+                });
+                return false;
+            }
+
+            Swal.fire({
+                title: 'Xác nhận đặt lịch',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#0f766e',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Xác nhận',
+                cancelButtonText: 'Hủy',
+                html: `Vui lòng kiểm tra lại thông tin đặt lịch.<br><br>
+                    Tên: <b>${fullName}</b> <br>
+                    Số điện thoại: <b>${phoneNumber}</b> <br>
+                    Ngày: <b>${date}</b> <br>
+                    Giờ: <b style="color:red;">${time}</b> <br>
+                    Bác sĩ: <b>${doctor}</b>`
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

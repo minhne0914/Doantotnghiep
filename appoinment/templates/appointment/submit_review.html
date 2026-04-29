@@ -1,0 +1,45 @@
+{% extends 'app.html' %}
+{% load bootstrap %}
+
+{% block title %}Đánh giá Bác sĩ{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Viết Đánh giá</h1>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Đánh giá quá trình khám lúc {{ booking.time|time:"H:i" }} - {{ booking.date|date:"d/m/Y" }}</h3>
+                    </div>
+                    <form method="POST">
+                        <div class="card-body">
+                            {% csrf_token %}
+                            <p><strong>Bác sĩ:</strong> {{ booking.appointment.user.first_name }} {{ booking.appointment.user.last_name }}</p>
+                            <p><strong>Chuyên khoa:</strong> {{ booking.appointment.department }}</p>
+                            <hr>
+                            {{ form|bootstrap }}
+                        </div>
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-success"><i class="fas fa-paper-plane"></i> Gửi đánh giá</button>
+                            <a href="{% url 'patient-my-appointments' %}" class="btn btn-secondary">Quay lại</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+      </div>
+    </section>
+</div>
+{% endblock %}

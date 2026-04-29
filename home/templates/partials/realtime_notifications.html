@@ -1,0 +1,235 @@
+{% if request.user.is_authenticated %}
+<style>
+    #realtimeNotificationStack {
+        position: fixed;
+        top: 88px;
+        right: 18px;
+        width: min(360px, calc(100vw - 24px));
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        z-index: 12000;
+        pointer-events: none;
+    }
+
+    .realtime-toast {
+        pointer-events: auto;
+        border-radius: 18px;
+        padding: 14px 16px;
+        background: #ffffff;
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        box-shadow: 0 16px 36px rgba(15, 23, 42, 0.18);
+        transform: translateY(-8px);
+        opacity: 0;
+        transition: opacity 0.25s ease, transform 0.25s ease;
+        overflow: hidden;
+    }
+
+    .realtime-toast.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .realtime-toast::before {
+        content: '';
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 5px;
+        background: #38bdf8;
+    }
+
+    .realtime-toast.level-success::before { background: #22c55e; }
+    .realtime-toast.level-warning::before { background: #f59e0b; }
+    .realtime-toast.level-danger::before { background: #ef4444; }
+
+    .realtime-toast-header {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+
+    .realtime-toast-title {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .realtime-toast-time {
+        margin-top: 4px;
+        font-size: 11px;
+        color: #64748b;
+    }
+
+    .realtime-toast-message {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.6;
+        color: #334155;
+    }
+
+    .realtime-toast-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .realtime-toast-link,
+    .realtime-toast-close {
+        border: none;
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+    .realtime-toast-link {
+        background: #0f766e;
+        color: #fff;
+        text-decoration: none;
+    }
+
+    .realtime-toast-close {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+
+    @media (max-width: 640px) {
+        #realtimeNotificationStack {
+            top: auto;
+            bottom: 90px;
+            right: 12px;
+            left: 12px;
+            width: auto;
+        }
+    }
+</style>
+
+<div id="realtimeNotificationStack" aria-live="polite" aria-atomic="true"></div>
+
+<script>
+    (function () {
+        if (window.__medicRealtimeInitialized) {
+            return;
+        }
+        window.__medicRealtimeInitialized = true;
+
+        const stack = document.getElementById('realtimeNotificationStack');
+        const seenIds = new Set(JSON.parse(window.sessionStorage.getItem('medicRealtimeSeenIds') || '[]'));
+        let socket = null;
+        let reconnectTimeout = null;
+
+        function buildSocketUrl() {
+            const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+            return `${protocol}://${window.location.host}/ws/notifications/`;
+        }
+
+        function removeToast(toast) {
+            toast.classList.remove('is-visible');
+            window.setTimeout(() => toast.remove(), 220);
+        }
+
+        function showToast(notification) {
+            if (!notification || !stack) {
+                return;
+            }
+            if (notification.id && seenIds.has(notification.id)) {
+                return;
+            }
+            if (notification.id) {
+                seenIds.add(notification.id);
+                window.sessionStorage.setItem(
+                    'medicRealtimeSeenIds',
+                    JSON.stringify(Array.from(seenIds).slice(-40))
+                );
+            }
+
+            const toast = document.createElement('article');
+            toast.className = `realtime-toast level-${notification.level || 'info'}`;
+            toast.style.position = 'relative';
+
+            const linkButton = notification.link
+                ? `<a class="realtime-toast-link" href="${notification.link}">Mở ngay</a>`
+                : '';
+
+            toast.innerHTML = `
+                <div class="realtime-toast-header">
+                    <div>
+                        <h4 class="realtime-toast-title">${escapeHtml(notification.title || 'Thông báo mới')}</h4>
+                        <div class="realtime-toast-time">${escapeHtml(notification.created_at || 'Vừa xong')}</div>
+                    </div>
+                    <button class="realtime-toast-close" type="button">Đóng</button>
+                </div>
+                <p class="realtime-toast-message">${escapeHtml(notification.message || '').replace(/\n/g, '<br>')}</p>
+                <div class="realtime-toast-actions">
+                    ${linkButton}
+                </div>
+            `;
+
+            stack.prepend(toast);
+            requestAnimationFrame(() => toast.classList.add('is-visible'));
+
+            toast.querySelector('.realtime-toast-close').addEventListener('click', function () {
+                removeToast(toast);
+            });
+
+            window.setTimeout(() => {
+                if (toast.isConnected) {
+                    removeToast(toast);
+                }
+            }, notification.level === 'danger' ? 12000 : 8000);
+
+            document.dispatchEvent(new CustomEvent('medic:realtime-notification', {
+                detail: notification,
+            }));
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function connectRealtime() {
+            if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+                return;
+            }
+
+            socket = new WebSocket(buildSocketUrl());
+
+            socket.onopen = function () {
+                if (reconnectTimeout) {
+                    clearTimeout(reconnectTimeout);
+                    reconnectTimeout = null;
+                }
+            };
+
+            socket.onmessage = function (event) {
+                const payload = JSON.parse(event.data || '{}');
+                if (payload.type === 'notification' && payload.notification) {
+                    showToast(payload.notification);
+                }
+                if (payload.type === 'notification_snapshot' && Array.isArray(payload.notifications)) {
+                    payload.notifications.forEach(showToast);
+                }
+            };
+
+            socket.onclose = function () {
+                reconnectTimeout = window.setTimeout(connectRealtime, 3000);
+            };
+
+            socket.onerror = function () {
+                socket.close();
+            };
+        }
+
+        connectRealtime();
+    })();
+</script>
+{% endif %}

@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+
+{% block title %}Đổi lịch khám{% endblock %}
+
+{% block content %}
+<div class="inner-banner-w3ls"><div class="container"></div></div>
+<div class="breadcrumb-agile">
+    <div aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'patient-my-appointments' %}">Lịch hẹn của tôi</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Đổi lịch khám</li>
+        </ol>
+    </div>
+</div>
+
+<style>
+    .reschedule-shell {
+        padding: 18px 0 10px;
+    }
+    .reschedule-layout {
+        display: grid;
+        grid-template-columns: 380px minmax(0, 1fr);
+        gap: 24px;
+    }
+    .reschedule-side,
+    .reschedule-form-card {
+        border-radius: 24px;
+        border: 1px solid #e5edf5;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+        box-shadow: 0 18px 42px rgba(15, 23, 42, 0.06);
+    }
+    .reschedule-side {
+        padding: 24px;
+    }
+    .reschedule-form-card {
+        padding: 28px;
+    }
+    .reschedule-kicker {
+        display: inline-block;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: #e0f2fe;
+        color: #075985;
+        font-weight: 700;
+        margin-bottom: 14px;
+    }
+    .reschedule-form-card h3,
+    .reschedule-side h4 {
+        color: #15324b;
+    }
+    .reschedule-note {
+        border-radius: 18px;
+        background: #fff7db;
+        color: #8a5b00;
+        padding: 14px 16px;
+        margin-bottom: 20px;
+        border: 1px solid #f8e3a2;
+    }
+    .current-slot-grid {
+        display: grid;
+        gap: 12px;
+        margin-top: 18px;
+    }
+    .current-slot-item {
+        border-radius: 16px;
+        background: #f8fbfe;
+        border: 1px solid #ebf1f6;
+        padding: 14px 16px;
+    }
+    .current-slot-item span {
+        display: block;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #7b8da1;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+    .current-slot-item strong {
+        color: #17324d;
+        line-height: 1.45;
+    }
+    .reschedule-form-card .form-group label {
+        font-weight: 700;
+        color: #17324d;
+        margin-bottom: 8px;
+    }
+    .reschedule-form-card input,
+    .reschedule-form-card select,
+    .reschedule-form-card textarea {
+        border-radius: 16px !important;
+        min-height: 50px;
+        border: 1px solid #d9e4ef;
+        box-shadow: none !important;
+    }
+    .reschedule-form-card textarea {
+        min-height: 120px;
+    }
+    .reschedule-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 18px;
+    }
+    .reschedule-actions .btn {
+        border-radius: 999px;
+        padding: 11px 18px;
+        font-weight: 700;
+    }
+    @media (max-width: 991px) {
+        .reschedule-layout {
+            grid-template-columns: 1fr;
+        }
+        .reschedule-side,
+        .reschedule-form-card {
+            padding: 22px;
+        }
+    }
+</style>
+
+<div class="container reschedule-shell mb-5">
+    <div class="reschedule-layout">
+        <aside class="reschedule-side">
+            <span class="reschedule-kicker">Lịch hiện tại</span>
+            <h4 class="mb-3">Bạn đang đổi một lịch khám đã xác nhận</h4>
+            <p class="text-muted mb-0">Hệ thống sẽ giữ lịch cũ cho đến khi lịch mới được xác nhận thành công. Slot cũ chỉ được giải phóng sau khi đổi lịch xong.</p>
+
+            <div class="current-slot-grid">
+                <div class="current-slot-item">
+                    <span>Bác sĩ</span>
+                    <strong>{{ object.appointment.full_name }}</strong>
+                </div>
+                <div class="current-slot-item">
+                    <span>Chuyên khoa</span>
+                    <strong>{{ object.appointment.department }}</strong>
+                </div>
+                <div class="current-slot-item">
+                    <span>Ngày giờ</span>
+                    <strong>{{ object.date|date:"d/m/Y" }} • {{ object.time|time:"H:i" }}</strong>
+                </div>
+            </div>
+        </aside>
+
+        <section class="reschedule-form-card">
+            <h3 class="mb-3">Chọn lịch khám mới</h3>
+            <div class="reschedule-note">
+                <i class="fas fa-clock mr-2"></i>Bạn chỉ có thể đổi lịch trước tối thiểu {{ change_deadline_hours }} giờ.
+            </div>
+
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                Vui lòng kiểm tra lại lựa chọn. Nếu có người vừa chọn slot này trước bạn, hãy chọn ca hoặc giờ khác.
+            </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    {{ form.appointment.label_tag }}
+                    {{ form.appointment }}
+                </div>
+                <div class="form-group">
+                    {{ form.time.label_tag }}
+                    {{ form.time }}
+                </div>
+                <div class="form-group">
+                    {{ form.reason.label_tag }}
+                    {{ form.reason }}
+                </div>
+                <div class="form-group">
+                    {{ form.message.label_tag }}
+                    {{ form.message }}
+                </div>
+                <div class="reschedule-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check-circle mr-2"></i>Xác nhận đổi lịch
+                    </button>
+                    <a href="{% url 'patient-my-appointments' %}" class="btn btn-outline-secondary">Quay lại</a>
+                </div>
+            </form>
+        </section>
+    </div>
+</div>
+{% endblock %}

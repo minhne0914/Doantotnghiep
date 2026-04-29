@@ -1,0 +1,46 @@
+{% extends 'app.html' %}
+{% load bootstrap %}
+
+{% block title %}Chỉnh sửa hồ sơ bác sĩ{% endblock %}
+
+{% block content %}
+<div class="content-wrapper" style="min-height: 1638px;">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Chỉnh sửa hồ sơ</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="#">Hồ sơ</a></li>
+              <li class="breadcrumb-item active">Chỉnh sửa hồ sơ</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-md-8 offset-md-2">
+              <div class="card card-primary">
+                <div class="card-header">
+                  <h3 class="card-title">Cập nhật thông tin bác sĩ</h3>
+                </div>
+                <form id="quickForm" novalidate="novalidate" method="POST">{% csrf_token %}
+                  <div class="card-body">
+                      {{ form|bootstrap }}
+                  </div>
+                  <div class="card-footer" style="text-align: center;">
+                      <input type="submit" value="Cập nhật" class="btn btn-primary btn-md text-white" style="width: 100px;">
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+</div>
+{% endblock %}

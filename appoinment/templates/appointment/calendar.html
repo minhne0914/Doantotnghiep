@@ -1,0 +1,167 @@
+{% extends 'app.html' %}
+{% load static %}
+{% block title %}Quản lý Lịch Khám{% endblock %}
+
+{% block content %}
+<div class="content-wrapper" style="min-height: 100vh;">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Lịch Khám Chuyên Sâu</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'doctor-dashboard' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Lịch khám</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card card-primary card-outline shadow-sm border-0" style="border-radius: 16px;">
+                        <div class="card-body p-4">
+                            <!-- THE CALENDAR -->
+                            <div id="calendar" style="min-height: 800px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- FullCalendar -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<!-- Định dạng tiếng Việt cho FullCalendar -->
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.11/locales/vi.global.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'timeGridWeek',
+            headerToolbar: {
+                left: 'prev,next today myCustomButton',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            customButtons: {
+                myCustomButton: {
+                    text: '+ Mở phân ca',
+                    click: function() {
+                        window.location.href = "{% url 'doctor-appointment-create' %}";
+                    }
+                }
+            },
+            locale: 'vi',
+            slotMinTime: '06:00:00',
+            slotMaxTime: '22:00:00',
+            allDaySlot: true,
+            expandRows: true,
+            nowIndicator: true,
+            events: '{% url "doctor-calendar-events" %}',
+            eventClick: function(info) {
+                // Bỏ qua click nêú đó là background event (Khung giờ trống)
+                if (info.event.display === 'background') {
+                    return;
+                }
+
+                var props = info.event.extendedProps;
+                var startDate = info.event.start;
+                var endDate = info.event.end;
+                
+                var timeStr = startDate.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'}) + 
+                              ' - ' + 
+                              endDate.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+                              
+                Swal.fire({
+                    title: 'Chi tiết lịch đặt',
+                    html: `
+                        <div style="text-align: left; padding: 10px;">
+                            <p style="font-size: 1.1rem;"><strong>${props.patient_name}</strong></p>
+                            <p><i class="fas fa-phone mr-2 text-muted"></i> ${props.phone}</p>
+                            <p><i class="fas fa-clock mr-2 text-muted"></i> ${timeStr}</p>
+                            <p><i class="fas fa-calendar-day mr-2 text-muted"></i> ${startDate.toLocaleDateString('vi-VN')}</p>
+                            <p><i class="fas fa-info-circle mr-2 text-muted"></i> Trạng thái: <b style="color: ${info.event.backgroundColor}">${props.status}</b></p>
+                            <p><i class="fas fa-comment-medical mr-2 text-muted"></i> Lời nhắn: <i>${props.message}</i></p>
+                            <hr/>
+                            <div class="d-flex justify-content-center mt-3">
+                                <a href="/appointment/${props.booking_id}/chat/" class="btn btn-info w-100"><i class="fas fa-comments mr-2"></i>Mở kênh Chat</a>
+                            </div>
+                        </div>
+                    `,
+                    showConfirmButton: true,
+                    confirmButtonText: 'Đóng',
+                    confirmButtonColor: '#6c757d'
+                });
+            },
+            dateClick: function(info) {
+                const dateStr = info.dateStr.split('T')[0];
+                Swal.fire({
+                    title: 'Mở thêm ca làm việc?',
+                    text: `Ngày ${new Date(dateStr).toLocaleDateString('vi-VN')}`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#0f766e',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Tạo ca làm việc',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = `{% url 'doctor-appointment-create' %}?date=${dateStr}`;
+                    }
+                });
+            }
+        });
+        calendar.render();
+    });
+</script>
+
+<style>
+    /* Tuỳ chỉnh UI cho gọn gàng và đẹp hơn của FullCalendar */
+    .fc-theme-standard .fc-scrollgrid {
+        border-radius: 12px;
+        overflow: hidden;
+        border-color: #e2e8f0;
+    }
+    .fc-event {
+        cursor: pointer;
+        padding: 2px 4px;
+        font-size: 0.9em;
+        border-radius: 6px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        transition: transform 0.1s ease;
+    }
+    .fc-event:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+        z-index: 99 !important;
+    }
+    .fc-bg-event {
+        opacity: 0.6 !important;
+        cursor: pointer;
+    }
+    .fc-button-primary {
+        background-color: #0f766e !important;
+        border-color: #0f766e !important;
+        border-radius: 8px !important;
+    }
+    .fc-button-primary:hover {
+        background-color: #0d9488 !important;
+    }
+    .fc-myCustomButton-button {
+        font-weight: bold;
+        background-color: #10b981 !important;
+        border-color: #10b981 !important;
+    }
+</style>
+{% endblock %}

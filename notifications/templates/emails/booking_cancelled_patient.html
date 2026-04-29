@@ -1,0 +1,11 @@
+{% extends "emails/base_email.html" %}
+{% block content %}
+<h3 style="margin-top:0;">Lịch khám đã bị hủy</h3>
+<p>Lịch khám của bạn đã được hủy.</p>
+<ul>
+    <li>Bác sĩ: {{ booking.appointment.full_name }}</li>
+    <li>Ngày cũ: {{ appointment_info.date }}</li>
+    <li>Giờ cũ: {{ appointment_info.time }}</li>
+    <li>Người thực hiện: {{ cancelled_by }}</li>
+</ul>
+{% endblock %}

@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% block title %} Sàng Lọc Ung Thư Da {% endblock %}
+{% block style %}
+<style>
+  .screening-shell { padding: 48px 0 64px; }
+  .screening-card { background: #fff; border-radius: 24px; box-shadow: 0 18px 50px rgba(20, 60, 90, 0.12); overflow: hidden; }
+  .screening-head { background: linear-gradient(135deg, #b91c1c, #7f1d1d); color: #fff; padding: 28px 28px 24px; }
+  .screening-head p { margin: 10px 0 0; color: rgba(255,255,255,.86); }
+  .screening-body { padding: 28px; background: #fef7f5; }
+  .field-card, .result-card, .advice-card { background: #fff; border-radius: 18px; padding: 22px; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); margin-bottom: 20px; }
+  .field-card h5, .result-card h5, .advice-card h5 { margin-bottom: 16px; color: #0f172a; }
+  .screening-body label { color: #0f172a; font-weight: 600; margin-bottom: 8px; }
+  .result-badge { display: inline-block; padding: 10px 18px; border-radius: 999px; font-weight: 700; margin-top: 8px; }
+  .result-danger { background: #fee2e2; color: #b91c1c; }
+  .result-safe { background: #dcfce7; color: #166534; }
+  .result-warning { background: #fef3c7; color: #92400e; }
+  .screening-note { border-left: 4px solid #f59e0b; background: #fffbeb; color: #92400e; padding: 14px 16px; border-radius: 12px; margin-top: 16px; }
+  .screening-danger { border-left: 4px solid #dc2626; background: #fef2f2; color: #991b1b; padding: 14px 16px; border-radius: 12px; margin-top: 16px; font-weight: 600; }
+  .submit-btn { border-radius: 14px; padding: 12px 20px; font-weight: 700; width: 100%; background: #dc2626; border-color: #dc2626; }
+  .submit-btn:hover { background: #b91c1c; border-color: #b91c1c; }
+  .preview-box { background: #fff; border-radius: 18px; padding: 18px; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); }
+  .prediction-row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9; gap: 12px; }
+  .prediction-row:last-child { border-bottom: none; }
+  .prediction-row .label { flex: 1; }
+  .prediction-bar { flex: 1.5; background: #f1f5f9; border-radius: 999px; height: 10px; overflow: hidden; }
+  .prediction-bar .fill { height: 100%; border-radius: 999px; transition: width .3s; }
+  .fill-danger { background: linear-gradient(90deg, #dc2626, #b91c1c); }
+  .fill-warning { background: linear-gradient(90deg, #f59e0b, #d97706); }
+  .fill-info { background: linear-gradient(90deg, #3b82f6, #1d4ed8); }
+  .fill-success { background: linear-gradient(90deg, #16a34a, #15803d); }
+  .fill-secondary { background: linear-gradient(90deg, #94a3b8, #64748b); }
+  .prediction-pct { width: 64px; text-align: right; font-weight: 700; color: #0f172a; }
+  .severity-pill { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: .5px; }
+  .pill-danger { background: #fee2e2; color: #b91c1c; }
+  .pill-warning { background: #fef3c7; color: #92400e; }
+  .pill-success { background: #dcfce7; color: #166534; }
+  .pill-info { background: #dbeafe; color: #1e40af; }
+  .legend-card { background: #fff; border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+  .legend-item { padding: 6px 0; font-size: 14px; color: #475569; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="inner-banner-w3ls"><div class="container"></div></div>
+<div class="breadcrumb-agile">
+  <div aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Sàng lọc ung thư da</li>
+    </ol>
+  </div>
+</div>
+<section class="screening-shell">
+  <div class="container">
+    <div class="screening-card">
+      <div class="screening-head">
+        <h3 class="mb-0"><i class="fas fa-allergies"></i> Sàng lọc ung thư da bằng AI</h3>
+        <p>Phân loại 7 nhóm tổn thương da phổ biến (HAM10000) bằng mạng CNN. Kết quả chỉ mang tính tham khảo, KHÔNG thay thế chẩn đoán của bác sĩ Da liễu.</p>
+      </div>
+      <div class="screening-body">
+        {% if error %}
+        <div class="result-card">
+          <h5>Thông báo hệ thống</h5>
+          <div class="screening-note">{{ error }}</div>
+        </div>
+        {% endif %}
+
+        {% if top_class %}
+        <div class="result-card">
+          <h5>Kết quả phân tích</h5>
+          {% if is_dangerous %}
+            <span class="result-badge result-danger">
+              <i class="fas fa-exclamation-triangle"></i> Nghi ngờ {{ top_class.label_vi }}
+            </span>
+            <div class="screening-danger">
+              Mô hình nghi ngờ tổn thương dạng <b>{{ top_class.label_vi }}</b> (<i>{{ top_class.label_en }}</i>) với xác suất {{ top_class.probability }}%.
+              Đây có thể là dạng tổn thương ác tính/tiền ung thư - <b>hãy đi khám chuyên khoa Da liễu sớm trong 1-3 ngày tới</b>.
+            </div>
+          {% else %}
+            <span class="result-badge result-safe">
+              <i class="fas fa-check-circle"></i> {{ top_class.label_vi }}
+            </span>
+            <div class="screening-note">
+              Mô hình phân loại dạng <b>{{ top_class.label_vi }}</b> với xác suất {{ top_class.probability }}%.
+              Phần lớn các loại tổn thương này lành tính. Nếu thấy thay đổi kích thước/màu sắc, vẫn nên đi khám.
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="result-card">
+          <h5>Phân bố xác suất theo từng nhóm</h5>
+          <p class="text-muted small mb-3">Mô hình ước lượng độ tin cậy của 7 nhóm tổn thương da, sắp xếp giảm dần.</p>
+          {% for p in predictions %}
+            <div class="prediction-row">
+              <div class="label">
+                <div><b>{{ p.label_vi }}</b> <span class="text-muted small">({{ p.label_en }})</span></div>
+                <div>
+                  {% if p.severity == 'malignant_high' or p.severity == 'malignant' %}
+                    <span class="severity-pill pill-danger">Ác tính</span>
+                  {% elif p.severity == 'precancerous' %}
+                    <span class="severity-pill pill-warning">Tiền ung thư</span>
+                  {% else %}
+                    <span class="severity-pill pill-success">Lành tính</span>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="prediction-bar">
+                <div class="fill fill-{{ p.badge }}" style="width: {{ p.probability }}%;"></div>
+              </div>
+              <div class="prediction-pct">{{ p.probability }}%</div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class="advice-card">
+          <h5 class="text-info"><i class="fas fa-stethoscope"></i> Khuyến nghị</h5>
+          {% if advices %}
+          <ul class="mb-0">
+            {% for advice in advices %}
+              <li style="margin-bottom: 8px;"><b>{{ advice }}</b></li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+
+          <h5 class="mt-4">Quy tắc ABCDE để tự kiểm tra nốt ruồi</h5>
+          <ul class="mb-0 text-muted">
+            <li><b>A</b>symmetry - Bất đối xứng: nửa này khác nửa kia</li>
+            <li><b>B</b>order - Bờ viền: lởm chởm, không đều</li>
+            <li><b>C</b>olor - Màu sắc: nhiều màu khác nhau trong cùng một nốt</li>
+            <li><b>D</b>iameter - Đường kính: lớn hơn 6 mm</li>
+            <li><b>E</b>volution - Thay đổi: kích thước/màu/hình dạng thay đổi theo thời gian</li>
+          </ul>
+        </div>
+        {% endif %}
+
+        <div class="row">
+          <div class="col-lg-5">
+            <div class="preview-box">
+              <h5 class="mb-3">Ảnh xem trước</h5>
+              {% if uploaded_image %}
+                <img src="data:image/png;base64,{{ uploaded_image }}" alt="Uploaded skin lesion" style="max-width: 100%; border-radius: 12px;">
+              {% else %}
+                <p class="text-muted mb-0">Ảnh tổn thương da sẽ hiển thị tại đây sau khi bạn tải lên.</p>
+              {% endif %}
+            </div>
+            {% if not top_class %}
+            <div class="legend-card mt-3">
+              <h6 class="mb-2"><i class="fas fa-info-circle"></i> 7 nhóm phân loại</h6>
+              {% for c in classes %}
+              <div class="legend-item">
+                {% if c.severity == 'malignant_high' %}<span class="severity-pill pill-danger">Ác tính cao</span>
+                {% elif c.severity == 'malignant' %}<span class="severity-pill pill-danger">Ác tính</span>
+                {% elif c.severity == 'precancerous' %}<span class="severity-pill pill-warning">Tiền UT</span>
+                {% else %}<span class="severity-pill pill-success">Lành tính</span>{% endif %}
+                <b>{{ c.vi }}</b>
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          <div class="col-lg-7">
+            <form method="POST" action="{% url 'skin_cancer_detector' %}" enctype="multipart/form-data">
+              {% csrf_token %}
+              <div class="field-card">
+                <h5>Tải ảnh tổn thương da</h5>
+                <p class="text-muted mb-3">Chụp gần (10-15 cm), ánh sáng tốt, lấy nét vào nốt ruồi/tổn thương cần đánh giá. Định dạng JPG/PNG/WEBP, dung lượng dưới 5 MB.</p>
+                <div class="form-group mb-0">
+                  <label for="skin_image">Ảnh chụp tổn thương</label>
+                  <input type="file" class="form-control" id="skin_image" name="skin_image" accept="image/*" onchange="previewImage(this)" required>
+                </div>
+                <img id="image-preview" src="#" alt="Preview" style="display: none; max-width: 100%; max-height: 220px; margin-top: 16px; border-radius: 12px;">
+              </div>
+              <div class="field-card">
+                <p class="mb-2 text-muted small"><i class="fas fa-shield-alt"></i> Ảnh chỉ được dùng để phân tích AI, lưu trong lịch sử cá nhân của bạn để theo dõi.</p>
+                <p class="mb-0 text-danger small"><i class="fas fa-exclamation-circle"></i> Đây là sàng lọc sơ bộ. Kết quả không thay thế việc khám của bác sĩ Da liễu.</p>
+              </div>
+              <button type="submit" class="btn btn-danger submit-btn">
+                <i class="fas fa-microscope"></i> Phân tích bằng AI
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+  function previewImage(input) {
+      var preview = document.getElementById('image-preview');
+      var file = input.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function (e) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+      }
+      reader.readAsDataURL(file);
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "emails/base_email.html" %}
+{% block content %}
+<h3 style="margin-top:0;">Có bệnh nhân mới đặt lịch</h3>
+<p>Bệnh nhân vừa đặt lịch khám với bạn.</p>
+<ul>
+    <li>Bệnh nhân: {{ patient.first_name }} {{ patient.last_name }}</li>
+    <li>Ngày: {{ appointment_info.date }}</li>
+    <li>Giờ: {{ appointment_info.time }}</li>
+    <li>Ghi chú: {{ booking.message }}</li>
+</ul>
+{% endblock %}

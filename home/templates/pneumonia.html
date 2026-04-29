@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% block title %} Sàng Lọc Nguy Cơ Viêm Phổi {% endblock %}
+{% block style %}
+<style>
+  .screening-shell { padding: 48px 0 64px; }
+  .screening-card { background: #fff; border-radius: 24px; box-shadow: 0 18px 50px rgba(20, 60, 90, 0.12); overflow: hidden; }
+  .screening-head { background: linear-gradient(135deg, #0369a1, #075985); color: #fff; padding: 28px 28px 24px; }
+  .screening-head p { margin: 10px 0 0; color: rgba(255,255,255,.86); }
+  .screening-body { padding: 28px; background: #f4fbff; }
+  .field-card, .result-card, .advice-card { background: #fff; border-radius: 18px; padding: 22px; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); margin-bottom: 20px; }
+  .field-card h5, .result-card h5, .advice-card h5 { margin-bottom: 16px; color: #0f172a; }
+  .screening-body label { color: #0f172a; font-weight: 600; margin-bottom: 8px; }
+  .screening-body .form-control { border-radius: 12px; min-height: 46px; }
+  .result-badge { display: inline-block; padding: 10px 18px; border-radius: 999px; font-weight: 700; margin-top: 8px; }
+  .result-high { background: #fee2e2; color: #b91c1c; }
+  .result-low { background: #dcfce7; color: #166534; }
+  .screening-note { border-left: 4px solid #f59e0b; background: #fffbeb; color: #92400e; padding: 14px 16px; border-radius: 12px; margin-top: 16px; }
+  .submit-btn { border-radius: 14px; padding: 12px 20px; font-weight: 700; width: 100%; }
+  .preview-box { background: #fff; border-radius: 18px; padding: 18px; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="inner-banner-w3ls"><div class="container"></div></div>
+<div class="breadcrumb-agile">
+  <div aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Sàng lọc nguy cơ viêm phổi</li>
+    </ol>
+  </div>
+</div>
+<section class="screening-shell">
+  <div class="container">
+    <div class="screening-card">
+      <div class="screening-head">
+        <h3 class="mb-0">Sàng lọc nguy cơ viêm phổi</h3>
+        <p>Kết quả hình ảnh chỉ giúp hỗ trợ tham khảo ban đầu, không thay thế việc đọc phim và khám lâm sàng bởi bác sĩ.</p>
+      </div>
+      <div class="screening-body">
+        {% if error %}
+        <div class="result-card">
+          <h5>Thông báo hệ thống</h5>
+          <div class="screening-note">{{ error }}</div>
+        </div>
+        {% endif %}
+        {% if pneumonia_detected is not None %}
+        <div class="result-card">
+          <h5>Kết quả sàng lọc</h5>
+          <span class="result-badge {% if pneumonia_detected %}result-high{% else %}result-low{% endif %}">
+            {% if pneumonia_detected %}Nguy cơ viêm phổi cao hơn{% else %}Nguy cơ viêm phổi thấp hơn{% endif %}
+          </span>
+          <div class="screening-note">
+            Độ tin cậy ước tính của mô hình: {{ probability }}%
+          </div>
+        </div>
+        <div class="advice-card mt-3">
+          <h5 class="text-info"><i class="fas fa-heartbeat"></i> Gợi ý sức khỏe dành riêng cho bạn</h5>
+          {% if advices %}
+          <ul class="mb-0">
+            {% for advice in advices %}
+              <li style="margin-bottom: 8px;"><b>{{ advice }}</b></li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+          
+          <h5 class="mt-4">Khuyến cáo chung nên làm gì tiếp theo?</h5>
+          {% if pneumonia_detected %}
+          <ul class="mb-0 text-muted">
+            <li>Nên đi khám sớm, đặc biệt nếu có sốt, ho, đau ngực hoặc khó thở.</li>
+            <li>Đi cấp cứu ngay nếu khó thở tăng nhanh, tím môi, mệt lả hoặc nghi ngờ thiếu oxy.</li>
+            <li>Nghỉ ngơi, uống đủ nước và hạn chế tiếp xúc gần với người khác cho đến khi được bác sĩ đánh giá.</li>
+            <li>Không dùng kết quả này để tự kết luận thay cho phim chụp và khám lâm sàng.</li>
+          </ul>
+          {% else %}
+          <ul class="mb-0 text-muted">
+            <li>Tiếp tục theo dõi nếu vẫn còn ho, sốt hoặc mệt sau khi sàng lọc.</li>
+            <li>Nếu triệu chứng kéo dài hoặc nặng hơn, bạn vẫn nên đi khám chuyên môn.</li>
+            <li>Kết quả mức thấp hơn không loại trừ hoàn toàn nguy cơ bệnh lý hô hấp.</li>
+          </ul>
+          {% endif %}
+        </div>
+        {% endif %}
+        <div class="row">
+          <div class="col-lg-5">
+            <div class="preview-box">
+              <h5 class="mb-3">Ảnh xem trước</h5>
+              {% if uploaded_image %}
+                <img src="data:image/png;base64,{{ uploaded_image }}" alt="Uploaded X-ray" style="max-width: 100%; border-radius: 12px;">
+              {% else %}
+                <p class="text-muted mb-0">Ảnh X-quang sẽ hiển thị tại đây sau khi bạn tải lên.</p>
+              {% endif %}
+            </div>
+          </div>
+          <div class="col-lg-7">
+            <form method="POST" action="{% url 'pneumonia_detector' %}" enctype="multipart/form-data">
+              {% csrf_token %}
+              <div class="field-card">
+                <h5>Tải ảnh để sàng lọc</h5>
+                <p class="text-muted mb-3">Hãy chọn ảnh X-quang ngực rõ nét để hệ thống phân tích sơ bộ.</p>
+                <div class="form-group mb-0">
+                  <label for="xray">Ảnh X-quang</label>
+                  <input type="file" class="form-control" id="xray" name="xray" accept="image/*" onchange="previewImage(this)">
+                </div>
+                <img id="image-preview" src="#" alt="Preview" style="display: none; max-width: 100%; max-height: 220px; margin-top: 16px; border-radius: 12px;">
+              </div>
+              <button type="submit" class="btn btn-primary submit-btn">Thực hiện sàng lọc</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+  function previewImage(input) {
+      var preview = document.getElementById('image-preview');
+      var file = input.files[0];
+      var reader = new FileReader();
+      reader.onload = function (e) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+      }
+      if (file) {
+          reader.readAsDataURL(file);
+      }
+  }
+</script>
+{% endblock %}

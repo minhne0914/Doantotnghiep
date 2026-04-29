@@ -1,0 +1,347 @@
+{% extends 'app.html' %}
+{% load static i18n %}
+
+{% block content %}
+<style>
+    .inbox-container {
+        height: calc(100vh - 120px);
+        margin: 15px;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        display: flex;
+        overflow: hidden;
+    }
+    .inbox-list {
+        width: 350px;
+        border-right: 1px solid #e1e4e8;
+        display: flex;
+        flex-direction: column;
+    }
+    .inbox-header {
+        padding: 20px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e1e4e8;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+    .inbox-items {
+        flex: 1;
+        overflow-y: auto;
+    }
+    .inbox-item {
+        padding: 15px 20px;
+        border-bottom: 1px solid #f1f1f1;
+        display: flex;
+        gap: 15px;
+        cursor: pointer;
+        transition: background 0.2s;
+        text-decoration: none;
+        color: inherit;
+    }
+    .inbox-item:hover {
+        background: #f8f9fa;
+    }
+    .inbox-item.active {
+        background: #e3f2fd;
+        border-left: 4px solid #007bff;
+    }
+    .inbox-item img {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    .inbox-item-details {
+        flex: 1;
+        overflow: hidden;
+    }
+    .inbox-item-name {
+        font-weight: bold;
+        margin-bottom: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .inbox-item-preview {
+        font-size: 0.85rem;
+        color: #6c757d;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .inbox-chat-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #f4f6f9;
+        position: relative;
+    }
+    .chat-header {
+        background: #fff;
+        padding: 15px 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        border-bottom: 1px solid #e1e4e8;
+    }
+    .chat-header img {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    .message {
+        max-width: 70%;
+        padding: 10px 15px;
+        border-radius: 15px;
+        position: relative;
+    }
+    .message-other {
+        background: #fff;
+        align-self: flex-start;
+        border: 1px solid #e1e4e8;
+        border-bottom-left-radius: 0;
+    }
+    .message-me {
+        background: #007bff;
+        color: white;
+        align-self: flex-end;
+        border-bottom-right-radius: 0;
+    }
+    .message-timestamp {
+        font-size: 0.7rem;
+        opacity: 0.7;
+        margin-top: 5px;
+        text-align: right;
+    }
+    .chat-input-area {
+        padding: 15px;
+        background: #fff;
+        border-top: 1px solid #e1e4e8;
+        display: flex;
+        gap: 10px;
+    }
+    .chat-input-area input {
+        flex: 1;
+        border-radius: 20px;
+        border: 1px solid #ced4da;
+        padding: 10px 20px;
+        outline: none;
+    }
+    .chat-input-area button {
+        border-radius: 50%;
+        width: 45px;
+        height: 45px;
+        border: none;
+        background: #007bff;
+        color: white;
+    }
+    .no-chat-selected {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        color: #6c757d;
+    }
+    .no-chat-selected i {
+        font-size: 4rem;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
+</style>
+
+<div class="content-wrapper">
+    <div class="inbox-container">
+        <!-- Sidebar Danh sách -->
+        <div class="inbox-list">
+            <div class="inbox-header">
+                {% trans "Hộp thư bệnh nhân" %}
+            </div>
+            <div class="inbox-items">
+                {% for b in bookings %}
+                <a href="{% url 'doctor-inbox-detail' b.id %}" class="inbox-item {% if active_booking and active_booking.id == b.id %}active{% endif %}">
+                    {% if b.user.image %}
+                        <img src="{{ b.user.image.url }}" alt="Avatar">
+                    {% else %}
+                        <img src="{% static 'images/default-avatar.png' %}" alt="Avatar">
+                    {% endif %}
+                    <div class="inbox-item-details">
+                        <div class="inbox-item-name">
+                            {{ b.full_name }}
+                            {% if b.has_unread %}
+                                <span class="badge badge-danger float-right ml-1" style="font-size:0.6rem; margin-top:2px;">Mới</span>
+                            {% endif %}
+                        </div>
+                        <div class="inbox-item-preview" style="{% if b.has_unread %}font-weight: 700; color: #000;{% endif %}">
+                            {% if b.latest_msg %}
+                                 {% if b.latest_msg.sender.id == request.user.id %}
+                                     Bạn: 
+                                 {% endif %}
+                                 {{ b.latest_msg.content|truncatechars:30 }}
+                                 {% if b.latest_msg.attachments %}
+                                     <i class="fas fa-file-image ml-1"></i>
+                                 {% endif %}
+                            {% else %}
+                                <i>{% trans "Bắt đầu cuộc trò chuyện" %}</i>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+                {% empty %}
+                <div class="p-4 text-center text-muted">
+                    {% trans "Chưa có bệnh nhân nào." %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Vùng Chat -->
+        {% if active_booking %}
+        <div class="inbox-chat-area">
+            <div class="chat-header">
+                {% if active_booking.user.image %}
+                    <img src="{{ active_booking.user.image.url }}" alt="Avatar">
+                {% else %}
+                    <img src="{% static 'images/default-avatar.png' %}" alt="Avatar">
+                {% endif %}
+                <div>
+                    <h5 class="mb-0">{{ active_booking.full_name }}</h5>
+                    <small class="text-muted">{{ active_booking.user.email }}</small>
+                </div>
+                
+                {% if not chat_enabled %}
+                <span class="badge badge-warning ml-auto">{% trans "Đã khóa chat" %}</span>
+                {% endif %}
+            </div>
+
+            <div class="chat-messages" id="chat-box">
+                {% for msg in chat_messages %}
+                    {% if msg.sender.id == request.user.id %}
+                    <div class="message message-me">
+                        {% if msg.attachments %}
+                            <div class="mb-2"><img src="{{ msg.attachments.url }}" alt="Attachment" style="max-width:200px; border-radius:10px;"></div>
+                        {% endif %}
+                        <div>{{ msg.content }}</div>
+                        <div class="message-timestamp">{{ msg.created_at|date:"H:i d/m/Y" }}</div>
+                    </div>
+                    {% else %}
+                    <div class="message message-other">
+                        {% if msg.attachments %}
+                            <div class="mb-2"><img src="{{ msg.attachments.url }}" alt="Attachment" style="max-width:200px; border-radius:10px;"></div>
+                        {% endif %}
+                        <div>{{ msg.content }}</div>
+                        <div class="message-timestamp">{{ msg.created_at|date:"H:i d/m/Y" }}</div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            {% if chat_enabled %}
+            <div class="chat-input-area">
+                <input type="file" id="chat-attachment" accept="image/*" style="display:none;">
+                <button type="button" id="btn-attach" style="background:#f8f9fa; color:#6c757d; border:1px solid #ced4da;" onclick="document.getElementById('chat-attachment').click();"><i class="fas fa-paperclip"></i></button>
+                <div id="attachment-preview" style="display:none; position:absolute; bottom:70px; left:20px; background:#fff; padding:10px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.1);"><img id="img-preview" src="" style="height:60px;"><button id="rm-attach" style="position:absolute; top:-10px; right:-10px; background:red; width:25px; height:25px; font-size:12px;">x</button></div>
+                <input type="text" id="chat-input" placeholder="{% trans 'Nhập tin nhắn...' %}" autocomplete="off">
+                <button id="chat-send"><i class="fas fa-paper-plane"></i></button>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if chat_enabled %}
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const chatBox = document.getElementById('chat-box');
+                const chatInput = document.getElementById('chat-input');
+                const chatSend = document.getElementById('chat-send');
+
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+                const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+                const wsUrl = wsProtocol + '://' + window.location.host + '/ws/chat/{{ active_booking.id }}/';
+                const chatSocket = new WebSocket(wsUrl);
+
+                chatSocket.onmessage = function(e) {
+                    const data = JSON.parse(e.data);
+                    
+                    const myUserId = parseInt("{{ request.user.id|default:'0' }}", 10);
+                    const isMe = data.sender_id === myUserId;
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = 'message ' + (isMe ? 'message-me' : 'message-other');
+                    
+                    msgDiv.innerHTML = `
+                        ${data.attachment_url ? `<div class="mb-2"><img src="${data.attachment_url}" style="max-width:200px; border-radius:10px;"></div>` : ''}
+                        <div>${data.message}</div>
+                        <div class="message-timestamp">${data.timestamp}</div>
+                    `;
+                    
+                    chatBox.appendChild(msgDiv);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                };
+
+                let currentAttachmentData = null;
+                let currentAttachmentName = null;
+
+                const attachInput = document.getElementById('chat-attachment');
+                const attachPreview = document.getElementById('attachment-preview');
+                const imgPreview = document.getElementById('img-preview');
+                document.getElementById('rm-attach').onclick = function() {
+                    attachInput.value = '';
+                    currentAttachmentData = null;
+                    currentAttachmentName = null;
+                    attachPreview.style.display = 'none';
+                };
+
+                attachInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if(file) {
+                        const reader = new FileReader();
+                        reader.onload = function(evt) {
+                            currentAttachmentData = evt.target.result;
+                            currentAttachmentName = file.name;
+                            imgPreview.src = evt.target.result;
+                            attachPreview.style.display = 'block';
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+
+                function sendMessage() {
+                    const message = chatInput.value.trim();
+                    if (message || currentAttachmentData) {
+                        chatSocket.send(JSON.stringify({
+                            'message': message,
+                            'attachment_data': currentAttachmentData,
+                            'attachment_name': currentAttachmentName
+                        }));
+                        chatInput.value = '';
+                        document.getElementById('rm-attach').click();
+                    }
+                }
+
+                chatSend.onclick = function() { sendMessage(); };
+                chatInput.addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') { sendMessage(); }
+                });
+            });
+        </script>
+        {% endif %}
+
+        {% else %}
+        <div class="no-chat-selected">
+            <i class="far fa-comments"></i>
+            <h5>{% trans "Chọn một bệnh nhân để bắt đầu trò chuyện" %}</h5>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
