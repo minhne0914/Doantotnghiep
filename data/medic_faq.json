@@ -1,0 +1,199 @@
+{
+  "version": "1.0",
+  "last_updated": "2026-04-29",
+  "description": "FAQ knowledge base cho Medic AI Chatbot. Mỗi mục có keywords để match với câu hỏi user.",
+  "faqs": [
+    {
+      "id": "system-intro",
+      "question": "Medic là gì? Hệ thống có những tính năng gì?",
+      "keywords": ["medic", "hệ thống", "tính năng", "giới thiệu", "là gì", "làm gì"],
+      "answer": "Medic là hệ thống quản lý y tế trực tuyến gồm: (1) Đặt lịch khám với bác sĩ, (2) Bệnh án điện tử (EMR) lưu lịch sử khám, (3) Sàng lọc bệnh bằng AI cho 6 loại: tiểu đường, ung thư vú, tim mạch, thận, viêm phổi, ung thư da, (4) Chat tư vấn AI với Medic AI, (5) Thông báo realtime."
+    },
+    {
+      "id": "register",
+      "question": "Làm sao để đăng ký tài khoản?",
+      "keywords": ["đăng ký", "tạo tài khoản", "register", "tạo acc", "sign up"],
+      "answer": "Vào trang chủ → click 'Đăng ký' → chọn vai trò Bệnh nhân hoặc Bác sĩ → điền email, họ tên, số điện thoại, mật khẩu → xác nhận. Email phải duy nhất, mật khẩu tối thiểu 8 ký tự."
+    },
+    {
+      "id": "login",
+      "question": "Tôi quên mật khẩu thì làm sao?",
+      "keywords": ["quên mật khẩu", "reset password", "đặt lại mật khẩu", "không nhớ mật khẩu"],
+      "answer": "Vào trang Đăng nhập → click 'Quên mật khẩu' → nhập email → kiểm tra hộp thư (cả thư rác) để nhận link đặt lại mật khẩu. Link có hiệu lực trong 24 giờ."
+    },
+    {
+      "id": "book-appointment",
+      "question": "Cách đặt lịch khám?",
+      "keywords": ["đặt lịch", "book", "đặt khám", "đặt hẹn", "lịch khám"],
+      "answer": "Đăng nhập → menu 'Bác sĩ' → chọn bác sĩ theo chuyên khoa → chọn ngày khám → chọn khung giờ trống → điền thông tin liên hệ → bấm 'Đặt lịch'. Lịch sẽ ở trạng thái 'Đã xác nhận' và bác sĩ sẽ nhận thông báo realtime."
+    },
+    {
+      "id": "cancel-appointment",
+      "question": "Tôi muốn hủy lịch khám thì làm thế nào?",
+      "keywords": ["hủy lịch", "cancel", "hủy khám", "không khám nữa"],
+      "answer": "Vào 'Lịch của tôi' → tìm lịch cần hủy → bấm 'Hủy' → ghi lý do → xác nhận. Lưu ý: chỉ hủy được trước giờ khám tối thiểu 4 tiếng. Sau thời điểm này không hủy được, nếu không tới khám sẽ bị tính là vắng mặt."
+    },
+    {
+      "id": "reschedule",
+      "question": "Có thể đổi lịch khám không?",
+      "keywords": ["đổi lịch", "reschedule", "đổi giờ", "đổi ngày", "dời lịch"],
+      "answer": "Có. Vào 'Lịch của tôi' → bấm 'Đổi lịch' → chọn bác sĩ/giờ mới → ghi lý do. Quy tắc giống hủy lịch: phải đổi trước giờ khám ít nhất 4 tiếng. Slot cũ sẽ tự động được giải phóng cho người khác đặt."
+    },
+    {
+      "id": "appointment-deadline",
+      "question": "Tại sao phải đặt lịch trước 4 tiếng?",
+      "keywords": ["4 tiếng", "trước bao lâu", "deadline", "thời gian", "tối thiểu"],
+      "answer": "Quy tắc 4 tiếng giúp bác sĩ chuẩn bị, sắp xếp thời gian, tránh để slot trống không có ai đặt thay. Nếu cần khám gấp dưới 4 tiếng, hãy gọi trực tiếp số điện thoại của phòng khám."
+    },
+    {
+      "id": "appointment-duration",
+      "question": "Mỗi ca khám kéo dài bao lâu?",
+      "keywords": ["bao lâu", "thời gian khám", "duration", "kéo dài", "30 phút"],
+      "answer": "Mỗi ca khám 30 phút. Hệ thống tự động chia khung giờ làm việc của bác sĩ thành các slot 30 phút, có nghỉ trưa từ 11:30 đến 13:00."
+    },
+    {
+      "id": "appointment-status",
+      "question": "Các trạng thái lịch khám là gì?",
+      "keywords": ["trạng thái", "status", "pending", "confirmed", "arrived", "completed"],
+      "answer": "Có 5 trạng thái: (1) Pending - Chờ xác nhận, (2) Confirmed - Đã xác nhận (mặc định khi đặt lịch online), (3) Arrived - Đang khám (bác sĩ xác nhận đã đến), (4) Completed - Đã hoàn thành (bác sĩ đã lưu bệnh án), (5) Cancelled - Đã hủy."
+    },
+    {
+      "id": "doctor-not-confirm",
+      "question": "Bác sĩ chưa xác nhận lịch của tôi?",
+      "keywords": ["chưa xác nhận", "pending", "đợi", "lâu", "không phản hồi"],
+      "answer": "Khi bạn đặt lịch online, hệ thống mặc định set trạng thái 'Đã xác nhận'. Nếu vẫn 'Chờ xác nhận' sau 24 giờ, có thể bác sĩ bận hoặc lịch trùng. Bạn có thể gửi tin nhắn cho bác sĩ qua khung chat hoặc đổi lịch khác."
+    },
+    {
+      "id": "medical-history",
+      "question": "Tôi xem lịch sử khám ở đâu?",
+      "keywords": ["lịch sử", "history", "bệnh án", "kết quả khám", "EMR"],
+      "answer": "Đăng nhập → menu 'Lịch sử sức khỏe' (/history/) → xem toàn bộ kết quả screening AI và bệnh án điện tử của các lần khám. Có biểu đồ glucose, huyết áp theo thời gian. Có thể export ra CSV."
+    },
+    {
+      "id": "ml-screening",
+      "question": "AI sàng lọc bệnh hoạt động thế nào?",
+      "keywords": ["AI", "sàng lọc", "screening", "machine learning", "chuẩn đoán", "dự đoán"],
+      "answer": "Hệ thống có 6 mô hình AI: tiểu đường (KNN), ung thư vú (Random Forest), tim mạch (Random Forest), thận (rule-based), viêm phổi (CNN từ ảnh X-quang), ung thư da (CNN từ ảnh dermoscopy). Bạn nhập chỉ số/upload ảnh, AI dự đoán nguy cơ. KHÔNG thay thế chẩn đoán bác sĩ."
+    },
+    {
+      "id": "ml-accuracy",
+      "question": "Độ chính xác của AI sàng lọc bao nhiêu?",
+      "keywords": ["chính xác", "accuracy", "tin cậy", "đáng tin", "sai số"],
+      "answer": "Các model đạt accuracy 75-90% trên test set tùy bệnh. Tuy nhiên đây là sàng lọc sơ bộ - kết quả phụ thuộc nhiều vào chất lượng dữ liệu đầu vào. Luôn cần bác sĩ chuyên khoa xác nhận. Đừng dùng kết quả AI để tự kết luận."
+    },
+    {
+      "id": "ml-skin",
+      "question": "Sàng lọc ung thư da làm thế nào?",
+      "keywords": ["ung thư da", "skin cancer", "nốt ruồi", "melanoma", "da liễu"],
+      "answer": "Vào /skin_cancer/ → upload ảnh tổn thương da rõ nét (chụp gần 10-15cm, ánh sáng tốt) → AI phân loại 7 loại: nốt ruồi (nv), ung thư hắc tố (mel), ung thư biểu mô tế bào đáy (bcc), tổn thương dày sừng (akiec, bkl), u xơ da (df), tổn thương mạch máu (vasc). Nếu kết quả nghi ngờ ác tính (mel, bcc), hệ thống sẽ cảnh báo realtime."
+    },
+    {
+      "id": "ml-pneumonia",
+      "question": "Sàng lọc viêm phổi qua X-quang?",
+      "keywords": ["viêm phổi", "pneumonia", "x-quang", "phổi", "chụp phim"],
+      "answer": "Vào /pneumonia_detector/ → upload ảnh X-quang ngực (JPG/PNG dưới 5MB) → AI dự đoán xác suất viêm phổi. Đạt accuracy ~90% trên dataset Chest X-Ray Kaggle. Nếu kết quả dương tính, hãy đi khám sớm để bác sĩ đọc phim chính xác."
+    },
+    {
+      "id": "ml-diabetes",
+      "question": "Sàng lọc tiểu đường cần chỉ số gì?",
+      "keywords": ["tiểu đường", "diabetes", "glucose", "đường huyết", "insulin"],
+      "answer": "Cần 8 chỉ số: số lần mang thai, glucose, huyết áp, độ dày da, insulin, BMI, hệ số gia đình (DiabetesPedigreeFunction), tuổi. Vào /diabetes/ điền form. Model dùng KNN train trên dataset Pima Indians."
+    },
+    {
+      "id": "ml-heart",
+      "question": "Sàng lọc bệnh tim cần thông tin gì?",
+      "keywords": ["bệnh tim", "heart disease", "tim mạch", "huyết áp", "ECG"],
+      "answer": "Cần 13 chỉ số: tuổi, giới tính, dạng đau ngực (cp), huyết áp khi nghỉ, cholesterol, đường huyết đói, ECG khi nghỉ, nhịp tim tối đa, đau thắt ngực do gắng sức, ST depression, slope, số mạch vành tắc, thalassemia. Vào /heart/."
+    },
+    {
+      "id": "chat-ai",
+      "question": "AI Chatbot có thể trả lời gì?",
+      "keywords": ["chatbot", "AI", "chat", "trả lời", "hỏi đáp", "tư vấn"],
+      "answer": "Medic AI Chatbot (dùng Gemini của Google) có thể tư vấn: thông tin sức khỏe chung, hướng dẫn dùng hệ thống Medic, giải thích kết quả screening, gợi ý đi khám khi cần. KHÔNG được dùng để chẩn đoán cuối cùng. Câu hỏi tối đa 1000 ký tự, giới hạn 1 tin/2 giây."
+    },
+    {
+      "id": "emergency",
+      "question": "Khi nào tôi nên đi cấp cứu ngay?",
+      "keywords": ["cấp cứu", "emergency", "115", "khẩn cấp", "nguy hiểm"],
+      "answer": "GỌI 115 hoặc đến bệnh viện NGAY nếu có: đau ngực dữ dội kéo dài, khó thở nặng, mất ý thức, co giật, chảy máu nhiều không cầm được, đột quỵ (yếu nửa người, méo miệng, không nói được), tai nạn nghiêm trọng. KHÔNG dùng AI Chatbot trong trường hợp khẩn cấp."
+    },
+    {
+      "id": "doctor-review",
+      "question": "Tôi có thể đánh giá bác sĩ không?",
+      "keywords": ["đánh giá", "review", "rating", "sao", "comment", "nhận xét"],
+      "answer": "Có. Sau khi lịch khám có trạng thái 'Hoàn thành', vào 'Lịch của tôi' → bấm 'Đánh giá' → chọn 1-5 sao + viết nhận xét. Mỗi lịch khám chỉ đánh giá 1 lần. Đánh giá hiển thị công khai trên hồ sơ bác sĩ."
+    },
+    {
+      "id": "departments",
+      "question": "Các chuyên khoa có những gì?",
+      "keywords": ["chuyên khoa", "department", "khoa nào", "specialty"],
+      "answer": "Hệ thống có 11 chuyên khoa: Tim mạch (Heart Disease, Cardiology), Tiểu đường, Ung thư vú, Nha khoa, Tai Mũi Họng, Tâm lý, Nội thần kinh, Xét nghiệm huyết học, Nhãn khoa, Vật lý trị liệu."
+    },
+    {
+      "id": "find-doctor",
+      "question": "Tìm bác sĩ thế nào?",
+      "keywords": ["tìm bác sĩ", "doctor", "search doctor", "bác sĩ nào"],
+      "answer": "Vào menu 'Bác sĩ' → có thể lọc theo chuyên khoa, tìm kiếm theo tên/bệnh viện, chọn ngày để xem ai có lịch khám. Mỗi bác sĩ hiển thị: tên, chuyên khoa, bệnh viện, số sao đánh giá, khung giờ khám hôm đó."
+    },
+    {
+      "id": "doctor-image",
+      "question": "Sao một số bác sĩ không có ảnh?",
+      "keywords": ["ảnh bác sĩ", "avatar", "hình ảnh", "không có ảnh"],
+      "answer": "Bác sĩ chưa upload ảnh đại diện sẽ dùng ảnh mặc định (avatar.png). Khi đăng nhập với role bác sĩ, vào 'Hồ sơ' → upload ảnh JPG/PNG dưới 5MB."
+    },
+    {
+      "id": "chat-doctor",
+      "question": "Có thể chat với bác sĩ trước giờ khám không?",
+      "keywords": ["chat", "nhắn tin", "tin nhắn", "liên hệ bác sĩ", "trò chuyện"],
+      "answer": "Có. Sau khi đặt lịch thành công, vào 'Lịch của tôi' → bấm vào lịch → 'Trò chuyện'. Bạn có thể gửi câu hỏi cho bác sĩ. Chỉ chat được khi lịch ở trạng thái Pending/Confirmed/Arrived (đã hủy hoặc đã xong thì khóa)."
+    },
+    {
+      "id": "notifications",
+      "question": "Hệ thống thông báo gì?",
+      "keywords": ["thông báo", "notification", "nhắc nhở", "reminder", "email"],
+      "answer": "Có 3 kênh: (1) Realtime trong web (chuông góc phải), (2) Email tới hộp thư của bạn, (3) SMS (nếu cấu hình Twilio). Các sự kiện: đặt lịch thành công, nhắc trước 24h, nhắc trước 1h, đổi/hủy lịch, kết quả AI nguy hiểm."
+    },
+    {
+      "id": "notification-pref",
+      "question": "Tắt thông báo email được không?",
+      "keywords": ["tắt thông báo", "không nhận email", "preference", "settings notification"],
+      "answer": "Được. Vào 'Hồ sơ' → 'Tùy chọn thông báo' → bỏ tick 'Email' hoặc các loại nhắc nhở. Lưu ý: bỏ hết thông báo có thể làm bạn quên giờ khám."
+    },
+    {
+      "id": "data-privacy",
+      "question": "Dữ liệu cá nhân của tôi được bảo vệ thế nào?",
+      "keywords": ["bảo mật", "privacy", "dữ liệu", "an toàn", "lộ thông tin", "GDPR"],
+      "answer": "Hệ thống mã hóa mật khẩu (hash bcrypt), HTTPS-only cookies, CSRF protection, audit log mọi thay đổi quan trọng. Dữ liệu y tế chỉ chính bạn và bác sĩ phụ trách thấy được. Đây là prototype học thuật - production cần thêm HIPAA compliance, encryption at-rest."
+    },
+    {
+      "id": "language",
+      "question": "Hệ thống có tiếng Anh không?",
+      "keywords": ["tiếng anh", "english", "ngôn ngữ", "language", "chuyển ngôn ngữ"],
+      "answer": "Có. Click vào icon ngôn ngữ ở thanh điều hướng để chuyển giữa Tiếng Việt và English. Bạn cũng có thể hỏi AI bằng tiếng Anh."
+    },
+    {
+      "id": "browser-support",
+      "question": "Hệ thống chạy được trên trình duyệt nào?",
+      "keywords": ["trình duyệt", "browser", "chrome", "firefox", "edge", "safari"],
+      "answer": "Hỗ trợ tốt nhất: Chrome, Edge, Firefox bản mới (2024+). Safari cũng được. Cần bật JavaScript. Để xem realtime notification, không tắt WebSocket trong browser settings."
+    },
+    {
+      "id": "mobile",
+      "question": "Có app mobile không?",
+      "keywords": ["mobile", "điện thoại", "app", "android", "ios", "iphone"],
+      "answer": "Hiện tại Medic chỉ có web app responsive (đáp ứng mobile). Mở trình duyệt trên điện thoại tại địa chỉ Medic là dùng được, không cần cài app riêng. App native iOS/Android trong roadmap tương lai."
+    },
+    {
+      "id": "offline",
+      "question": "Mất mạng có dùng được không?",
+      "keywords": ["offline", "mất mạng", "không có internet", "wifi"],
+      "answer": "Không. Medic là web app cần internet để: chat AI (gọi Gemini Cloud), đặt lịch (sync DB server), thông báo realtime (WebSocket). Khi mất mạng, dữ liệu đã xem có thể vẫn cache trong trình duyệt nhưng không tương tác được."
+    },
+    {
+      "id": "fee",
+      "question": "Sử dụng có mất phí không?",
+      "keywords": ["miễn phí", "phí", "tiền", "trả phí", "free", "cost"],
+      "answer": "Đây là dự án học thuật demo - hoàn toàn miễn phí. Hệ thống không thu phí đặt lịch, không thu phí AI screening, không quảng cáo."
+    }
+  ]
+}

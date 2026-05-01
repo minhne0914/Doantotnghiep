@@ -71,6 +71,7 @@ if not DEBUG and not RUNNING_TESTS:
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',  # phải trước django.contrib.admin
     'daphne',
     'channels',
     'django.contrib.admin',
@@ -346,3 +347,115 @@ LOGGING = {
         'notifications': {'handlers': ['console', 'file'], 'level': 'INFO', 'propagate': False},
     },
 }
+
+# =============================================================================
+# Jazzmin Admin UI - https://django-jazzmin.readthedocs.io/
+# =============================================================================
+JAZZMIN_SETTINGS = {
+    # Branding
+    "site_title": "Medic Admin",
+    "site_header": "Medic - Hospital Management",
+    "site_brand": "Medic",
+    "site_logo": None,  # đường dẫn ảnh logo trong static/
+    "login_logo": None,
+    "site_icon": None,
+    "welcome_sign": "Chào mừng tới hệ thống quản trị Medic",
+    "copyright": "Medic Project - Đồ án tốt nghiệp",
+
+    # Search nhanh
+    "search_model": ["accounts.User", "appoinment.Appointment", "emr.EMRRecord"],
+
+    # Top menu
+    "topmenu_links": [
+        {"name": "Trang chủ", "url": "admin:index", "permissions": ["auth.view_user"]},
+        {"name": "Web app", "url": "/", "new_window": True},
+        {"model": "accounts.User"},
+        {"app": "appoinment"},
+    ],
+
+    # User menu (góc trên phải)
+    "usermenu_links": [
+        {"name": "Hỗ trợ", "url": "https://github.com/", "new_window": True},
+        {"model": "accounts.user"},
+    ],
+
+    # Sidebar
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "hide_apps": [],
+    "hide_models": [],
+    "order_with_respect_to": [
+        "accounts", "appoinment", "emr", "home", "notifications", "auth",
+    ],
+
+    # Icons mỗi app/model (dùng FontAwesome 5)
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+        "accounts.User": "fas fa-user-md",
+        "accounts.DoctorProfile": "fas fa-user-md",
+        "appoinment.Appointment": "fas fa-calendar-alt",
+        "appoinment.TakeAppointment": "fas fa-calendar-check",
+        "appoinment.AppointmentChangeLog": "fas fa-history",
+        "appoinment.DoctorReview": "fas fa-star",
+        "appoinment.DirectMessage": "fas fa-comments",
+        "emr.EMRRecord": "fas fa-file-medical",
+        "emr.VitalSign": "fas fa-heartbeat",
+        "emr.PrescriptionItem": "fas fa-prescription-bottle-alt",
+        "home.MedicalHistory": "fas fa-notes-medical",
+        "home.ChatMessage": "fas fa-robot",
+        "notifications.NotificationPreference": "fas fa-cog",
+        "notifications.AppointmentNotificationLog": "fas fa-envelope",
+        "notifications.RealtimeNotification": "fas fa-bell",
+    },
+    "default_icon_parents": "fas fa-chevron-circle-right",
+    "default_icon_children": "fas fa-circle",
+
+    # UI tweaks
+    "related_modal_active": True,
+    "custom_css": None,
+    "custom_js": None,
+    "use_google_fonts_cdn": True,
+    "show_ui_builder": False,
+
+    # Form layout
+    "changeform_format": "horizontal_tabs",
+    "changeform_format_overrides": {
+        "auth.user": "collapsible",
+        "accounts.user": "collapsible",
+    },
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "brand_colour": "navbar-primary",
+    "accent": "accent-primary",
+    "navbar": "navbar-primary navbar-dark",
+    "no_navbar_border": False,
+    "navbar_fixed": True,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": True,
+    "sidebar": "sidebar-dark-primary",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": True,
+    "sidebar_nav_compact_style": False,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+    "theme": "default",
+    "dark_mode_theme": None,
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success",
+    },
+}
+

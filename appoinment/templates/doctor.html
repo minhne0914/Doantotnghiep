@@ -108,7 +108,7 @@
                         <h6>{% trans "Khung giờ" %} {{ apt.start_time }} {% trans "đến" %} {{ apt.end_time }}
                             {% trans "tại" %} {{ apt.hospital_name }}</h6>
                         <h6>
-                            {% trans "Địa chỉ:" %} {{ apt.location }} </i>
+                            {% trans "Địa chỉ:" %} {{ apt.location }}
                             <a href="{% url 'take-appointment' apt.id %}"> {% trans "Đặt lịch khám" %}</a>
                        </h6>
                        {% elif request.user.is_authenticated and request.user.role == 'doctor'   %}

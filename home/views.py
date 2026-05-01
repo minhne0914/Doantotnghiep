@@ -2,10 +2,17 @@ import base64
 import csv
 import json
 import logging
+import os
 import time
 from functools import lru_cache
 from io import BytesIO
 from pathlib import Path
+
+# QUAN TRỌNG: phải set BEFORE import tensorflow.
+# Skin cancer model (model.h5 từ repo gốc) train với Keras 2 API,
+# nhưng TensorFlow 2.16+ dùng Keras 3 - không tương thích trực tiếp.
+# Set flag này để TF dùng tf_keras (Keras 2 legacy) khi cần.
+os.environ.setdefault('TF_USE_LEGACY_KERAS', '1')
 
 import joblib
 import numpy as np
@@ -124,6 +131,9 @@ def get_skin_cancer_model():
 
     Tên file mặc định: data/skin_cancer_model.h5. Có thể override qua
     settings.SKIN_CANCER_MODEL_FILE nếu user đặt tên khác (vd: model.h5).
+
+    Fallback: nếu TF Keras 3 không load được file .h5 cũ (train với Keras 2),
+    thử lại với tf_keras (legacy Keras 2 API).
     """
     candidates = [
         getattr(settings, 'SKIN_CANCER_MODEL_FILE', None),
@@ -135,12 +145,32 @@ def get_skin_cancer_model():
         if not filename:
             continue
         model_path = DATA_DIR / filename
-        if model_path.exists():
-            try:
-                return tf.keras.models.load_model(model_path, compile=False)
-            except Exception:
-                logger.exception('Failed to load skin cancer model: %s', model_path)
-                return None
+        if not model_path.exists():
+            continue
+
+        # Thử với tf.keras hiện tại (Keras 3 trong TF >= 2.16, Keras 2 trong TF < 2.16)
+        try:
+            return tf.keras.models.load_model(model_path, compile=False)
+        except Exception as primary_err:
+            logger.warning(
+                'Primary load failed for %s (%s). Trying tf_keras legacy fallback.',
+                model_path, primary_err.__class__.__name__,
+            )
+
+        # Fallback: tf_keras (Keras 2 standalone) cho file train với Keras cũ
+        try:
+            import tf_keras
+            return tf_keras.models.load_model(model_path, compile=False)
+        except ImportError:
+            logger.error(
+                'Skin cancer model needs Keras 2 to load. '
+                'Install with: pip install tf_keras'
+            )
+            return None
+        except Exception:
+            logger.exception('tf_keras fallback also failed for %s', model_path)
+            return None
+
     logger.warning('Skin cancer model file not found in %s. Tried: %s', DATA_DIR, candidates)
     return None
 
@@ -404,10 +434,10 @@ def breast(request):
 
     def advices(_data):
         return [
-            'Duy tri thoi quen tu kiem tra vung nguc dinh ky de phat hien som bat thuong.',
-            'Khong nen tu y dung noi tiet hoac thuoc khong ro nguon goc khi chua co chi dinh.',
-            'Tang cuong rau xanh, trai cay va kham tam soat theo huong dan cua bac si.',
-            'Neu thay khoi u, dau keo dai hoac tiet dich bat thuong, hay di kham som.',
+            _('Duy tri thoi quen tu kiem tra vung nguc dinh ky de phat hien som bat thuong.'),
+            _('Khong nen tu y dung noi tiet hoac thuoc khong ro nguon goc khi chua co chi dinh.'),
+            _('Tang cuong rau xanh, trai cay va kham tam soat theo huong dan cua bac si.'),
+            _('Neu thay khoi u, dau keo dai hoac tiet dich bat thuong, hay di kham som.'),
         ]
 
     return render_prediction_page(request, 'breast.html', form, payload, 'Breast Cancer', 'have', "don't have", advices, 'breast')
@@ -608,26 +638,54 @@ def history_view(request):
 
 
 def build_chat_prompt(user, user_message):
-    context_string = (
-        'Ban la tro ly y te Medic AI. Hay tra loi bang tieng Viet ro rang, than thien va an toan. '
-        'Khong dua ra ket luan chan doan cuoi cung va luon khuyen nguoi dung di kham khi can.\n\n'
+    """Build prompt cho Gemini với RAG context.
+
+    Pipeline:
+      1. System prompt (rules, persona, safety)
+      2. RAG context: FAQ + bác sĩ + lịch + history user (từ services_chat)
+      3. Câu hỏi của user
+    """
+    from .services_chat import build_rag_context
+
+    system_prompt = (
+        "Bạn là Medic AI - trợ lý y tế của hệ thống đặt lịch khám và bệnh án "
+        "điện tử Medic. Hãy trả lời:\n"
+        "- Bằng TIẾNG VIỆT, ngắn gọn, dễ hiểu.\n"
+        "- KHÔNG đưa chẩn đoán cuối cùng - luôn khuyên đi khám bác sĩ chuyên khoa.\n"
+        "- Nếu hỏi về CÁCH SỬ DỤNG hệ thống → DỰA VÀO 'CONTEXT' bên dưới để trả lời.\n"
+        "- Nếu trong CONTEXT có cảnh báo CẤP CỨU → ƯU TIÊN khuyên gọi 115 hoặc tới bệnh viện ngay.\n"
+        "- Nếu user hỏi vượt ngoài kiến thức hệ thống Medic → trả lời theo kiến thức y học chung "
+        "kèm khuyến nghị đi khám.\n"
+        "- KHÔNG bịa thông tin về bác sĩ/lịch khám không có trong CONTEXT.\n\n"
     )
+
+    # RAG: tìm context liên quan trong DB + FAQ
+    try:
+        rag_context = build_rag_context(user, user_message)
+    except Exception:
+        logger.exception('build_rag_context failed for user_id=%s', getattr(user, 'id', None))
+        rag_context = ''
+
+    if rag_context:
+        system_prompt += "=== CONTEXT (data thực từ hệ thống Medic) ===\n"
+        system_prompt += rag_context + "\n=== HẾT CONTEXT ===\n\n"
+
+    # Lịch sử screening AI gần nhất của user (giữ tương thích logic cũ)
     latest_history = MedicalHistory.objects.filter(user=user).order_by('-created_at').first()
     if latest_history:
-        context_string += (
-            'Thong tin sang loc gan nhat: benh '
-            + str(latest_history.disease_type)
-            + ', ket qua '
-            + str(latest_history.prediction_result)
-            + ', chi so '
-            + str(latest_history.input_data or {})
-            + '.\n'
-            + 'Hay dua ra huong dan ngan gon, thuc te, va noi ro neu thong tin chua du de ket luan.\n'
+        system_prompt += (
+            f"Thông tin sàng lọc gần nhất của user: bệnh {latest_history.disease_type}, "
+            f"kết quả {latest_history.prediction_result}, chỉ số {latest_history.input_data or {}}.\n"
+            "Hãy đưa ra hướng dẫn ngắn gọn, thực tế, và nói rõ nếu thông tin chưa đủ để kết luận.\n\n"
         )
     else:
-        context_string += 'Nguoi dung chua co du lieu sang loc luu tru. Hay tra loi o muc tham khao chung.\n'
-    context_string += '\nCau hoi cua nguoi dung: ' + str(user_message)
-    return context_string
+        system_prompt += (
+            "User chưa có dữ liệu sàng lọc lưu trữ. "
+            "Trả lời theo kiến thức tham khảo chung.\n\n"
+        )
+
+    system_prompt += f"Câu hỏi của user: {user_message}"
+    return system_prompt
 
 
 def is_urgent_chat_reply(reply):

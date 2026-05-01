@@ -15,7 +15,6 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models import Count, Min
-from django.db.models.functions import TruncDate
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
@@ -292,7 +291,7 @@ def _status_presentation(status):
 
 
 def _build_chart_series(rows, start_date, end_date):
-    rows_by_date = {row['day']: row['total'] for row in rows}
+    rows_by_date = {row['date']: row['total'] for row in rows}
     labels, data = [], []
     cursor = start_date
     while cursor <= end_date:
@@ -410,18 +409,16 @@ def _doctor_dashboard_payload(user):
     weekly_rows = list(
         base_queryset.filter(date__range=(week_start, today))
         .exclude(status='cancelled')
-        .annotate(day=TruncDate('date'))
-        .values('day')
+        .values('date')
         .annotate(total=Count('id'))
-        .order_by('day')
+        .order_by('date')
     )
     monthly_rows = list(
         base_queryset.filter(date__range=(month_start, today))
         .exclude(status='cancelled')
-        .annotate(day=TruncDate('date'))
-        .values('day')
+        .values('date')
         .annotate(total=Count('id'))
-        .order_by('day')
+        .order_by('date')
     )
 
     return {
