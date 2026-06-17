@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load i18n medic_tags %}
 {% block title %}{% trans "Lịch hẹn của tôi" %}{% endblock %}
 
 {% block content %}
@@ -187,7 +187,7 @@
             <div class="col-lg-8">
                 <h2 class="appointments-title">{% trans "Quản lý lịch khám của bạn dễ dàng hơn" %}</h2>
                 <p class="appointments-subtitle">
-                    {% blocktrans %}Theo dõi lịch hẹn sắp tới, đổi hoặc hủy lịch trước tối thiểu {{ change_deadline_hours }} giờ và xem lại toàn bộ thay đổi theo thời gian.{% endblocktrans %}
+                    {% trans "Theo dõi lịch hẹn sắp tới, đổi hoặc hủy lịch trước tối thiểu" %} {{ change_deadline_hours }} {% trans "giờ và xem lại toàn bộ thay đổi theo thời gian." %}
                 </p>
             </div>
             <div class="col-lg-4 mt-4 mt-lg-0 text-lg-right hero-actions">
@@ -204,23 +204,23 @@
         <div class="appointment-card-ui">
             <div class="appointment-topbar">
                 <div>
-                    <div class="doctor-name-ui">BS. {{ booking.appointment.user.first_name }} {{ booking.appointment.user.last_name }}</div>
-                    <div class="doctor-meta-ui">{{ booking.appointment.user.doctor_profile.specialization|default:booking.appointment.department }} • {{ booking.appointment.hospital_name }}</div>
+                    <div class="doctor-name-ui"><i class="fas fa-user-md mr-2"></i>BS. {{ booking.appointment.user.first_name }} {{ booking.appointment.user.last_name }}</div>
+                    <div class="doctor-meta-ui"><i class="fas fa-stethoscope mr-1"></i>{{ booking.appointment.user.doctor_profile.specialization|default:booking.appointment.department|specialty_label }} • <i class="fas fa-hospital-alt mx-1"></i>{{ booking.appointment.hospital_name }}</div>
                 </div>
                 <span class="status-pill-ui status-{{ booking.badge_class }}-ui">{{ booking.badge_label }}</span>
             </div>
 
             <div class="appointment-grid-ui">
                 <div class="appointment-metric-ui">
-                    <span>{% trans "Ngày khám" %}</span>
+                    <span><i class="fas fa-calendar-day mr-1"></i>{% trans "Ngày khám" %}</span>
                     <strong>{{ booking.date|date:"d/m/Y" }}</strong>
                 </div>
                 <div class="appointment-metric-ui">
-                    <span>{% trans "Giờ khám" %}</span>
+                    <span><i class="fas fa-clock mr-1"></i>{% trans "Giờ khám" %}</span>
                     <strong>{{ booking.time|time:"H:i" }}</strong>
                 </div>
                 <div class="appointment-metric-ui">
-                    <span>{% trans "Ghi chú" %}</span>
+                    <span><i class="fas fa-comment-medical mr-1"></i>{% trans "Ghi chú" %}</span>
                     <strong>{{ booking.message|default:_("Chưa có ghi chú") }}</strong>
                 </div>
             </div>
@@ -252,7 +252,7 @@
                 </a>
                 {% endif %}
                 {% else %}
-                <span class="text-muted align-self-center">{% trans "Lịch này hiện không còn thao tác khả dụng." %}</span>
+                <span class="text-muted align-self-center"><i class="fas fa-lock mr-1"></i>{% trans "Lịch này hiện không còn thao tác khả dụng." %}</span>
                 {% endif %}
             </div>
 

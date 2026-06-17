@@ -1,26 +1,82 @@
+{% url 'login' as chatbot_login_url %}
 <style>
 #chatbotToggle {
     position: fixed;
-    right: 28px;
-    bottom: 28px;
-    width: 62px;
-    height: 62px;
-    border-radius: 50%;
+    right: max(24px, env(safe-area-inset-right));
+    bottom: max(24px, env(safe-area-inset-bottom));
+    width: auto;
+    min-width: 154px;
+    height: 58px;
+    border-radius: 999px;
     border: none;
-    background: linear-gradient(135deg, #0891b2, #0f766e);
+    background: linear-gradient(135deg, #0891b2 0%, #0f766e 54%, #134e4a 100%);
     color: #fff;
-    box-shadow: 0 12px 30px rgba(8, 145, 178, 0.35);
-    display: flex;
+    box-shadow: 0 14px 32px rgba(8, 145, 178, 0.38), 0 0 0 5px rgba(8, 145, 178, 0.12);
+    display: inline-flex !important;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    gap: 10px;
+    padding: 0 18px 0 12px;
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1;
     cursor: pointer;
-    z-index: 9999;
+    z-index: 2147483000;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+#chatbotToggle:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 38px rgba(8, 145, 178, 0.46), 0 0 0 7px rgba(8, 145, 178, 0.16);
+}
+
+#chatbotToggle:focus-visible {
+    outline: 3px solid rgba(14, 165, 233, 0.35);
+    outline-offset: 4px;
+}
+
+#chatbotToggle .chatbot-toggle-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    font-size: 20px;
+}
+
+.chatbot-toggle-text {
+    letter-spacing: 0;
+    white-space: nowrap;
+}
+
+.chatbot-toggle-status {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 18px;
+    height: 18px;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55);
+    animation: chatbotPulse 1.8s infinite;
+}
+
+@keyframes chatbotPulse {
+    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55); }
+    70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
 }
 
 #chatContainer {
     position: fixed;
-    right: 28px;
+    right: max(24px, env(safe-area-inset-right));
     bottom: 106px;
     width: 380px;
     max-width: calc(100vw - 24px);
@@ -32,7 +88,7 @@
     display: none;
     flex-direction: column;
     overflow: hidden;
-    z-index: 10000;
+    z-index: 2147483001;
 }
 
 #chatHeader {
@@ -155,6 +211,27 @@
     cursor: not-allowed;
 }
 
+.chat-login-link {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 0 16px;
+    border-radius: 14px;
+    background: #0f766e;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.chat-login-link:hover {
+    color: #fff;
+    text-decoration: none;
+    background: #115e59;
+}
+
 .typing-indicator {
     display: inline-flex;
     align-items: center;
@@ -189,12 +266,43 @@
     #chatbotToggle {
         right: 16px;
         bottom: 16px;
+        min-width: 138px;
+        height: 54px;
+        padding: 0 16px 0 10px;
+    }
+
+    #chatbotToggle .chatbot-toggle-icon {
+        width: 36px;
+        height: 36px;
+    }
+}
+
+@media (max-width: 420px) {
+    #chatbotToggle {
+        width: 58px;
+        min-width: 58px;
+        height: 58px;
+        padding: 0;
+        border-radius: 50%;
+    }
+
+    #chatbotToggle .chatbot-toggle-icon {
+        width: 58px;
+        height: 58px;
+        background: transparent;
+        font-size: 23px;
+    }
+
+    .chatbot-toggle-text {
+        display: none;
     }
 }
 </style>
 
-<button id="chatbotToggle" type="button" onclick="toggleChat()">
-    <i class="fas fa-robot"></i>
+<button id="chatbotToggle" type="button" onclick="toggleChat()" aria-label="Mở Medic AI" title="Mở Medic AI">
+    <span class="chatbot-toggle-icon" aria-hidden="true"><i class="fas fa-robot"></i></span>
+    <span class="chatbot-toggle-text">Medic AI</span>
+    <span class="chatbot-toggle-status" aria-hidden="true"></span>
 </button>
 
 <div id="chatContainer">
@@ -218,17 +326,20 @@
             <button id="chatSend" type="button" onclick="sendMessage()">
                 <i class="fas fa-paper-plane"></i>
             </button>
+            <a id="chatLoginLink" class="chat-login-link" href="{{ chatbot_login_url }}?next={{ request.get_full_path|urlencode }}">Đăng nhập</a>
         </div>
     </div>
 </div>
 
 <script>
+    const chatUserAuthenticated = {{ request.user.is_authenticated|yesno:"true,false" }};
+    const chatCsrfToken = '{{ csrf_token }}';
     let chatLoaded = false;
     let chatBusy = false;
 
     function getCsrfToken() {
         const csrfCookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
-        return csrfCookie ? csrfCookie.split('=')[1] : '';
+        return csrfCookie ? csrfCookie.split('=')[1] : chatCsrfToken;
     }
 
     function setChatStatus(message, tone = 'info') {
@@ -310,8 +421,26 @@
         document.getElementById('chatInput').disabled = isBusy;
     }
 
+    function showLoginPrompt() {
+        const messages = document.getElementById('chatMessages');
+        messages.innerHTML = '';
+        appendMessage('bot', 'Bạn cần đăng nhập để sử dụng Medic AI và lưu lịch sử trò chuyện.');
+        setChatStatus('Đăng nhập để bắt đầu trò chuyện với Medic AI.', 'info');
+        document.getElementById('chatInput').disabled = true;
+        document.getElementById('chatInput').placeholder = 'Đăng nhập để sử dụng Medic AI';
+        document.getElementById('chatSend').style.display = 'none';
+        document.getElementById('clearChatBtn').style.display = 'none';
+        document.getElementById('chatLoginLink').style.display = 'inline-flex';
+        chatLoaded = true;
+    }
+
     async function loadChatHistory(force = false) {
         if (chatLoaded && !force) return;
+
+        if (!chatUserAuthenticated) {
+            showLoginPrompt();
+            return;
+        }
 
         setChatStatus('Đang tải lịch sử hội thoại...', 'loading');
         try {
@@ -342,7 +471,9 @@
 
         if (!isOpen) {
             loadChatHistory();
-            document.getElementById('chatInput').focus();
+            if (chatUserAuthenticated) {
+                document.getElementById('chatInput').focus();
+            }
         }
     }
 
@@ -354,6 +485,11 @@
     }
 
     async function sendMessage() {
+        if (!chatUserAuthenticated) {
+            showLoginPrompt();
+            return;
+        }
+
         const input = document.getElementById('chatInput');
         const text = input.value.trim();
         if (!text || chatBusy) return;
@@ -394,6 +530,11 @@
     }
 
     async function clearChat() {
+        if (!chatUserAuthenticated) {
+            showLoginPrompt();
+            return;
+        }
+
         if (chatBusy) return;
         if (!confirm('Bạn có chắc muốn xóa toàn bộ lịch sử hội thoại?')) return;
 

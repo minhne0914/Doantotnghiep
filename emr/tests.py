@@ -98,6 +98,37 @@ class EMRFlowTests(TestCase):
         self.assertEqual(booking.status, TakeAppointment.STATUS_COMPLETED)
         self.assertTrue(EMRRecord.objects.filter(appointment=booking).exists())
 
+    def test_create_emr_rejects_invalid_vital_sign_payload(self):
+        booking = TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Patient EMR',
+            phone_number='0123456789',
+            message='Arrived booking',
+            date=self.appointment.date,
+            time=timezone.datetime.strptime('10:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_ARRIVED,
+        )
+        self.client.force_login(self.doctor)
+
+        response = self.client.post(
+            reverse('emr-record-create-api', args=[booking.pk]),
+            data=json.dumps({
+                'symptoms': 'Ho',
+                'diagnosis': 'Theo doi',
+                'vital_sign': {
+                    'blood_pressure_systolic': 0,
+                    'blood_pressure_diastolic': 80,
+                    'heart_rate': 75,
+                    'temperature_c': 36.5,
+                },
+            }),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(EMRRecord.objects.filter(appointment=booking).exists())
+
     def test_delete_emr_returns_booking_to_arrived(self):
         booking = TakeAppointment.objects.create(
             user=self.patient,

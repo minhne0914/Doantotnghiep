@@ -29,7 +29,7 @@
                         </div>
                         <div class="col-lg-5 col-6 header-w3layouts pl-4 text-lg-left">
                             <p class="text-white">
-                                <i class="fas fa-phone mr-2"></i>Hotline 24/7: 1900 8888
+                                <i class="fas fa-phone mr-2"></i>{% trans "Hotline 24/7:" %} 1900 8888
                             </p>
                         </div>
                     </div>
@@ -50,42 +50,42 @@
                     </a>
                 </h1>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
-                    aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{% trans 'Mở menu điều hướng' %}">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
                 <div class="collapse navbar-collapse text-center" id="navbarSupportedContent">
                     <ul class="navbar-nav ml-lg-auto">
                         <li class="nav-item active mt-lg-0 mt-3">
-                            <a class="nav-link" href="{% url 'home' %}">{% trans "Trang chủ" %}
-                                <span class="sr-only">(current)</span>
+                            <a class="nav-link" href="{% url 'home' %}"><i class="fas fa-home mr-1"></i>{% trans "Trang chủ" %}
+                                <span class="sr-only">({% trans "đang chọn" %})</span>
                             </a>
                         </li>
 
                         <li class="nav-item dropdown nav-item mx-lg-3 my-lg-0 my-3">
                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
                                 aria-haspopup="true" aria-expanded="false">
-                                {% trans "Sàng lọc nguy cơ" %}
+                                <i class="fas fa-microscope mr-1"></i>{% trans "Sàng lọc nguy cơ" %}
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                <a class="dropdown-item" href="{% url 'diabetes' %}">{% trans "Nguy cơ tiểu đường" %}</a>
-                                <a class="dropdown-item" href="{% url 'breast' %}">{% trans "Nguy cơ ung thư vú" %}</a>
-                                <a class="dropdown-item" href="{% url 'heart' %}">{% trans "Nguy cơ bệnh tim" %}</a>
-                                <a class="dropdown-item" href="{% url 'kidney' %}">{% trans "Nguy cơ bệnh thận" %}</a>
-                                <a class="dropdown-item" href="{% url 'pneumonia_detector' %}">{% trans "Nguy cơ viêm phổi" %}</a>
-                                <a class="dropdown-item" href="{% url 'skin_cancer_detector' %}">{% trans "Nguy cơ ung thư da" %}</a>
+                                <a class="dropdown-item" href="{% url 'diabetes' %}"><i class="fas fa-vial mr-2"></i>{% trans "Nguy cơ tiểu đường" %}</a>
+                                <a class="dropdown-item" href="{% url 'breast' %}"><i class="fas fa-ribbon mr-2"></i>{% trans "Nguy cơ ung thư vú" %}</a>
+                                <a class="dropdown-item" href="{% url 'heart' %}"><i class="fas fa-heartbeat mr-2"></i>{% trans "Nguy cơ bệnh tim" %}</a>
+                                <a class="dropdown-item" href="{% url 'kidney' %}"><i class="fas fa-tint mr-2"></i>{% trans "Nguy cơ bệnh thận" %}</a>
+                                <a class="dropdown-item" href="{% url 'pneumonia_detector' %}"><i class="fas fa-x-ray mr-2"></i>{% trans "Nguy cơ viêm phổi" %}</a>
+                                <a class="dropdown-item" href="{% url 'skin_cancer_detector' %}"><i class="fas fa-allergies mr-2"></i>{% trans "Nguy cơ ung thư da" %}</a>
                             </div>
                         </li>
 
                         <li class="nav-item mx-lg-4">
-                            <a class="nav-link" href="{% url 'doctor' %}">{% trans "Bác sĩ" %}</a>
+                            <a class="nav-link" href="{% url 'doctor' %}"><i class="fas fa-user-md mr-1"></i>{% trans "Bác sĩ" %}</a>
                         </li>
 
                         {% if request.user.is_authenticated and request.user.role == 'doctor' %}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownDoctor" role="button" data-toggle="dropdown"
                                 aria-haspopup="true" aria-expanded="false">
-                                {{ request.user.first_name }}
+                                <i class="fas fa-user-circle mr-1"></i>{{ request.user.first_name }}
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdownDoctor">
                                 <a class="dropdown-item" href="{% url 'doctor-dashboard' %}"><i class="fas fa-cog"></i> {% trans "Cài đặt" %}</a>
@@ -99,7 +99,7 @@
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownPatient" role="button" data-toggle="dropdown"
                                 aria-haspopup="true" aria-expanded="false">
-                                {{ request.user.first_name }}
+                                <i class="fas fa-user-circle mr-1"></i>{{ request.user.first_name }}
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdownPatient">
                                 <a class="dropdown-item" href="{% url 'history' %}"><i class="fas fa-history"></i> {% trans "Lịch sử sức khỏe" %}</a>
@@ -114,11 +114,11 @@
                         <li class="nav-item dropdown nav-item mx-lg-3 my-lg-0 my-3">
                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownRegister" role="button" data-toggle="dropdown"
                                 aria-haspopup="true" aria-expanded="false">
-                                {% trans "Đăng ký" %}
+                                <i class="fas fa-user-plus mr-1"></i>{% trans "Đăng ký" %}
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdownRegister">
-                                <a class="dropdown-item" href="{% url 'doctor-register' %}">{% trans "Bác sĩ" %}</a>
-                                <a class="dropdown-item" href="{% url 'patient-register' %}">{% trans "Bệnh nhân" %}</a>
+                                <a class="dropdown-item" href="{% url 'doctor-register' %}"><i class="fas fa-user-md mr-2"></i>{% trans "Bác sĩ" %}</a>
+                                <a class="dropdown-item" href="{% url 'patient-register' %}"><i class="fas fa-user-injured mr-2"></i>{% trans "Bệnh nhân" %}</a>
                             </div>
                         </li>
                     </ul>

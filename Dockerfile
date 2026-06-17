@@ -26,5 +26,5 @@ COPY . /app/
 # Expose port 8000
 EXPOSE 8000
 
-# Start server
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Start ASGI server
+CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "mlhospital.asgi:application"]

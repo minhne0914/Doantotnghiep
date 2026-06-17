@@ -15,6 +15,16 @@ class AccountUrlTests(TestCase):
 
 
 class RegistrationFormTests(TestCase):
+    def test_create_superuser_sets_default_role(self):
+        admin = User.objects.create_superuser(
+            email='admin@example.com',
+            password='StrongPass123',
+        )
+
+        self.assertEqual(admin.role, 'doctor')
+        self.assertTrue(admin.is_staff)
+        self.assertTrue(admin.is_superuser)
+
     def test_patient_registration_sets_role(self):
         response = self.client.post(
             reverse('patient-register'),
@@ -31,6 +41,24 @@ class RegistrationFormTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(User.objects.get(email='patient@example.com').role, 'patient')
+
+    def test_login_rejects_external_next_redirect(self):
+        User.objects.create_user(
+            email='login@example.com',
+            password='StrongPass123',
+            role='patient',
+        )
+
+        response = self.client.post(
+            f"{reverse('login')}?next=https://evil.example/phishing",
+            {
+                'email': 'login@example.com',
+                'password': 'StrongPass123',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], '/')
 
 
 class DoctorDashboardFeedTests(TestCase):

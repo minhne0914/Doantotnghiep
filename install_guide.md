@@ -1,6 +1,6 @@
 # Huong Dan Cai Dat Va Chay Du An
 
-Tai lieu nay da duoc cap nhat theo trang thai codebase ngay 06/04/2026 va su dung virtualenv chuan hoa `.venv-runtime`.
+Tai lieu nay da duoc cap nhat theo trang thai codebase hien tai va su dung virtualenv local `.venv-runtime`.
 
 ## 1. Yeu cau
 
@@ -11,10 +11,10 @@ Tai lieu nay da duoc cap nhat theo trang thai codebase ngay 06/04/2026 va su dun
 
 ## 2. Virtualenv chuan hoa
 
-Neu repo da co san `.venv-runtime`, ban co the dung lai truc tiep:
+Neu repo da co san `.venv-runtime`, ban co the dung lai neu interpreter con hop le:
 
 ```powershell
-Set-Location D:\doanhieu\doanhieu
+Set-Location D:\doantopnghiep\doantotnghiep
 .venv-runtime\Scripts\Activate.ps1
 python -V
 ```
@@ -22,8 +22,8 @@ python -V
 Neu can tao moi:
 
 ```powershell
-Set-Location D:\doanhieu\doanhieu
-C:\Users\Admin\AppData\Local\Programs\Python\Python310\python.exe -m venv .venv-runtime
+Set-Location D:\doantopnghiep\doantotnghiep
+py -3.10 -m venv .venv-runtime
 .venv-runtime\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
@@ -48,6 +48,7 @@ DB_ENGINE=django.db.backends.sqlite3
 DB_NAME=db.sqlite3
 CHANNEL_LAYER_BACKEND=inmemory
 CELERY_TASK_ALWAYS_EAGER=True
+DJANGO_STATIC_ROOT=staticfiles
 GEMINI_API_KEY=
 GEMINI_MODEL=gemini-2.5-flash
 ```
@@ -74,14 +75,11 @@ python manage.py createsuperuser
 ## 5. Chay test
 
 ```powershell
+python manage.py check
 python manage.py test
 ```
 
-Trang thai da xac minh:
-
-- Test suite hien tai pass `13/13`
-- `python manage.py check` pass
-- Boot server va goi HTTP local tra `200`
+Neu moi tao lai virtualenv, hay chay `python manage.py check` truoc de bat loi cau hinh som.
 
 ## 6. Chay server
 
@@ -93,6 +91,12 @@ Neu cong `8000` dang ban:
 
 ```powershell
 python manage.py runserver 127.0.0.1:8001
+```
+
+Neu deploy hoac can gom static file:
+
+```powershell
+python manage.py collectstatic
 ```
 
 ## 7. Redis, Celery, Channels
@@ -130,7 +134,7 @@ Neu de trong `GEMINI_API_KEY`, giao dien chat van mo duoc nhung API chat se tra 
 ## 9. Loi thuong gap
 
 1. `python` khong chay trong virtualenv
-   Dung truc tiep `D:\doanhieu\doanhieu\.venv-runtime\Scripts\python.exe`.
+   Tao lai `.venv-runtime` bang Python 3.10, sau do dung truc tiep `D:\doantopnghiep\doantotnghiep\.venv-runtime\Scripts\python.exe`.
 
 2. Websocket/Celery loi ket noi Redis
    Kiem tra Redis dang chay, hoac doi local env sang:

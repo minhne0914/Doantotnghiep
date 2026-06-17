@@ -4,12 +4,12 @@ Du an nay la mot he thong Django cho dat lich kham, EMR, thong bao realtime/emai
 
 ## Chay nhanh
 
-1. Tao file `.env` tu [`.env.example`](/D:/doanhieu/doanhieu/.env.example).
+1. Tao file `.env` tu [`.env.example`](/D:/doantopnghiep/doantotnghiep/.env.example).
    Django da duoc cap nhat de tu dong nap file `.env` nay khi khoi dong.
 2. Dung virtualenv da chuan hoa:
 
 ```powershell
-D:\doanhieu\doanhieu\.venv-runtime\Scripts\Activate.ps1
+D:\doantopnghiep\doantotnghiep\.venv-runtime\Scripts\Activate.ps1
 ```
 
 3. Cai dependencies neu may ban chua co:
@@ -56,10 +56,12 @@ python manage.py runserver 127.0.0.1:8000
 - `GEMINI_API_KEY`
 - `GEMINI_MODEL`
 - `TWILIO_*`
+- `MAX_CHAT_ATTACHMENT_BYTES`
+- `DJANGO_STATIC_ROOT`
 
 ## Tinh nang ML screening
 
-Medic ho tro 5 tinh nang sang loc bang AI:
+Medic ho tro 6 tinh nang sang loc bang AI:
 
 | Endpoint | Mo hinh | Input |
 |----------|---------|-------|
@@ -80,6 +82,5 @@ Medic ho tro 5 tinh nang sang loc bang AI:
 
 ## Ghi chu
 
-- Virtualenv cu `.venv/` trong repo da hong interpreter; moi huong dan chay nen dung `.venv-runtime/`.
-- Neu ban muon tao lai virtualenv moi, xem [install_guide.md](/D:/doanhieu/doanhieu/install_guide.md).
+- Virtualenv trong repo khong nen xem la portable; neu `python.exe` trong `.venv-runtime/` bao loi duong dan Python cu, hay tao lai virtualenv theo [install_guide.md](/D:/doantopnghiep/doantotnghiep/install_guide.md).
 - Sau khi pull code moi: chay `python manage.py makemigrations && python manage.py migrate` de cap nhat `db_index` moi them vao cac model.

@@ -1,4 +1,7 @@
 .venv/
+.venv-runtime/
+.uv-cache/
+.uv-python/
 __pycache__/
 *.pyc
 *.pyo
@@ -10,6 +13,9 @@ ENV/
 env.bak/
 venv.bak/
 db.sqlite3
+staticfiles/
+media/
+logs/
 .git/
 .gitignore
 .vscode/
@@ -18,3 +24,4 @@ db.sqlite3
 Dockerfile
 docker-compose.yml
 .env
+.env.*

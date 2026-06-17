@@ -1,18 +1,40 @@
-version: "3.9"
-
 services:
   db:
     image: mysql:8.0
     container_name: mlhospital_mysql
     restart: always
     environment:
-      MYSQL_DATABASE: db_healthcare
-      MYSQL_ROOT_PASSWORD: 123
+      MYSQL_DATABASE: ${DB_NAME:-db_healthcare}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-replace-root-password}
+      MYSQL_USER: ${MYSQL_APP_USER:-app_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-replace-with-strong-password}
     ports:
-      - "3307:3306"
+      - "${DB_PORT:-3307}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    container_name: mlhospital_web
+    restart: always
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: ${MYSQL_APP_USER:-app_user}
+      DB_PASSWORD: ${DB_PASSWORD:-replace-with-strong-password}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   mysql_data:

@@ -1,5 +1,6 @@
 import io
 import json
+from datetime import time, timedelta
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
@@ -8,9 +9,11 @@ from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 from PIL import Image
 
 from .models import ChatMessage, MedicalHistory
+from .services_chat import build_rag_context
 
 
 User = get_user_model()
@@ -138,6 +141,35 @@ class PredictionEndpointTests(TestCase):
         self.assertEqual(response.context['probability'], 90.0)
         self.assertTrue(MedicalHistory.objects.filter(user=self.user, disease_type='Pneumonia').exists())
 
+    def test_skin_cancer_endpoint_renders_upload_page(self):
+        response = self.client.get(reverse('skin_cancer_detector'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Sàng lọc tổn thương da bằng AI', status_code=200)
+
+    def test_skin_cancer_endpoint_handles_missing_model_gracefully(self):
+        upload = build_test_image(name='lesion.png', image_format='PNG', content_type='image/png')
+
+        with patch('home.views.get_skin_cancer_model', return_value=None):
+            response = self.client.post(reverse('skin_cancer_detector'), {'skin_image': upload})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Mô hình sàng lọc ung thư da chưa được triển khai', status_code=200)
+
+    def test_skin_cancer_endpoint_returns_prediction_and_saves_history(self):
+        upload = build_test_image(name='lesion.png', image_format='PNG', content_type='image/png', size=(120, 120))
+        mock_model = Mock()
+        mock_model.predict.return_value = np.array([[0.02, 0.88, 0.03, 0.01, 0.03, 0.02, 0.01]])
+
+        self.client.force_login(self.user)
+        with patch('home.views.get_skin_cancer_model', return_value=mock_model):
+            response = self.client.post(reverse('skin_cancer_detector'), {'skin_image': upload})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['top_class']['code'], 'bcc')
+        self.assertTrue(response.context['is_dangerous'])
+        self.assertTrue(MedicalHistory.objects.filter(user=self.user, disease_type='Skin Cancer').exists())
+
 
 class HistoryEndpointTests(TestCase):
     def setUp(self):
@@ -197,6 +229,7 @@ class ChatEndpointTests(TestCase):
         )
         self.assertEqual(response.status_code, 302)
 
+    @override_settings(GEMINI_API_KEY='')
     def test_chat_api_returns_503_when_key_missing(self):
         self.client.force_login(self.user)
 
@@ -226,6 +259,28 @@ class ChatEndpointTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['reply'], fake_response.text)
         self.assertEqual(ChatMessage.objects.filter(user=self.user).count(), 2)
+
+    @override_settings(GEMINI_API_KEY='test-key', GEMINI_MODEL='gemini-2.5-flash')
+    def test_chat_api_sends_recent_chat_context_to_provider(self):
+        self.client.force_login(self.user)
+        ChatMessage.objects.create(user=self.user, sender='user', message='Tôi bị đau đầu từ hôm qua')
+        ChatMessage.objects.create(user=self.user, sender='bot', message='Bạn nên theo dõi thêm triệu chứng.')
+        fake_response = SimpleNamespace(text='Bạn nên nghỉ ngơi và đi khám nếu đau tăng.')
+        fake_client = Mock()
+        fake_client.models.generate_content.return_value = fake_response
+
+        with patch('google.genai.Client', return_value=fake_client):
+            response = self.client.post(
+                reverse('chat_api'),
+                data=json.dumps({'message': 'Vậy tôi nên làm gì tiếp?'}),
+                content_type='application/json',
+            )
+
+        self.assertEqual(response.status_code, 200)
+        prompt = fake_client.models.generate_content.call_args.kwargs['contents']
+        self.assertIn('Ngữ cảnh hội thoại gần đây', prompt)
+        self.assertIn('Tôi bị đau đầu từ hôm qua', prompt)
+        self.assertEqual(prompt.count('Vậy tôi nên làm gì tiếp?'), 1)
 
     @override_settings(GEMINI_API_KEY='test-key')
     def test_chat_api_handles_provider_failure(self):
@@ -259,3 +314,53 @@ class ChatEndpointTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(ChatMessage.objects.count(), 0)
+
+    def test_rag_context_excludes_already_booked_slots(self):
+        from appoinment.models import Appointment, TakeAppointment
+
+        doctor = User.objects.create_user(
+            email='doctor@example.com',
+            password='secret123',
+            role='doctor',
+            first_name='An',
+            last_name='Nguyen',
+        )
+        slot_date = timezone.localdate() + timedelta(days=1)
+        free_slot = Appointment.objects.create(
+            user=doctor,
+            full_name='BS An Nguyen',
+            location='Ha Noi',
+            qualification_name='CKI',
+            institute_name='Medic',
+            hospital_name='Medic Center',
+            department='Heart Disease',
+            start_time=time(9, 0),
+            end_time=time(9, 30),
+            date=slot_date,
+        )
+        booked_slot = Appointment.objects.create(
+            user=doctor,
+            full_name='BS An Nguyen',
+            location='Ha Noi',
+            qualification_name='CKI',
+            institute_name='Medic',
+            hospital_name='Medic Center',
+            department='Heart Disease',
+            start_time=time(10, 0),
+            end_time=time(10, 30),
+            date=slot_date,
+        )
+        TakeAppointment.objects.create(
+            user=self.user,
+            appointment=booked_slot,
+            full_name='Patient Test',
+            phone_number='0900000000',
+            date=booked_slot.date,
+            time=booked_slot.start_time,
+            status=TakeAppointment.STATUS_CONFIRMED,
+        )
+
+        context = build_rag_context(self.user, 'Có lịch khám tim mạch nào trong tuần không?')
+
+        self.assertIn(free_slot.start_time.strftime('%H:%M'), context)
+        self.assertNotIn(booked_slot.start_time.strftime('%H:%M'), context)

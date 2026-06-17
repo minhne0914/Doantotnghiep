@@ -1,19 +1,344 @@
 {% extends 'base.html' %}
-{% load static i18n %}
-{% block title %}{% trans "Danh sách Lịch khám" %}{% endblock %}
+{% load static i18n medic_tags %}
 
+{% block title %}{% trans "Đội ngũ Bác sĩ" %}{% endblock %}
 
+{% block style %}
+<style>
+    .doctor-directory {
+        background: #f6f9fc;
+    }
+
+    .doctor-directory .container {
+        max-width: 1180px;
+    }
+
+    .doctor-directory-title {
+        max-width: 720px;
+        margin: 0 auto 28px;
+        text-align: center;
+    }
+
+    .doctor-directory-title h3 {
+        color: #0f172a;
+        font-size: 2.15rem;
+        font-weight: 900;
+        letter-spacing: 0;
+        margin-bottom: 10px;
+    }
+
+    .doctor-directory-title p {
+        color: #64748b;
+        font-size: 1rem;
+        line-height: 1.65;
+        margin: 0;
+    }
+
+    .doctor-title-icon {
+        display: inline-flex;
+        width: 42px;
+        height: 42px;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 14px;
+        border-radius: 12px;
+        background: #e0f2fe;
+        color: #0891b2;
+        box-shadow: 0 12px 26px rgba(8, 145, 178, 0.16);
+    }
+
+    .doctor-filter-panel {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+        padding: 18px;
+        margin-bottom: 28px;
+    }
+
+    .doctor-filter-grid {
+        display: grid;
+        grid-template-columns: minmax(240px, 1.4fr) minmax(180px, 1fr) minmax(165px, 0.82fr) auto;
+        gap: 12px;
+        align-items: end;
+    }
+
+    .doctor-filter-field label {
+        display: block;
+        margin-bottom: 7px;
+        color: #475569;
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .doctor-input-wrap {
+        display: flex;
+        min-height: 46px;
+        overflow: hidden;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        background: #fff;
+    }
+
+    .doctor-input-wrap:focus-within {
+        border-color: #0891b2;
+        box-shadow: 0 0 0 0.2rem rgba(8, 145, 178, 0.12);
+    }
+
+    .doctor-input-icon {
+        display: inline-flex;
+        width: 46px;
+        flex: 0 0 46px;
+        align-items: center;
+        justify-content: center;
+        border-right: 1px solid #e2e8f0;
+        background: #f8fafc;
+        color: #0e7490;
+    }
+
+    .doctor-input-wrap .form-control,
+    .doctor-input-wrap .custom-select {
+        height: 46px;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        color: #0f172a;
+        font-weight: 600;
+    }
+
+    .doctor-filter-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .doctor-filter-actions .btn {
+        min-height: 46px;
+        border-radius: 10px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .doctor-results-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 18px;
+        color: #64748b;
+        font-weight: 700;
+    }
+
+    .doctor-results-meta strong {
+        color: #0f172a;
+    }
+
+    .doctor-grid {
+        row-gap: 24px;
+    }
+
+    .doctor-card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+
+    .doctor-card:hover {
+        transform: translateY(-4px);
+        border-color: #bae6fd;
+        box-shadow: 0 22px 48px rgba(15, 23, 42, 0.12);
+    }
+
+    .doctor-photo {
+        position: relative;
+        aspect-ratio: 4 / 3;
+        background: #e2e8f0;
+        overflow: hidden;
+    }
+
+    .doctor-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .doctor-status-badge {
+        position: absolute;
+        left: 14px;
+        bottom: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        min-height: 32px;
+        padding: 0 11px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.82);
+        color: #fff;
+        font-size: 0.78rem;
+        font-weight: 800;
+        backdrop-filter: blur(8px);
+    }
+
+    .doctor-card-body {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        padding: 18px;
+    }
+
+    .doctor-card-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+    .doctor-card-heading h4 {
+        margin: 0;
+        color: #0f172a;
+        font-size: 1.08rem;
+        font-weight: 900;
+        line-height: 1.35;
+        letter-spacing: 0;
+    }
+
+    .doctor-card-heading a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .doctor-card-heading a:hover {
+        color: #0e7490;
+    }
+
+    .doctor-rating {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        min-height: 28px;
+        padding: 0 9px;
+        border-radius: 999px;
+        background: #fffbeb;
+        color: #b45309;
+        font-size: 0.78rem;
+        font-weight: 900;
+        white-space: nowrap;
+    }
+
+    .doctor-specialty {
+        display: inline-flex;
+        width: fit-content;
+        align-items: center;
+        gap: 7px;
+        min-height: 32px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: #ecfeff;
+        color: #0e7490;
+        font-size: 0.82rem;
+        font-weight: 900;
+        margin-bottom: 12px;
+    }
+
+    .doctor-qualification {
+        min-height: 44px;
+        margin: 0 0 14px;
+        color: #475569;
+        font-size: 0.9rem;
+        line-height: 1.55;
+    }
+
+    .doctor-info-list {
+        display: grid;
+        gap: 9px;
+        margin-bottom: 16px;
+    }
+
+    .doctor-info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        color: #475569;
+        font-size: 0.9rem;
+        line-height: 1.45;
+    }
+
+    .doctor-info-item i {
+        width: 18px;
+        margin-top: 3px;
+        color: #0891b2;
+        text-align: center;
+    }
+
+    .doctor-card-actions {
+        display: flex;
+        gap: 9px;
+        margin-top: auto;
+    }
+
+    .doctor-card-actions .btn {
+        min-height: 40px;
+        border-radius: 10px;
+        font-weight: 800;
+    }
+
+    .doctor-empty-state {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 16px 36px rgba(15, 23, 42, 0.06);
+    }
+
+    @media (max-width: 991.98px) {
+        .doctor-filter-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .doctor-filter-actions {
+            grid-column: 1 / -1;
+            justify-content: flex-end;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .doctor-directory-title h3 {
+            font-size: 1.7rem;
+        }
+
+        .doctor-filter-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .doctor-filter-actions,
+        .doctor-card-actions,
+        .doctor-results-meta {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .doctor-filter-actions .btn,
+        .doctor-card-actions .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-
-	<!-- banner 2 -->
 	<div class="inner-banner-w3ls">
-		<div class="container">
-
-		</div>
-		<!-- //banner 2 -->
+		<div class="container"></div>
 	</div>
-	<!-- page details -->
+
 	<div class="breadcrumb-agile">
 		<div aria-label="breadcrumb">
 			<ol class="breadcrumb">
@@ -24,164 +349,194 @@
 			</ol>
 		</div>
 	</div>
-	<!-- //page details -->
 
-
-
-
-	<!-- team -->
-	<section class="team py-5">
+	<section class="doctor-directory py-5">
 		<div class="container py-xl-5 py-lg-3">
-			<div class="w3ls-titles text-center mb-5">
-				<h3 class="title">{% trans "Đội ngũ Bác sĩ" %}</h3>
-				<span>
-					<i class="fas fa-user-md"></i>
-				</span>
-				<div class="row justify-content-center mt-4">
-                    <div class="col-lg-10">
-                        <form method="GET" action="{% url 'doctor' %}" class="bg-light p-4 rounded shadow-sm text-left">
-                            <div class="form-row align-items-center">
-                                <div class="col-md-4 mb-3">
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <div class="doctor-directory-title">
+                <span class="doctor-title-icon"><i class="fas fa-user-md"></i></span>
+				<h3>{% trans "Đội ngũ Bác sĩ" %}</h3>
+                <p>{% trans "Tìm bác sĩ theo tên, chuyên khoa hoặc ngày khám để chọn đúng lịch phù hợp." %}</p>
+			</div>
+
+            <form method="GET" action="{% url 'doctor' %}" class="doctor-filter-panel">
+                <div class="doctor-filter-grid">
+                    <div class="doctor-filter-field">
+                        <label for="doctor-search">{% trans "Tìm kiếm" %}</label>
+                        <div class="doctor-input-wrap">
+                            <span class="doctor-input-icon"><i class="fas fa-search"></i></span>
+                            <input id="doctor-search" type="text" class="form-control" name="search" placeholder="{% trans 'Tên bác sĩ / Cơ sở...' %}" value="{{ search_val }}">
+                        </div>
+                    </div>
+                    <div class="doctor-filter-field">
+                        <label for="doctor-department">{% trans "Chuyên khoa" %}</label>
+                        <div class="doctor-input-wrap">
+                            <span class="doctor-input-icon"><i class="fas fa-stethoscope"></i></span>
+                            <select id="doctor-department" name="department" class="custom-select form-control">
+                                <option value="">{% trans "Tất cả chuyên khoa" %}</option>
+                                {% for val, name in departments %}
+                                    <option value="{{ val }}" {% if val == dept_val %}selected{% endif %}>{{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="doctor-filter-field">
+                        <label for="doctor-date">{% trans "Ngày khám" %}</label>
+                        <div class="doctor-input-wrap">
+                            <span class="doctor-input-icon"><i class="fas fa-calendar-alt"></i></span>
+                            <input id="doctor-date" type="date" class="form-control" name="date" value="{{ date_val }}">
+                        </div>
+                    </div>
+                    <div class="doctor-filter-actions">
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-filter mr-1"></i>{% trans "Lọc" %}</button>
+                        {% if search_val or dept_val or date_val %}
+                            <a href="{% url 'doctor' %}" class="btn btn-outline-primary"><i class="fas fa-redo mr-1"></i>{% trans "Tất cả" %}</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+
+            <div class="doctor-results-meta">
+                <div>
+                    <strong>{{ page_obj.paginator.count }}</strong> {% trans "bác sĩ phù hợp" %}
+                </div>
+                {% if search_val or dept_val or date_val %}
+                    <div>{% trans "Bộ lọc đang được áp dụng" %}</div>
+                {% endif %}
+            </div>
+
+			<div class="row doctor-grid">
+                {% if not doctor %}
+                    <div class="col-12 text-center py-5">
+                        <div class="doctor-empty-state p-5">
+                            <i class="fas fa-user-md fa-4x text-muted mb-3"></i>
+                            <h4 class="text-muted">{% trans "Không tìm thấy bác sĩ nào khớp với bộ lọc." %}</h4>
+                            <p class="mb-4">{% trans "Vui lòng thử thay đổi tên, chuyên khoa hoặc ngày khám." %}</p>
+                            <a href="{% url 'doctor' %}" class="btn btn-outline-primary"><i class="fas fa-redo mr-1"></i> {% trans "Xem tất cả bác sĩ" %}</a>
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% for doc in doctor %}
+                    <div class="col-lg-4 col-md-6">
+                        <article class="doctor-card">
+                            <div class="doctor-photo">
+                                <img src="{{ doc.image.url }}" alt="BS. {{ doc.first_name }} {{ doc.last_name }}">
+                                <span class="doctor-status-badge">
+                                    {% if doc.next_slot %}
+                                        <i class="fas fa-calendar-check"></i>{% trans "Có lịch khám" %}
+                                    {% else %}
+                                        <i class="fas fa-user-md"></i>{% trans "Hồ sơ bác sĩ" %}
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="doctor-card-body">
+                                <div class="doctor-card-heading">
+                                    <h4>
+                                        <a href="{% url 'doctor-profile-detail' doc.id %}">
+                                            BS. {{ doc.first_name }} {{ doc.last_name }}
+                                        </a>
+                                    </h4>
+                                    <span class="doctor-rating">
+                                        <i class="fas fa-star"></i>
+                                        {{ doc.avg_rating }}
+                                    </span>
+                                </div>
+
+                                <span class="doctor-specialty">
+                                    <i class="fas fa-stethoscope"></i>{{ doc.profile_specialization|specialty_label }}
+                                </span>
+
+                                <p class="doctor-qualification">
+                                    <i class="fas fa-graduation-cap text-primary mr-1"></i>{{ doc.profile_qualifications|truncatechars:92 }}
+                                </p>
+
+                                <div class="doctor-info-list">
+                                    {% if doc.next_slot %}
+                                        <div class="doctor-info-item">
+                                            <i class="fas fa-calendar-day"></i>
+                                            <span>{{ doc.next_slot.date|date:"d/m/Y" }}</span>
                                         </div>
-                                        <input type="text" class="form-control" name="search" placeholder="{% trans 'Tên Bác sĩ / Cơ sở...' %}" value="{{ search_val }}">
+                                        <div class="doctor-info-item">
+                                            <i class="fas fa-clock"></i>
+                                            <span>{{ doc.next_slot.start_time|time:"H:i" }} - {{ doc.next_slot.end_time|time:"H:i" }}</span>
+                                        </div>
+                                        <div class="doctor-info-item">
+                                            <i class="fas fa-hospital"></i>
+                                            <span>{{ doc.display_hospital }}</span>
+                                        </div>
+                                    {% else %}
+                                        <div class="doctor-info-item">
+                                            <i class="fas fa-calendar-times"></i>
+                                            <span>{% trans "Chưa mở lịch khám sắp tới" %}</span>
+                                        </div>
+                                    {% endif %}
+                                    <div class="doctor-info-item">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <span>{{ doc.display_location }}</span>
                                     </div>
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fas fa-stethoscope"></i></span>
-                                        </div>
-                                        <select name="department" class="custom-select form-control">
-                                            <option value="">{% trans "Tất cả chuyên khoa" %}</option>
-                                            {% for val, name in departments %}
-                                                <option value="{{ val }}" {% if val == dept_val %}selected{% endif %}>{{ name }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
-                                        </div>
-                                        <input type="date" class="form-control" name="date" value="{{ date_val }}">
-                                    </div>
-                                </div>
-                                <div class="col-md-2 mb-3">
-                                    <button type="submit" class="btn btn-primary btn-block" style="height: 100%; border-radius: 4px;"><i class="fas fa-filter mr-1"></i> {% trans "Lọc" %}</button>
+
+                                <div class="doctor-card-actions">
+                                    <a href="{% url 'doctor-profile-detail' doc.id %}" class="btn btn-outline-primary btn-sm flex-fill">
+                                        <i class="fas fa-eye mr-1"></i>{% trans "Hồ sơ" %}
+                                    </a>
+                                    {% if doc.next_slot and request.user.is_authenticated and request.user.role == 'patient' %}
+                                        <a href="{% url 'take-appointment' doc.next_slot.id %}" class="btn btn-primary btn-sm flex-fill">
+                                            <i class="fas fa-calendar-plus mr-1"></i>{% trans "Đặt lịch" %}
+                                        </a>
+                                    {% elif doc.next_slot %}
+                                        <a href="{% url 'doctor-profile-detail' doc.id %}" class="btn btn-primary btn-sm flex-fill">
+                                            <i class="fas fa-calendar-alt mr-1"></i>{% trans "Xem lịch" %}
+                                        </a>
+                                    {% endif %}
                                 </div>
                             </div>
-                        </form>
+                        </article>
                     </div>
-                </div>
-			</div>
-			
-			<div class="row inner-sec-w3layouts-agileinfo">
-                {% if not doctor %}
-                <div class="col-12 text-center py-5">
-                    <div class="empty-state p-5 bg-light rounded">
-                        <i class="fas fa-user-md fa-4x text-muted mb-3"></i>
-                        <h4 class="text-muted">{% trans "Không tìm thấy lịch khám nào khớp với bộ lọc của bạn." %}</h4>
-                        <p class="mb-4">{% trans "Vui lòng thử thay đổi chuyên khoa, khoảng thời gian, hoặc kiểm tra lại từ khóa." %}</p>
-                        <a href="{% url 'doctor' %}" class="btn btn-outline-primary"><i class="fas fa-redo mr-1"></i> {% trans "Xem lại tất cả bác sĩ" %}</a>
-                    </div>
-                </div>
-                {% endif %}
-                
-                {% for apt in doctor %}
-				<div class="col-md-4 team-grids text-center mb-5">
-                   
-					<img style="height: 400px; width: 400px; object-fit: cover;" src="{{ apt.user.image.url }}" class="img-fluid" alt="">
-					<div class="team-info">
-                        {% if request.user.is_authenticated and request.user.role == 'patient' %}
-						<div class="caption">
-							<h4><a style="color: inherit; text-decoration: none;" href="{% url 'doctor-profile-detail' apt.user.id %}">BS. {{ apt.user.first_name }} {{ apt.user.last_name }}</a></h4>
-						</div>
-					
-                        <h6 class="text-warning"><i class="fas fa-star"></i> {{ apt.avg_rating }} {% trans "Đánh giá" %}</h6>
-                        <h6>{{ apt.department }} {% trans "Chuyên ngành" %}</h6>
-                        <h6>{{ apt.qualification_name }}, {{ apt.institute_name }}</h6>
-						<h6>{% trans "Ngày khám:" %} {{ apt.date|date:"d/m/Y" }}</h6>
-                        <h6>{% trans "Khung giờ" %} {{ apt.start_time }} {% trans "đến" %} {{ apt.end_time }}
-                            {% trans "tại" %} {{ apt.hospital_name }}</h6>
-                        <h6>
-                            {% trans "Địa chỉ:" %} {{ apt.location }}
-                            <a href="{% url 'take-appointment' apt.id %}"> {% trans "Đặt lịch khám" %}</a>
-                       </h6>
-                       {% elif request.user.is_authenticated and request.user.role == 'doctor'   %}
-                       <div class="caption">
-                        <h4><a style="color: inherit; text-decoration: none;" href="{% url 'doctor-profile-detail' apt.user.id %}">BS. {{ apt.user.first_name }} {{ apt.user.last_name }}</a></h4>
-                    </div>
-                
-                    <h6 class="text-warning"><i class="fas fa-star"></i> {{ apt.avg_rating }} {% trans "Đánh giá" %}</h6>
-                    <h6>{{ apt.department }} {% trans "Chuyên ngành" %}</h6>
-                    <h6>{{ apt.qualification_name }}, {{ apt.institute_name }}</h6>
-                    <h6>{% trans "Khung giờ" %} {{ apt.start_time }} {% trans "đến" %} {{ apt.end_time }}
-                        {% trans "tại" %} {{ apt.hospital_name }}</h6>
-                    <h6>
-                        {% trans "Địa chỉ:" %} {{ apt.location }}
-                   </h6>
-                   {% else %}
-                   <h6>{{ apt.department }} {% trans "Chuyên ngành" %}</h6>
-                   <h6>{{ apt.qualification_name }}, {{ apt.institute_name }}</h6>
-                   <h6>{% trans "Khung giờ" %} {{ apt.start_time }} {% trans "đến" %} {{ apt.end_time }}
-                       {% trans "tại" %} {{ apt.hospital_name }}</h6>
-                   <h6>
-                       {% trans "Địa chỉ:" %} {{ apt.location }}
-                  </h6>
-                  {% endif %}
-					</div>
-				</div>
-				{% endfor %}
+                {% endfor %}
 			</div>
 
             {% if page_obj.has_other_pages %}
-            <nav aria-label="Page navigation" class="mt-5">
-                <ul class="pagination justify-content-center">
-                    {% if page_obj.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{{ filter_qs }}" aria-label="Previous">
-                            <span aria-hidden="true">&laquo; {% trans "Trang trước" %}</span>
-                        </a>
-                    </li>
-                    {% else %}
-                    <li class="page-item disabled">
-                        <a class="page-link" href="#" aria-label="Previous">
-                            <span aria-hidden="true">&laquo; {% trans "Trang trước" %}</span>
-                        </a>
-                    </li>
-                    {% endif %}
+                <nav aria-label="Page navigation" class="mt-5">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{{ filter_qs }}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo; {% trans "Trang trước" %}</span>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo; {% trans "Trang trước" %}</span>
+                                </a>
+                            </li>
+                        {% endif %}
 
-                    {% for num in page_obj.paginator.page_range %}
-                    {% if page_obj.number == num %}
-                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                    <li class="page-item"><a class="page-link" href="?page={{ num }}{{ filter_qs }}">{{ num }}</a></li>
-                    {% endif %}
-                    {% endfor %}
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item"><a class="page-link" href="?page={{ num }}{{ filter_qs }}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
 
-                    {% if page_obj.has_next %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{{ filter_qs }}" aria-label="Next">
-                            <span aria-hidden="true">{% trans "Trang sau" %} &raquo;</span>
-                        </a>
-                    </li>
-                    {% else %}
-                    <li class="page-item disabled">
-                        <a class="page-link" href="#" aria-label="Next">
-                            <span aria-hidden="true">{% trans "Trang sau" %} &raquo;</span>
-                        </a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </nav>
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{{ filter_qs }}" aria-label="Next">
+                                    <span aria-hidden="true">{% trans "Trang sau" %} &raquo;</span>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="Next">
+                                    <span aria-hidden="true">{% trans "Trang sau" %} &raquo;</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
             {% endif %}
 		</div>
 	</section>
-	<!-- team -->
-
-  
 {% endblock %}

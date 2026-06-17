@@ -1,0 +1,13 @@
+<section class="pm-stats-grid" aria-label="KPI cards">
+    {% for card in stats_cards %}
+        <article class="pm-stat-card tone-{{ card.tone }}">
+            <div class="pm-stat-top">
+                <span class="pm-stat-icon"><i class="{{ card.icon }}"></i></span>
+                <span class="pm-stat-delta">{{ card.delta }}</span>
+            </div>
+            <p>{{ card.label }}</p>
+            <strong>{{ card.value }}</strong>
+            <small>{{ card.caption }}</small>
+        </article>
+    {% endfor %}
+</section>

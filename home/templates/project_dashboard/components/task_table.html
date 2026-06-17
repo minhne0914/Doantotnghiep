@@ -1,0 +1,44 @@
+<section class="pm-panel pm-task-panel" aria-label="Task table">
+    <div class="pm-panel-header">
+        <div>
+            <span class="pm-eyebrow">Execution</span>
+            <h2>Task ưu tiên tuần này</h2>
+        </div>
+        <button class="pm-ghost-btn" type="button">Xem tất cả</button>
+    </div>
+
+    <div class="pm-table-wrap">
+        <table class="pm-table">
+            <thead>
+                <tr>
+                    <th>Task</th>
+                    <th>Dự án</th>
+                    <th>Team</th>
+                    <th>Trạng thái</th>
+                    <th>Ưu tiên</th>
+                    <th>Deadline</th>
+                    <th>Owner</th>
+                    <th>Tiến độ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                    <tr>
+                        <td><strong>{{ task.name }}</strong></td>
+                        <td>{{ task.project }}</td>
+                        <td>{{ task.team }}</td>
+                        <td><span class="pm-badge {{ task.status_tone }}">{{ task.status }}</span></td>
+                        <td><span class="pm-badge soft {{ task.priority_tone }}">{{ task.priority }}</span></td>
+                        <td>{{ task.due }}</td>
+                        <td><span class="pm-avatar">{{ task.owner }}</span></td>
+                        <td>
+                            <div class="pm-progress" aria-label="{{ task.progress }}%">
+                                <span style="width: {{ task.progress }}%"></span>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>

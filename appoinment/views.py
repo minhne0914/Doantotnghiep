@@ -14,6 +14,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
@@ -79,8 +80,8 @@ class AppointmentCreateView(CreateView):
             logger.info('Doctor %s has no DoctorProfile, using default placeholders.', user.id)
             profile = None
 
-        form.instance.department = (profile.specialization if profile else None) or 'Chưa cập nhật'
-        form.instance.qualification_name = (profile.qualifications if profile else None) or 'Chưa cập nhật'
+        form.instance.department = (profile.specialization if profile else None) or _('Chưa cập nhật')
+        form.instance.qualification_name = (profile.qualifications if profile else None) or _('Chưa cập nhật')
         form.instance.institute_name = form.instance.hospital_name
         return super().form_valid(form)
 
@@ -152,18 +153,18 @@ DEPARTMENT_CHOICES_VI = [
 
 class DoctorPageView(ListView):
     paginate_by = 9
-    model = Appointment
+    model = User
     context_object_name = 'doctor'
     template_name = 'doctor.html'
 
-    def _parse_filter_date(self, raw_value, fallback):
+    def _parse_filter_date(self, raw_value):
         if not raw_value:
-            return fallback
+            return None
         try:
             return datetime.datetime.strptime(raw_value, '%Y-%m-%d').date()
         except ValueError:
-            logger.debug('Invalid date filter %r, fall back to today', raw_value)
-            return fallback
+            logger.debug('Invalid date filter %r, ignore date filter', raw_value)
+            return None
 
     def get_queryset(self):
         today = timezone.localdate()
@@ -172,35 +173,94 @@ class DoctorPageView(ListView):
         request_get = self.request.GET
         dept = request_get.get('department', '').strip()
         search = request_get.get('search', '').strip()
-        target_date = self._parse_filter_date(request_get.get('date', '').strip(), today)
+        target_date = self._parse_filter_date(request_get.get('date', '').strip())
 
         queryset = (
-            self.model.objects.filter(is_active=True, date=target_date)
-            .select_related('user')
-            .order_by('-id')
+            self.model.objects.filter(role=UserRole.DOCTOR)
+            .select_related('doctor_profile')
+            .annotate(
+                avg_rating=Avg('doctor_reviews__rating'),
+                review_count=Count('doctor_reviews', distinct=True),
+            )
         )
         if dept:
-            queryset = queryset.filter(department=dept)
+            queryset = queryset.filter(
+                Q(doctor_profile__specialization=dept) | Q(appointment__department=dept)
+            )
         if search:
             queryset = queryset.filter(
-                Q(full_name__icontains=search) | Q(hospital_name__icontains=search)
+                Q(first_name__icontains=search)
+                | Q(last_name__icontains=search)
+                | Q(email__icontains=search)
+                | Q(doctor_profile__specialization__icontains=search)
+                | Q(appointment__full_name__icontains=search)
+                | Q(appointment__hospital_name__icontains=search)
+            )
+        if target_date:
+            date_filter = Q(appointment__is_active=True, appointment__date=target_date)
+            if target_date == today:
+                date_filter &= Q(appointment__end_time__gt=now_time)
+            queryset = queryset.filter(date_filter)
+
+        doctors = list(queryset.distinct().order_by('first_name', 'last_name', 'id'))
+
+        available_slots = Appointment.objects.filter(
+            user__in=doctors,
+            is_active=True,
+        ).filter(
+            Q(date__gt=today) | Q(date=today, end_time__gt=now_time)
+        )
+
+        if target_date:
+            available_slots = available_slots.filter(date=target_date)
+        if dept:
+            available_slots = available_slots.filter(
+                Q(department=dept) | Q(user__doctor_profile__specialization=dept)
+            )
+        if search:
+            available_slots = available_slots.filter(
+                Q(full_name__icontains=search)
+                | Q(hospital_name__icontains=search)
+                | Q(user__first_name__icontains=search)
+                | Q(user__last_name__icontains=search)
+                | Q(user__email__icontains=search)
             )
 
+        slots_by_doctor = {}
+        for slot in available_slots.select_related('user').order_by('date', 'start_time'):
+            slots_by_doctor.setdefault(slot.user_id, slot)
+
+        for doctor in doctors:
+            try:
+                profile = doctor.doctor_profile
+            except DoctorProfile.DoesNotExist:
+                profile = None
+
+            slot = slots_by_doctor.get(doctor.id)
+            doctor.next_slot = slot
+            doctor.avg_rating = round(doctor.avg_rating, 1) if doctor.avg_rating else 0
+            doctor.profile_specialization = (
+                (profile.specialization if profile else None)
+                or (slot.department if slot else None)
+                or _('Đang cập nhật')
+            )
+            doctor.profile_qualifications = (
+                (profile.qualifications if profile else None)
+                or (slot.qualification_name if slot else None)
+                or _('Đang cập nhật bằng cấp')
+            )
+            doctor.profile_experience = (profile.experience if profile else None) or ''
+            doctor.display_hospital = slot.hospital_name if slot else _('Chưa mở lịch khám')
+            doctor.display_location = slot.location if slot else _('Chưa cập nhật')
+
+        return doctors
+
         # Annotate avg rating qua subquery thay vì 1 query thủ công bên ngoài
-        queryset = queryset.annotate(avg_rating=Avg('user__doctor_reviews__rating'))
 
         # Lọc bỏ slot đã quá giờ trong ngày hôm nay
-        results = []
-        for appt in queryset:
-            if appt.date == today and appt.end_time <= now_time:
-                continue
-            appt.avg_rating = round(appt.avg_rating, 1) if appt.avg_rating else 0
-            results.append(appt)
-        return results
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        from django.utils.translation import gettext_lazy as _
 
         context['search_val'] = self.request.GET.get('search', '').strip()
         context['dept_val'] = self.request.GET.get('department', '').strip()

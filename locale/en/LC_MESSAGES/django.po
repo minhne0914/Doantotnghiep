@@ -780,3 +780,507 @@ msgstr "to"
 
 msgid "Ứng dụng Random Forest & KNN phân lớp rủi ro bệnh lý tức thì."
 msgstr "Apply Random Forest & KNN for instant risk classification."
+
+msgid "Hotline 24/7:"
+msgstr "Hotline 24/7:"
+
+msgid "Mở menu điều hướng"
+msgstr "Toggle navigation menu"
+
+msgid "đang chọn"
+msgstr "current"
+
+msgid "Nguy cơ ung thư da"
+msgstr "Skin Cancer Risk"
+
+msgid "Medic hỗ trợ đặt lịch khám, sàng lọc nguy cơ bằng AI và quản lý hồ sơ sức khỏe điện tử trong một nền tảng an toàn."
+msgstr "Medic supports appointment booking, AI risk screening, and secure electronic health record management in one platform."
+
+msgid "Bắc Từ Liêm,"
+msgstr "Bac Tu Liem,"
+
+msgid "Hà Nội"
+msgstr "Ha Noi"
+
+msgid "Bản quyền thuộc Medic Healthcare Platform."
+msgstr "All rights reserved by Medic Healthcare Platform."
+
+msgid "Medic - Phòng khám AI thông minh"
+msgstr "Medic - Smart AI Clinic"
+
+msgid "Thứ 2 - Thứ 7: 07:30 - 16:30"
+msgstr "Mon - Sat: 07:30 - 16:30"
+
+msgid "Tổng đài:"
+msgstr "Hotline:"
+
+msgid "Phòng khám AI thông minh"
+msgstr "Smart AI Clinic"
+
+msgid "Y tế chuẩn mực"
+msgstr "Clinical care"
+
+msgid "trợ lực AI"
+msgstr "powered by AI"
+
+msgid "vì sức khỏe của bạn"
+msgstr "for your health"
+
+msgid "Medic là phòng khám điện tử ứng dụng AI cho 6 bệnh phổ biến: tiểu đường, tim mạch, ung thư vú, thận, viêm phổi, ung thư da. Đặt lịch online, chat với bác sĩ, quản lý bệnh án điện tử an toàn."
+msgstr "Medic is a digital clinic using AI for six common conditions: diabetes, cardiovascular disease, breast cancer, kidney disease, pneumonia, and skin cancer. Book appointments online, chat with doctors, and manage secure electronic medical records."
+
+msgid "Sàng lọc AI"
+msgstr "AI Screening"
+
+msgid "Bác sĩ chuyên môn"
+msgstr "Specialist Doctors"
+
+msgid "Chuyên khoa"
+msgstr "Specialties"
+
+msgid "Mô hình AI"
+msgstr "AI Models"
+
+msgid "Chat AI tư vấn"
+msgstr "AI Consultation Chat"
+
+msgid "AI Sàng lọc"
+msgstr "AI Screening"
+
+msgid "6 mô hình AI hỗ trợ chẩn đoán"
+msgstr "6 AI models supporting diagnosis"
+
+msgid "Ứng dụng Machine Learning và Deep Learning để phát hiện sớm bệnh. Kết quả tham khảo, không thay thế bác sĩ."
+msgstr "Uses Machine Learning and Deep Learning to support early detection. Results are for reference and do not replace a doctor."
+
+msgid "Sàng lọc tiểu đường"
+msgstr "Diabetes screening"
+
+msgid "Đánh giá nguy cơ tiểu đường qua 8 chỉ số xét nghiệm. Mô hình KNN."
+msgstr "Assess diabetes risk using 8 clinical indicators. KNN model."
+
+msgid "Sàng lọc ung thư vú"
+msgstr "Breast cancer screening"
+
+msgid "Phân loại lành tính / ác tính dựa trên đặc trưng tế bào. Random Forest."
+msgstr "Classify benign or malignant tumors based on cell features. Random Forest."
+
+msgid "Sàng lọc bệnh tim"
+msgstr "Heart disease screening"
+
+msgid "Đánh giá nguy cơ tim mạch từ 13 chỉ số lâm sàng. Random Forest."
+msgstr "Assess cardiovascular risk from 13 clinical indicators. Random Forest."
+
+msgid "Sàng lọc bệnh thận"
+msgstr "Kidney disease screening"
+
+msgid "Đánh giá nguy cơ suy thận theo ngưỡng KDIGO. Rule-based scoring."
+msgstr "Assess kidney failure risk using KDIGO thresholds. Rule-based scoring."
+
+msgid "Sàng lọc viêm phổi"
+msgstr "Pneumonia screening"
+
+msgid "Phát hiện viêm phổi từ ảnh X-quang phổi. CNN Deep Learning."
+msgstr "Detect pneumonia from chest X-ray images. CNN Deep Learning."
+
+msgid "Sàng lọc ung thư da"
+msgstr "Skin cancer screening"
+
+msgid "Phân loại 7 nhóm tổn thương da từ ảnh dermoscopy. CNN HAM10000."
+msgstr "Classify 7 groups of skin lesions from dermoscopy images. CNN HAM10000."
+
+msgid "Ưu thế"
+msgstr "Advantages"
+
+msgid "Tại sao chọn Medic?"
+msgstr "Why choose Medic?"
+
+msgid "Công nghệ AI tiên phong"
+msgstr "Pioneering AI technology"
+
+msgid "Tích hợp 6 mô hình ML/DL state-of-the-art, hỗ trợ bác sĩ ra quyết định nhanh và chính xác."
+msgstr "Integrates 6 state-of-the-art ML/DL models to help doctors make faster, more accurate decisions."
+
+msgid "Bác sĩ chuyên môn cao"
+msgstr "Highly specialized doctors"
+
+msgid "Đội ngũ bác sĩ giàu kinh nghiệm trong 11 chuyên khoa, được đánh giá thực bởi bệnh nhân."
+msgstr "Experienced doctors across 11 specialties, with real reviews from patients."
+
+msgid "Bệnh án điện tử an toàn"
+msgstr "Secure electronic medical records"
+
+msgid "Lưu trữ vĩnh viễn, audit trail mọi thay đổi, phân quyền chặt chẽ theo role bác sĩ/bệnh nhân."
+msgstr "Permanent storage, full audit trail for changes, and strict doctor/patient role-based permissions."
+
+msgid "Tin tức"
+msgstr "News"
+
+msgid "Tin tức & Sự kiện"
+msgstr "News & Events"
+
+msgid "Cập nhật thông tin y học và sản phẩm mới nhất từ Medic."
+msgstr "Latest medical information and Medic product updates."
+
+msgid "Xem thêm"
+msgstr "Read more"
+
+msgid "Đội ngũ"
+msgstr "Team"
+
+msgid "Đội ngũ Bác sĩ Medic"
+msgstr "Medic Doctor Team"
+
+msgid "Đội ngũ bác sĩ chuyên môn cao, kinh nghiệm dày dạn trên 11 chuyên khoa."
+msgstr "A highly specialized, experienced team of doctors across 11 specialties."
+
+msgid "Đa khoa"
+msgstr "General Medicine"
+
+msgid "Chưa có đánh giá"
+msgstr "No reviews yet"
+
+msgid "Xem toàn bộ bác sĩ"
+msgstr "View all doctors"
+
+msgid "Nhận xét"
+msgstr "Reviews"
+
+msgid "Nhận xét của bệnh nhân"
+msgstr "Patient Reviews"
+
+msgid "Đánh giá thực từ bệnh nhân đã trải nghiệm dịch vụ Medic."
+msgstr "Real feedback from patients who have used Medic services."
+
+msgid "Bác sĩ tận tâm, chuyên nghiệp. Tôi rất hài lòng với dịch vụ tại Medic."
+msgstr "The doctor was dedicated and professional. I am very satisfied with Medic's service."
+
+msgid "Khám với"
+msgstr "Appointment with"
+
+msgid "Sẵn sàng chăm sóc sức khỏe?"
+msgstr "Ready to take care of your health?"
+
+msgid "Đăng ký Medic miễn phí, sàng lọc bệnh bằng AI, đặt lịch khám với bác sĩ chuyên môn."
+msgstr "Register for Medic free, screen health risks with AI, and book appointments with specialists."
+
+msgid "Đăng ký miễn phí"
+msgstr "Register free"
+
+msgid "Xem lịch sử"
+msgstr "View history"
+
+msgid "Tìm bác sĩ theo tên, chuyên khoa hoặc ngày khám để chọn đúng lịch phù hợp."
+msgstr "Search doctors by name, specialty, or appointment date to find the right schedule."
+
+msgid "Tìm kiếm"
+msgstr "Search"
+
+msgid "Tên bác sĩ / Cơ sở..."
+msgstr "Doctor name / Facility..."
+
+msgid "Tất cả"
+msgstr "All"
+
+msgid "bác sĩ phù hợp"
+msgstr "matching doctors"
+
+msgid "Bộ lọc đang được áp dụng"
+msgstr "Active filters"
+
+msgid "Không tìm thấy bác sĩ nào khớp với bộ lọc."
+msgstr "No doctors matched your filters."
+
+msgid "Vui lòng thử thay đổi tên, chuyên khoa hoặc ngày khám."
+msgstr "Please try changing the name, specialty, or appointment date."
+
+msgid "Xem tất cả bác sĩ"
+msgstr "View all doctors"
+
+msgid "Có lịch khám"
+msgstr "Schedule available"
+
+msgid "Hồ sơ bác sĩ"
+msgstr "Doctor profile"
+
+msgid "Chưa mở lịch khám sắp tới"
+msgstr "No upcoming schedule"
+
+msgid "Hồ sơ"
+msgstr "Profile"
+
+msgid "Đặt lịch"
+msgstr "Book"
+
+msgid "Xem lịch"
+msgstr "View schedule"
+
+msgid "Hồ sơ Bác sĩ"
+msgstr "Doctor Profile"
+
+msgid "Hồ sơ BS."
+msgstr "Profile of Dr."
+
+msgid "Ảnh hồ sơ bác sĩ"
+msgstr "Doctor profile photo"
+
+msgid "Bác sĩ chuyên khoa"
+msgstr "Specialist doctor"
+
+msgid "Đang cập nhật"
+msgstr "Updating"
+
+msgid "lượt"
+msgstr "reviews"
+
+msgid "Chuyên môn chính"
+msgstr "Primary specialty"
+
+msgid "Giới thiệu"
+msgstr "About"
+
+msgid "Bằng cấp & Đào tạo"
+msgstr "Qualifications & Training"
+
+msgid "Chưa cập nhật thông tin bằng cấp."
+msgstr "Qualification information has not been updated."
+
+msgid "Kinh nghiệm làm việc"
+msgstr "Work experience"
+
+msgid "Chưa cập nhật thông tin kinh nghiệm."
+msgstr "Experience information has not been updated."
+
+msgid "Tiểu sử Bác sĩ"
+msgstr "Doctor Biography"
+
+msgid "Nhận xét từ Bệnh nhân"
+msgstr "Patient Reviews"
+
+msgid "Đặt lịch ngay"
+msgstr "Book now"
+
+msgid "Bác sĩ chưa có bài giới thiệu chi tiết."
+msgstr "This doctor has not added a detailed introduction yet."
+
+msgid "Đã được khám"
+msgstr "Visited"
+
+msgid "Chưa có lượt đánh giá nào cho bác sĩ này."
+msgstr "This doctor has no reviews yet."
+
+msgid "Ca khám sắp tới của Bác sĩ"
+msgstr "Upcoming Doctor Slots"
+
+msgid "Thời gian"
+msgstr "Time"
+
+msgid "Thao tác"
+msgstr "Action"
+
+msgid "Chọn giờ"
+msgstr "Choose time"
+
+msgid "Hiện bác sĩ chưa mở ca khám mới hoặc đã kín lịch."
+msgstr "This doctor has not opened new slots or is fully booked."
+
+msgid "Hủy lịch khám"
+msgstr "Cancel Appointment"
+
+msgid "Xác nhận hủy lịch khám"
+msgstr "Confirm Appointment Cancellation"
+
+msgid "Hủy lịch sẽ giải phóng slot để bệnh nhân khác có thể đặt lại. Bác sĩ cũng sẽ nhận được thông báo thay đổi lịch."
+msgstr "Cancelling will release the slot so another patient can book it. The doctor will also receive a schedule change notification."
+
+msgid "Nếu hủy trong vòng"
+msgstr "If you cancel within"
+
+msgid "giờ trước giờ khám, hệ thống sẽ không cho phép thao tác này."
+msgstr "hours before the appointment, the system will not allow this action."
+
+msgid "Quay lại"
+msgstr "Back"
+
+msgid "Số điện thoại"
+msgstr "Phone number"
+
+msgid "Ngày giờ khám"
+msgstr "Appointment date and time"
+
+msgid "Ghi chú hiện tại"
+msgstr "Current note"
+
+msgid "Xác nhận hủy"
+msgstr "Confirm cancellation"
+
+msgid "Giữ lại lịch"
+msgstr "Keep appointment"
+
+msgid "Theo dõi lịch hẹn sắp tới, đổi hoặc hủy lịch trước tối thiểu"
+msgstr "Track upcoming appointments, reschedule or cancel at least"
+
+msgid "giờ và xem lại toàn bộ thay đổi theo thời gian."
+msgstr "hours in advance, and review the full change history over time."
+
+msgid "Chưa cập nhật"
+msgstr "Not updated"
+
+msgid "Đang cập nhật bằng cấp"
+msgstr "Qualifications pending"
+
+msgid "Chưa mở lịch khám"
+msgstr "No appointment slots opened yet"
+
+msgid "AI Da liễu"
+msgstr "Dermatology AI"
+
+msgid "Sàng lọc tổn thương da bằng AI"
+msgstr "AI Skin Lesion Screening"
+
+msgid "Tải ảnh chụp vùng tổn thương da để mô hình CNN HAM10000 phân loại 7 nhóm phổ biến. Kết quả chỉ dùng để sàng lọc ban đầu và không thay thế chẩn đoán của bác sĩ Da liễu."
+msgstr "Upload a photo of the skin lesion so the HAM10000 CNN model can classify 7 common groups. Results are for preliminary screening only and do not replace a dermatologist's diagnosis."
+
+msgid "7 nhóm tổn thương"
+msgstr "7 lesion groups"
+
+msgid "JPG, PNG, WEBP"
+msgstr "JPG, PNG, WEBP"
+
+msgid "Tối đa 5 MB"
+msgstr "Up to 5 MB"
+
+msgid "Ảnh rõ, đủ sáng"
+msgstr "Clear, well-lit photo"
+
+msgid "Chụp gần 10-15 cm, lấy nét vào nốt ruồi hoặc vùng tổn thương."
+msgstr "Take a close photo from 10-15 cm and focus on the mole or lesion."
+
+msgid "Không tự chẩn đoán"
+msgstr "Do not self-diagnose"
+
+msgid "Nếu tổn thương thay đổi nhanh, chảy máu, đau hoặc ngứa kéo dài, hãy đi khám."
+msgstr "If the lesion changes quickly, bleeds, hurts, or itches for a long time, see a doctor."
+
+msgid "Lưu lịch sử"
+msgstr "Save history"
+
+msgid "Người dùng đăng nhập sẽ được lưu kết quả để theo dõi sức khỏe."
+msgstr "Logged-in users will have results saved for health tracking."
+
+msgid "Tải ảnh cần sàng lọc"
+msgstr "Upload image for screening"
+
+msgid "Ảnh tổn thương da"
+msgstr "Skin lesion image"
+
+msgid "Nên dùng ảnh chụp trực diện, không dùng ảnh quá mờ, quá tối hoặc đã chỉnh màu mạnh."
+msgstr "Use a front-facing photo. Avoid images that are too blurry, too dark, or heavily color-edited."
+
+msgid "Phân tích bằng AI"
+msgstr "Analyze with AI"
+
+msgid "Ảnh xem trước"
+msgstr "Image preview"
+
+msgid "Ảnh tổn thương da đã tải lên"
+msgstr "Uploaded skin lesion image"
+
+msgid "Ảnh sẽ hiển thị tại đây sau khi bạn chọn file."
+msgstr "The image will appear here after you choose a file."
+
+msgid "Kết quả phân tích"
+msgstr "Analysis result"
+
+msgid "Cần đi khám Da liễu sớm"
+msgstr "See a dermatologist soon"
+
+msgid "Mô hình nghi ngờ nhóm tổn thương nguy hiểm hoặc tiền ung thư. Bạn nên đặt lịch khám chuyên khoa để được soi da và đánh giá trực tiếp."
+msgstr "The model suspects a dangerous or precancerous lesion group. You should book a specialist visit for dermoscopy and direct evaluation."
+
+msgid "Chưa thấy tín hiệu nguy cơ cao"
+msgstr "No high-risk signal detected"
+
+msgid "Kết quả hiện nghiêng về nhóm lành tính. Nếu tổn thương lớn nhanh, đổi màu, đau, ngứa hoặc chảy máu, bạn vẫn nên đi khám."
+msgstr "The result currently leans toward a benign group. If the lesion grows quickly, changes color, hurts, itches, or bleeds, you should still see a doctor."
+
+msgid "Phân bố xác suất 7 lớp"
+msgstr "7-class probability distribution"
+
+msgid "Tiền ung thư"
+msgstr "Precancerous"
+
+msgid "Theo dõi"
+msgstr "Monitor"
+
+msgid "Khuyến nghị"
+msgstr "Recommendations"
+
+msgid "7 nhóm mô hình phân loại"
+msgstr "7 model classification groups"
+
+msgid "Mã lớp"
+msgstr "Class code"
+
+msgid "Quy tắc ABCDE để tự kiểm tra"
+msgstr "ABCDE rule for self-checking"
+
+msgid "Asymmetry: hai nửa không đối xứng."
+msgstr "Asymmetry: the two halves do not match."
+
+msgid "Border: bờ viền lởm chởm, không đều."
+msgstr "Border: jagged or uneven edges."
+
+msgid "Color: nhiều màu trong cùng một nốt."
+msgstr "Color: multiple colors in one spot."
+
+msgid "Diameter: đường kính lớn hơn 6 mm."
+msgstr "Diameter: larger than 6 mm."
+
+msgid "Evolution: thay đổi theo thời gian."
+msgstr "Evolution: changes over time."
+
+msgid "Kết quả nghi ngờ Melanoma - đây là dạng ung thư da nguy hiểm nhất. Hãy đi khám chuyên khoa Da liễu/Ung bướu trong 1-2 ngày tới."
+msgstr "The result suggests possible melanoma, the most dangerous skin cancer type. See a dermatologist or oncology specialist within the next 1-2 days."
+
+msgid "Có dấu hiệu của ung thư biểu mô tế bào đáy. Tiên lượng thường tốt nếu phát hiện sớm, bạn nên đi khám chuyên khoa Da liễu sắp tới."
+msgstr "There are signs of basal cell carcinoma. Prognosis is often good when detected early, so you should see a dermatologist soon."
+
+msgid "Tổn thương dày sừng quang hóa là tổn thương tiền ung thư. Cần điều trị sớm để tránh tiến triển thành ung thư tế bào gai."
+msgstr "Actinic keratosis is a precancerous lesion. Early treatment is needed to avoid progression to squamous cell carcinoma."
+
+msgid "Đa phần nốt ruồi là lành tính. Theo dõi quy tắc ABCDE: Asymmetry, Border, Color, Diameter, Evolution. Khi có thay đổi, hãy đi khám."
+msgstr "Most moles are benign. Monitor using the ABCDE rule: Asymmetry, Border, Color, Diameter, Evolution. See a doctor if anything changes."
+
+msgid "Tổn thương dày sừng lành tính thường xuất hiện ở người lớn tuổi. Không nguy hiểm, nhưng nếu ngứa nhiều hoặc chảy máu hãy đi khám."
+msgstr "Benign keratosis-like lesions often appear in older adults. They are usually not dangerous, but seek care if they itch a lot or bleed."
+
+msgid "U xơ da thường lành tính, không cần điều trị trừ khi gây khó chịu hoặc ảnh hưởng thẩm mỹ."
+msgstr "Dermatofibroma is usually benign and does not need treatment unless it causes discomfort or cosmetic concern."
+
+msgid "Tổn thương mạch máu đa phần lành tính. Hãy theo dõi nếu kích thước thay đổi nhanh."
+msgstr "Most vascular skin lesions are benign. Monitor them if size changes quickly."
+
+msgid "Mô hình còn phân vân, xác suất một lớp nguy hiểm khác khá cao. Hãy đi khám trực tiếp để bác sĩ quyết định có cần soi da hoặc sinh thiết hay không."
+msgstr "The model is uncertain and another risky class has a relatively high probability. See a doctor directly so they can decide whether dermoscopy or biopsy is needed."
+
+msgid "Đây chỉ là sàng lọc tham khảo bằng AI, KHÔNG thay thế chẩn đoán của bác sĩ Da liễu. Hãy lưu lại ảnh và đi khám sớm để được soi da (dermoscopy)."
+msgstr "This is AI-assisted screening for reference only and does NOT replace a dermatologist's diagnosis. Save the image and seek care for dermoscopy."
+
+msgid "Mô hình sàng lọc ung thư da chưa được triển khai. Vui lòng liên hệ quản trị viên."
+msgstr "The skin cancer screening model has not been deployed. Please contact the administrator."
+
+msgid "Cảnh báo kết quả sàng lọc da"
+msgstr "Skin screening result warning"
+
+msgid "Kết quả sàng lọc nghi ngờ tổn thương nguy hiểm. Vui lòng đi khám Da liễu sớm."
+msgstr "The screening result suggests a potentially dangerous lesion. Please see a dermatologist soon."
+
+msgid "Không đọc được ảnh. Vui lòng tải lên ảnh JPG/PNG hợp lệ."
+msgstr "The image could not be read. Please upload a valid JPG/PNG image."
+
+msgid "Hệ thống phân tích ảnh tạm thời gặp sự cố. Vui lòng thử lại sau."
+msgstr "The image analysis system is temporarily unavailable. Please try again later."
+
+msgid "Vui lòng tải lên một ảnh tổn thương da hợp lệ."
+msgstr "Please upload a valid skin lesion image."

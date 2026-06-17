@@ -1,0 +1,23 @@
+<section class="pm-panel" aria-label="Staff statistics">
+    <div class="pm-panel-header">
+        <div>
+            <span class="pm-eyebrow">People</span>
+            <h2>Thống kê nhân sự</h2>
+        </div>
+    </div>
+
+    <div class="pm-staff-list">
+        {% for item in staff_stats %}
+            <article class="pm-staff">
+                <div>
+                    <strong>{{ item.label }}</strong>
+                    <small>{{ item.count }} thành viên</small>
+                </div>
+                <div class="pm-staff-meter">
+                    <span class="tone-{{ item.tone }}" style="width: {{ item.load }}%"></span>
+                </div>
+                <b>{{ item.load }}%</b>
+            </article>
+        {% endfor %}
+    </div>
+</section>

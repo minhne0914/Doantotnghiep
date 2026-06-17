@@ -1,3 +1,5 @@
+import datetime
+
 from django import forms
 from django.utils import timezone
 
@@ -41,8 +43,10 @@ class CreateAppointmentForm(forms.ModelForm):
             self.add_error('end_time', "Giờ kết thúc phải sau giờ bắt đầu.")
             
         if date and start_time:
-            import datetime
-            dt = datetime.datetime.combine(date, start_time)
+            dt = timezone.make_aware(
+                datetime.datetime.combine(date, start_time),
+                timezone.get_current_timezone(),
+            )
             now = timezone.localtime()
             if dt < now + datetime.timedelta(hours=1):
                 self.add_error('start_time', "Giờ bắt đầu quá gần. Phải tạo ca khám cho tương lai cách hiện tại ít nhất 1 tiếng đồng hồ.")

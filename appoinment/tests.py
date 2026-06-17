@@ -4,8 +4,108 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from accounts.models import User
+from accounts.models import DoctorProfile, User
+from .consumers import DirectChatConsumer
+from .forms import CreateAppointmentForm
 from .models import Appointment, AppointmentChangeLog, TakeAppointment
+
+
+class AppointmentFormTests(TestCase):
+    def test_create_form_uses_timezone_aware_comparison(self):
+        form = CreateAppointmentForm(data={
+            'date': (timezone.localdate() + timedelta(days=1)).isoformat(),
+            'start_time': '09:00',
+            'end_time': '17:00',
+            'hospital_name': 'Demo Hospital',
+            'location': 'Clinic',
+        })
+
+        self.assertTrue(form.is_valid(), form.errors)
+
+
+class DirectChatConsumerTests(TestCase):
+    def test_decode_attachment_rejects_disallowed_content_type(self):
+        attachment, error = DirectChatConsumer._decode_attachment(
+            'data:text/html;base64,PGgxPkhlbGxvPC9oMT4=',
+            'hello.html',
+        )
+
+        self.assertIsNone(attachment)
+        self.assertIsNotNone(error)
+
+
+class DoctorDirectoryTests(TestCase):
+    def test_directory_lists_doctors_without_requiring_today_slot(self):
+        doctor = User.objects.create_user(
+            email='no-slot-doctor@example.com',
+            password='secret123',
+            first_name='Lan',
+            last_name='Nguyen',
+            role='doctor',
+        )
+        DoctorProfile.objects.create(user=doctor, specialization='Heart Disease')
+
+        response = self.client.get(reverse('doctor'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'BS. Lan Nguyen')
+        self.assertContains(response, 'Chưa mở lịch khám sắp tới')
+
+    def test_directory_filters_by_name_department_and_date(self):
+        target_date = timezone.localdate() + timedelta(days=2)
+        other_date = timezone.localdate() + timedelta(days=3)
+
+        heart_doctor = User.objects.create_user(
+            email='heart@example.com',
+            password='secret123',
+            first_name='Minh',
+            last_name='Heart',
+            role='doctor',
+        )
+        DoctorProfile.objects.create(user=heart_doctor, specialization='Heart Disease')
+        eye_doctor = User.objects.create_user(
+            email='eye@example.com',
+            password='secret123',
+            first_name='Khoa',
+            last_name='Eye',
+            role='doctor',
+        )
+        DoctorProfile.objects.create(user=eye_doctor, specialization='Eye Care')
+
+        Appointment.objects.create(
+            user=heart_doctor,
+            full_name='BS. Minh Heart',
+            location='Heart Clinic',
+            qualification_name='MD',
+            institute_name='Medical University',
+            hospital_name='Central Hospital',
+            department='Heart Disease',
+            date=target_date,
+            start_time=timezone.datetime.strptime('09:00', '%H:%M').time(),
+            end_time=timezone.datetime.strptime('12:00', '%H:%M').time(),
+        )
+        Appointment.objects.create(
+            user=eye_doctor,
+            full_name='BS. Khoa Eye',
+            location='Eye Clinic',
+            qualification_name='MD',
+            institute_name='Medical University',
+            hospital_name='Eye Hospital',
+            department='Eye Care',
+            date=other_date,
+            start_time=timezone.datetime.strptime('09:00', '%H:%M').time(),
+            end_time=timezone.datetime.strptime('12:00', '%H:%M').time(),
+        )
+
+        response = self.client.get(reverse('doctor'), {
+            'search': 'Minh',
+            'department': 'Heart Disease',
+            'date': target_date.isoformat(),
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'BS. Minh Heart')
+        self.assertNotContains(response, 'BS. Khoa Eye')
 
 
 class AppointmentFlowTests(TestCase):

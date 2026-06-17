@@ -22,7 +22,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import get_language, gettext_lazy as _
 from PIL import Image, UnidentifiedImageError
 
 from notifications.realtime import push_realtime_notification
@@ -190,6 +190,7 @@ def _preprocess_skin_image(image):
 
 def _build_skin_predictions(probabilities):
     """Convert vector xác suất 7-class thành list dict đã format cho template."""
+    use_english = (get_language() or '').startswith('en')
     items = []
     for idx, cls in enumerate(SKIN_LESION_CLASSES):
         prob = round(float(probabilities[idx]) * 100, 2)
@@ -197,6 +198,7 @@ def _build_skin_predictions(probabilities):
             'code': cls['code'],
             'label_vi': cls['vi'],
             'label_en': cls['en'],
+            'label': cls['en'] if use_english else cls['vi'],
             'severity': cls['severity'],
             'badge': cls['badge'],
             'probability': prob,
@@ -212,26 +214,26 @@ def _build_skin_advice(top_class, all_predictions):
     """
     advices = []
     if top_class['code'] == 'mel':
-        advices.append(_('Ket qua nghi ngo Melanoma - day la dang ung thu da nguy hiem nhat. Hay di kham chuyen khoa Da lieu/Ung buou trong 1-2 ngay toi.'))
+        advices.append(_('Kết quả nghi ngờ Melanoma - đây là dạng ung thư da nguy hiểm nhất. Hãy đi khám chuyên khoa Da liễu/Ung bướu trong 1-2 ngày tới.'))
     if top_class['code'] == 'bcc':
-        advices.append(_('Co dau hieu cua ung thu bieu mo te bao day. Tien luong tot neu phat hien som, ban nen di kham chuyen khoa Da lieu sap toi.'))
+        advices.append(_('Có dấu hiệu của ung thư biểu mô tế bào đáy. Tiên lượng thường tốt nếu phát hiện sớm, bạn nên đi khám chuyên khoa Da liễu sắp tới.'))
     if top_class['code'] == 'akiec':
-        advices.append(_('Ton thuong dang sung quang hoa la ton thuong tien ung thu. Can dieu tri som tranh tien trien thanh ung thu te bao gai.'))
+        advices.append(_('Tổn thương dày sừng quang hóa là tổn thương tiền ung thư. Cần điều trị sớm để tránh tiến triển thành ung thư tế bào gai.'))
     if top_class['code'] == 'nv':
-        advices.append(_('Da phan not ruoi la lanh tinh. Theo doi quy tac ABCDE: Asymmetry, Border, Color, Diameter, Evolution. Khi co thay doi - di kham.'))
+        advices.append(_('Đa phần nốt ruồi là lành tính. Theo dõi quy tắc ABCDE: Asymmetry, Border, Color, Diameter, Evolution. Khi có thay đổi, hãy đi khám.'))
     if top_class['code'] == 'bkl':
-        advices.append(_('Ton thuong day sung lanh tinh, thuong xuat hien o nguoi lon tuoi. Khong nguy hiem nhung neu ngua nhieu hoac chay mau hay di kham.'))
+        advices.append(_('Tổn thương dày sừng lành tính thường xuất hiện ở người lớn tuổi. Không nguy hiểm, nhưng nếu ngứa nhiều hoặc chảy máu hãy đi khám.'))
     if top_class['code'] == 'df':
-        advices.append(_('U xo da thuong lanh tinh, khong can dieu tri tru khi gay kho chiu hoac mat tham my.'))
+        advices.append(_('U xơ da thường lành tính, không cần điều trị trừ khi gây khó chịu hoặc ảnh hưởng thẩm mỹ.'))
     if top_class['code'] == 'vasc':
-        advices.append(_('Ton thuong mach mau da phan lanh tinh. Theo doi neu thay doi kich thuoc nhanh.'))
+        advices.append(_('Tổn thương mạch máu đa phần lành tính. Hãy theo dõi nếu kích thước thay đổi nhanh.'))
 
     # Cảnh báo nếu top-2 là dangerous với xác suất > 25%
     second = all_predictions[1] if len(all_predictions) > 1 else None
     if second and second['code'] in SKIN_DANGEROUS_CODES and second['probability'] >= 25:
-        advices.append(_('Mo hinh con phan van, xac suat lop nguy hiem khac kha cao. Hay di kham truc tiep de bac si quyet dinh sinh thiet hay khong.'))
+        advices.append(_('Mô hình còn phân vân, xác suất một lớp nguy hiểm khác khá cao. Hãy đi khám trực tiếp để bác sĩ quyết định có cần soi da hoặc sinh thiết hay không.'))
 
-    advices.append(_('Day chi la sang loc tham khao bang AI, KHONG thay the chan doan cua bac si Da lieu. Hay luu lai anh va di kham som de duoc soi da (dermoscopy).'))
+    advices.append(_('Đây chỉ là sàng lọc tham khảo bằng AI, KHÔNG thay thế chẩn đoán của bác sĩ Da liễu. Hãy lưu lại ảnh và đi khám sớm để được soi da (dermoscopy).'))
     return advices
 
 
@@ -243,6 +245,11 @@ def skin_cancer_detector(request):
     is_dangerous = None
     error = None
     advices = []
+    use_english = (get_language() or '').startswith('en')
+    display_classes = [
+        {**cls, 'label': cls['en'] if use_english else cls['vi']}
+        for cls in SKIN_LESION_CLASSES
+    ]
 
     if request.method == 'POST':
         form = SkinCancerUploadForm(request.POST, request.FILES)
@@ -253,7 +260,7 @@ def skin_cancer_detector(request):
         if form.is_valid() and not error:
             model = get_skin_cancer_model()
             if model is None:
-                error = _('Mo hinh sang loc ung thu da chua duoc trien khai. Vui long lien he quan tri vien.')
+                error = _('Mô hình sàng lọc ung thư da chưa được triển khai. Vui lòng liên hệ quản trị viên.')
             else:
                 try:
                     original_image = Image.open(image_file)
@@ -286,8 +293,8 @@ def skin_cancer_detector(request):
                         try:
                             push_realtime_notification(
                                 request.user,
-                                title=str(_('Canh bao ket qua sang loc da')),
-                                message=str(_('Ket qua sang loc nghi ngo ton thuong nguy hiem. Vui long di kham Da lieu som.')),
+                                title=str(_('Cảnh báo kết quả sàng lọc da')),
+                                message=str(_('Kết quả sàng lọc nghi ngờ tổn thương nguy hiểm. Vui lòng đi khám Da liễu sớm.')),
                                 level='warning',
                                 category='skin-cancer',
                                 payload={'top_class': top_class['code']},
@@ -295,15 +302,15 @@ def skin_cancer_detector(request):
                         except Exception:
                             logger.exception('Skin cancer warning notification failed')
                 except UnidentifiedImageError:
-                    error = _('Khong doc duoc anh. Vui long tai len anh JPG/PNG hop le.')
+                    error = _('Không đọc được ảnh. Vui lòng tải lên ảnh JPG/PNG hợp lệ.')
                 except Exception:
                     logger.exception(
                         'Skin cancer detection failed for upload: %s',
                         getattr(image_file, 'name', '<unknown>'),
                     )
-                    error = _('He thong phan tich anh tam thoi gap su co. Vui long thu lai sau.')
+                    error = _('Hệ thống phân tích ảnh tạm thời gặp sự cố. Vui lòng thử lại sau.')
         elif not error:
-            error = _('Vui long tai len mot anh ton thuong da hop le.')
+            error = _('Vui lòng tải lên một ảnh tổn thương da hợp lệ.')
 
     return render(request, 'skin_cancer.html', {
         'uploaded_image': uploaded_image,
@@ -312,7 +319,7 @@ def skin_cancer_detector(request):
         'is_dangerous': is_dangerous,
         'error': error,
         'advices': advices,
-        'classes': SKIN_LESION_CLASSES,
+        'classes': display_classes,
     })
 
 
@@ -385,7 +392,203 @@ def render_prediction_page(request, template_name, form, user_data, disease_type
 
 
 def index(request):
-    return render(request, 'index.html')
+    """Trang chủ - hiển thị stats động (số bác sĩ, lượt screening,...) + featured doctors.
+
+    Cố ý wrap trong try/except để nếu DB lỗi vẫn render được trang.
+    """
+    context = {
+        'total_doctors': 0,
+        'total_specialties': 0,
+        'total_screenings': 0,
+        'total_bookings': 0,
+        'featured_doctors': [],
+    }
+    try:
+        from accounts.models import User, DoctorProfile, UserRole
+        from appoinment.models import Appointment, TakeAppointment
+        from django.db.models import Avg, Count
+
+        context['total_doctors'] = User.objects.filter(role=UserRole.DOCTOR).count()
+        context['total_specialties'] = (
+            DoctorProfile.objects
+            .exclude(specialization__isnull=True)
+            .exclude(specialization='')
+            .values('specialization').distinct().count()
+        )
+        context['total_screenings'] = MedicalHistory.objects.count()
+        context['total_bookings'] = TakeAppointment.objects.count()
+
+        # Top 4 bác sĩ theo rating (nếu chưa có review thì lấy mới nhất)
+        featured = (
+            User.objects.filter(role=UserRole.DOCTOR)
+            .select_related('doctor_profile')
+            .annotate(
+                avg_rating=Avg('doctor_reviews__rating'),
+                review_count=Count('doctor_reviews'),
+            )
+            .order_by('-avg_rating', '-id')[:4]
+        )
+        context['featured_doctors'] = list(featured)
+    except Exception:
+        logger.exception('index() failed to load stats - rendering with zeros')
+
+    return render(request, 'index.html', context)
+
+
+def project_dashboard(request):
+    """Demo dashboard quản lý dự án theo phong cách SaaS."""
+    stats_cards = [
+        {
+            'label': 'Tiến độ tổng',
+            'value': '78%',
+            'delta': '+6.4%',
+            'tone': 'teal',
+            'icon': 'fas fa-chart-line',
+            'caption': 'So với sprint trước',
+        },
+        {
+            'label': 'Task hoàn thành',
+            'value': '184',
+            'delta': '+24',
+            'tone': 'blue',
+            'icon': 'fas fa-check-circle',
+            'caption': 'Trong 30 ngày gần nhất',
+        },
+        {
+            'label': 'Ngân sách còn lại',
+            'value': '412M',
+            'delta': '-8.2%',
+            'tone': 'amber',
+            'icon': 'fas fa-wallet',
+            'caption': 'VND, đã gồm dự phòng',
+        },
+        {
+            'label': 'Rủi ro mở',
+            'value': '7',
+            'delta': '+2',
+            'tone': 'rose',
+            'icon': 'fas fa-exclamation-triangle',
+            'caption': '2 rủi ro mức cao',
+        },
+    ]
+    tasks = [
+        {
+            'name': 'Hoàn thiện API phân quyền dự án',
+            'project': 'Medic Platform',
+            'owner': 'AN',
+            'team': 'Backend',
+            'due': '18/06/2026',
+            'status': 'In progress',
+            'status_tone': 'blue',
+            'priority': 'High',
+            'priority_tone': 'amber',
+            'progress': 72,
+        },
+        {
+            'name': 'Thiết kế dashboard điều phối sprint',
+            'project': 'Operations Hub',
+            'owner': 'HL',
+            'team': 'Product Design',
+            'due': '19/06/2026',
+            'status': 'Review',
+            'status_tone': 'violet',
+            'priority': 'Medium',
+            'priority_tone': 'blue',
+            'progress': 88,
+        },
+        {
+            'name': 'Tối ưu truy vấn báo cáo nhân sự',
+            'project': 'Analytics Core',
+            'owner': 'QM',
+            'team': 'Data',
+            'due': '21/06/2026',
+            'status': 'Blocked',
+            'status_tone': 'rose',
+            'priority': 'Urgent',
+            'priority_tone': 'rose',
+            'progress': 41,
+        },
+        {
+            'name': 'Kiểm thử luồng thanh toán nhà cung cấp',
+            'project': 'Finance Portal',
+            'owner': 'DK',
+            'team': 'QA',
+            'due': '22/06/2026',
+            'status': 'Not started',
+            'status_tone': 'slate',
+            'priority': 'Medium',
+            'priority_tone': 'blue',
+            'progress': 12,
+        },
+        {
+            'name': 'Triển khai cảnh báo SLA cho khách hàng',
+            'project': 'Customer Success',
+            'owner': 'NT',
+            'team': 'DevOps',
+            'due': '24/06/2026',
+            'status': 'Completed',
+            'status_tone': 'green',
+            'priority': 'Low',
+            'priority_tone': 'green',
+            'progress': 100,
+        },
+    ]
+    risks = [
+        {
+            'title': 'Phụ thuộc vendor thanh toán',
+            'level': 'Cao',
+            'level_tone': 'rose',
+            'description': 'API đối tác chưa xác nhận hạn mức production, có thể trễ UAT.',
+            'owner': 'Finance Portal',
+        },
+        {
+            'title': 'Thiếu nhân sự QA automation',
+            'level': 'Trung bình',
+            'level_tone': 'amber',
+            'description': 'Regression suite mới đạt 61%, cần ưu tiên ca kiểm thử luồng lõi.',
+            'owner': 'QA Guild',
+        },
+        {
+            'title': 'Scope dashboard tăng',
+            'level': 'Thấp',
+            'level_tone': 'blue',
+            'description': 'Có 4 yêu cầu biểu đồ bổ sung, cần gom vào sprint sau.',
+            'owner': 'Product Design',
+        },
+    ]
+    staff_stats = [
+        {'label': 'Engineering', 'count': 18, 'load': 82, 'tone': 'blue'},
+        {'label': 'Product', 'count': 6, 'load': 68, 'tone': 'teal'},
+        {'label': 'QA', 'count': 5, 'load': 91, 'tone': 'amber'},
+        {'label': 'Design', 'count': 4, 'load': 74, 'tone': 'violet'},
+    ]
+    chart_data = {
+        'velocity': {
+            'labels': ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8'],
+            'planned': [42, 46, 51, 55, 58, 63, 67, 72],
+            'actual': [38, 44, 49, 53, 61, 66, 69, 78],
+        },
+        'workload': {
+            'labels': ['Engineering', 'Product', 'QA', 'Design', 'DevOps'],
+            'values': [82, 68, 91, 74, 79],
+        },
+        'portfolio': {
+            'labels': ['On track', 'At risk', 'Delayed'],
+            'values': [58, 27, 15],
+        },
+    }
+    user_image = ''
+    if request.user.is_authenticated and getattr(request.user, 'image', None):
+        user_image = request.user.image.url
+
+    return render(request, 'project_dashboard.html', {
+        'user_image': user_image,
+        'stats_cards': stats_cards,
+        'tasks': tasks,
+        'risks': risks,
+        'staff_stats': staff_stats,
+        'chart_data': chart_data,
+    })
 
 
 def diabetes(request):
@@ -637,7 +840,7 @@ def history_view(request):
     })
 
 
-def build_chat_prompt(user, user_message):
+def build_chat_prompt(user, user_message, current_message_id=None):
     """Build prompt cho Gemini với RAG context.
 
     Pipeline:
@@ -653,6 +856,8 @@ def build_chat_prompt(user, user_message):
         "- Bằng TIẾNG VIỆT, ngắn gọn, dễ hiểu.\n"
         "- KHÔNG đưa chẩn đoán cuối cùng - luôn khuyên đi khám bác sĩ chuyên khoa.\n"
         "- Nếu hỏi về CÁCH SỬ DỤNG hệ thống → DỰA VÀO 'CONTEXT' bên dưới để trả lời.\n"
+        "- Nếu CONTEXT có ngữ cảnh hội thoại gần đây → dùng để trả lời câu hỏi nối tiếp.\n"
+        "- Nếu CONTEXT nói chưa có dữ liệu → nói rõ hệ thống chưa có dữ liệu, KHÔNG bịa.\n"
         "- Nếu trong CONTEXT có cảnh báo CẤP CỨU → ƯU TIÊN khuyên gọi 115 hoặc tới bệnh viện ngay.\n"
         "- Nếu user hỏi vượt ngoài kiến thức hệ thống Medic → trả lời theo kiến thức y học chung "
         "kèm khuyến nghị đi khám.\n"
@@ -661,7 +866,11 @@ def build_chat_prompt(user, user_message):
 
     # RAG: tìm context liên quan trong DB + FAQ
     try:
-        rag_context = build_rag_context(user, user_message)
+        rag_context = build_rag_context(
+            user,
+            user_message,
+            current_message_id=current_message_id,
+        )
     except Exception:
         logger.exception('build_rag_context failed for user_id=%s', getattr(user, 'id', None))
         rag_context = ''
@@ -773,7 +982,7 @@ def chat_api(request):
         )
     request.session['chat_last_sent_at'] = now
 
-    ChatMessage.objects.create(
+    user_chat_message = ChatMessage.objects.create(
         user=request.user,
         sender=ChatMessage.SENDER_USER,
         message=user_message,
@@ -785,7 +994,11 @@ def chat_api(request):
         client = genai.Client(api_key=settings.GEMINI_API_KEY)
         response = client.models.generate_content(
             model=getattr(settings, 'GEMINI_MODEL', 'gemini-2.5-flash'),
-            contents=build_chat_prompt(request.user, user_message),
+            contents=build_chat_prompt(
+                request.user,
+                user_message,
+                current_message_id=user_chat_message.id,
+            ),
         )
         reply = (getattr(response, 'text', '') or '').strip()
 

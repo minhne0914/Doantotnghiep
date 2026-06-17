@@ -1,0 +1,202 @@
+{% extends "admin/base_site.html" %}
+{% load i18n jazzmin log admin_dashboard_tags %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+{% admin_dashboard_metrics as admin_metrics %}
+
+{% block bodyclass %}{{ block.super }} dashboard medic-admin-dashboard{% endblock %}
+
+{% block content_title %}Tổng quan hệ thống{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'admin:index' %}">Admin</a></li>
+        <li class="breadcrumb-item active">Dashboard</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    {% get_side_menu using="app_list" as dashboard_list %}
+
+    <div class="col-12">
+        <section class="admin-hero">
+            <div class="admin-hero-copy">
+                <span class="admin-eyebrow">Medic Control Center</span>
+                <h2>Dashboard quản trị</h2>
+                <p>Giám sát nhanh người dùng, lịch khám, hồ sơ bệnh án, thông báo và các module vận hành của hệ thống.</p>
+            </div>
+            <div class="admin-hero-actions">
+                <a class="admin-ghost-btn" href="{% url 'home' %}" target="_blank" rel="noopener">
+                    <i class="fas fa-globe"></i>
+                    <span>Mở web app</span>
+                </a>
+                <a class="admin-primary-btn" href="{% url 'admin:accounts_user_add' %}">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Thêm người dùng</span>
+                </a>
+            </div>
+        </section>
+    </div>
+
+    <div class="col-12">
+        <section class="admin-kpi-grid" aria-label="Admin KPI cards">
+            {% for stat in admin_metrics.stats %}
+                <article class="admin-kpi-card tone-{{ stat.tone }}">
+                    <div class="admin-kpi-top">
+                        <span class="admin-kpi-icon"><i class="{{ stat.icon }}"></i></span>
+                        <span class="admin-kpi-indicator">Live</span>
+                    </div>
+                    <p>{{ stat.label }}</p>
+                    <strong>{{ stat.value }}</strong>
+                    <small>{{ stat.caption }}</small>
+                </article>
+            {% endfor %}
+        </section>
+    </div>
+
+    <div class="col-xl-8 col-12">
+        <section class="admin-panel">
+            <div class="admin-panel-header">
+                <div>
+                    <span class="admin-eyebrow">Operations</span>
+                    <h3>Trạng thái lịch hẹn</h3>
+                </div>
+                <span class="admin-panel-pill">{{ admin_metrics.summary.total_bookings }} lịch hẹn</span>
+            </div>
+            <div class="admin-status-list">
+                {% for item in admin_metrics.status_items %}
+                    <div class="admin-status-row">
+                        <div class="admin-status-name">
+                            <span class="admin-dot {{ item.tone }}"></span>
+                            <strong>{{ item.label }}</strong>
+                        </div>
+                        <div class="admin-status-meter" aria-label="{{ item.percent }}%">
+                            <span class="{{ item.tone }}" style="width: {{ item.percent }}%"></span>
+                        </div>
+                        <b>{{ item.count }}</b>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="admin-panel">
+            <div class="admin-panel-header">
+                <div>
+                    <span class="admin-eyebrow">Modules</span>
+                    <h3>Quản trị dữ liệu</h3>
+                </div>
+                <span class="admin-panel-pill">{{ dashboard_list|length }} nhóm</span>
+            </div>
+            <div class="admin-module-grid">
+                {% for app in dashboard_list %}
+                    <article class="admin-module-card">
+                        <div class="admin-module-title">
+                            <span><i class="{{ app.icon|default:'fas fa-folder' }}"></i></span>
+                            <h4>{{ app.name }}</h4>
+                        </div>
+                        <div class="admin-model-list">
+                            {% for model in app.models %}
+                                <div class="admin-model-row">
+                                    <div>
+                                        {% if model.url %}
+                                            <a href="{{ model.url }}">{{ model.name }}</a>
+                                        {% else %}
+                                            <span>{{ model.name }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="admin-model-actions">
+                                        {% if model.add_url %}
+                                            <a href="{{ model.add_url }}" class="admin-mini-btn addlink" title="Thêm">
+                                                <i class="fas fa-plus"></i>
+                                            </a>
+                                        {% endif %}
+                                        {% if model.url %}
+                                            <a href="{{ model.url }}" class="admin-mini-btn changelink" title="Xem danh sách">
+                                                <i class="fas fa-arrow-right"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    <div class="col-xl-4 col-12">
+        <section class="admin-panel admin-health-panel">
+            <div class="admin-panel-header">
+                <div>
+                    <span class="admin-eyebrow">System mix</span>
+                    <h3>Cơ cấu vận hành</h3>
+                </div>
+            </div>
+            <div class="admin-health-grid">
+                <div class="admin-health-item">
+                    <span class="admin-health-icon blue"><i class="fas fa-user-md"></i></span>
+                    <div>
+                        <strong>{{ admin_metrics.summary.doctors }}</strong>
+                        <small>Bác sĩ</small>
+                    </div>
+                </div>
+                <div class="admin-health-item">
+                    <span class="admin-health-icon teal"><i class="fas fa-user-injured"></i></span>
+                    <div>
+                        <strong>{{ admin_metrics.summary.patients }}</strong>
+                        <small>Bệnh nhân</small>
+                    </div>
+                </div>
+                <div class="admin-health-item">
+                    <span class="admin-health-icon green"><i class="fas fa-check-circle"></i></span>
+                    <div>
+                        <strong>{{ admin_metrics.summary.completed }}</strong>
+                        <small>Lịch hoàn thành</small>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="admin-panel">
+            <div class="admin-panel-header">
+                <div>
+                    <span class="admin-eyebrow">Audit trail</span>
+                    <h3>Thao tác gần đây</h3>
+                </div>
+            </div>
+            {% get_admin_log 7 as admin_log for_user user %}
+            {% if not admin_log %}
+                <p class="admin-empty-state">Chưa có thao tác nào.</p>
+            {% else %}
+                <div class="admin-activity-list">
+                    {% for entry in admin_log %}
+                        <article class="admin-activity">
+                            {% if entry.is_change %}
+                                <span class="admin-activity-icon info"><i class="fas fa-edit"></i></span>
+                            {% elif entry.is_deletion %}
+                                <span class="admin-activity-icon danger"><i class="fas fa-trash"></i></span>
+                            {% elif entry.is_addition %}
+                                <span class="admin-activity-icon success"><i class="fas fa-plus"></i></span>
+                            {% else %}
+                                <span class="admin-activity-icon muted"><i class="fas fa-history"></i></span>
+                            {% endif %}
+                            <div>
+                                <strong>
+                                    {% if entry.is_deletion or not entry.get_admin_url %}
+                                        {{ entry.object_repr }}
+                                    {% else %}
+                                        <a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>
+                                    {% endif %}
+                                </strong>
+                                <small>
+                                    {% if entry.model %}{{ entry.model|capfirst }} · {% endif %}
+                                    {% blocktrans with timesince=entry.action_time|timesince %}{{ timesince }} ago{% endblocktrans %}
+                                </small>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </section>
+    </div>
+{% endblock %}

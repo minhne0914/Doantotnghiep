@@ -20,6 +20,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.generic import CreateView, FormView, RedirectView, UpdateView
 
@@ -111,7 +112,13 @@ class LoginView(FormView):
 
     def get_success_url(self):
         next_url = self.request.GET.get('next', '').strip()
-        return next_url or self.success_url
+        if next_url and url_has_allowed_host_and_scheme(
+            next_url,
+            allowed_hosts={self.request.get_host()},
+            require_https=self.request.is_secure(),
+        ):
+            return next_url
+        return self.success_url
 
     def form_valid(self, form):
         auth.login(self.request, form.get_user())

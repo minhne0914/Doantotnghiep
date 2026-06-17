@@ -1,175 +1,393 @@
-  
 {% extends 'base.html' %}
-{% load static i18n %}
-{% block title %} {% trans "Trang chủ" %} {% endblock %}
+{% load static i18n medic_tags %}
+{% block title %}{% trans "Medic - Phòng khám AI thông minh" %}{% endblock %}
+
+{% block style %}
+<style>
+  :root {
+    --umc-blue: #0e3a6a;
+    --umc-blue-dark: #082348;
+    --umc-cyan: #16a3c4;
+    --umc-orange: #f7941d;
+    --umc-bg: #f5f8fb;
+    --umc-text: #1f2937;
+    --umc-muted: #6b7280;
+    --umc-border: #e5e7eb;
+  }
+  .umc-home { background: var(--umc-bg); }
+  .umc-home * { box-sizing: border-box; }
+
+  .top-hotline { background: var(--umc-blue); color:#fff; padding:8px 0; font-size:13px; }
+  .top-hotline a { color:#fde68a; text-decoration:none; font-weight:700; }
+
+  .umc-hero {
+    background: linear-gradient(120deg, var(--umc-blue) 0%, var(--umc-blue-dark) 100%);
+    color:#fff; padding:80px 0 100px; position:relative; overflow:hidden;
+  }
+  .umc-hero::after {
+    content:''; position:absolute; right:-100px; bottom:-100px;
+    width:400px; height:400px;
+    background: radial-gradient(circle, rgba(22,163,196,0.4) 0%, transparent 70%);
+    pointer-events:none;
+  }
+  .umc-hero-content { position:relative; z-index:2; }
+  .umc-hero-eyebrow { color: var(--umc-cyan); font-weight:700; text-transform:uppercase; letter-spacing:2px; font-size:13px; margin-bottom:16px; }
+  .umc-hero h1 { font-size:48px; font-weight:800; line-height:1.15; margin-bottom:22px; }
+  .umc-hero h1 span { color: var(--umc-cyan); }
+  .umc-hero p { font-size:17px; opacity:0.92; line-height:1.7; margin-bottom:30px; max-width:600px; }
+  .umc-hero-btns { display:flex; gap:14px; flex-wrap:wrap; }
+  .btn-orange {
+    background: var(--umc-orange); color:#fff;
+    padding:13px 28px; border-radius:8px; font-weight:700;
+    text-decoration:none; transition:all 0.2s;
+    display:inline-flex; align-items:center; gap:8px;
+    border: 2px solid var(--umc-orange);
+  }
+  .btn-orange:hover { background:#d97706; border-color:#d97706; color:#fff; text-decoration:none; transform:translateY(-2px); }
+  .btn-outline-white {
+    background:transparent; color:#fff; padding:13px 28px;
+    border-radius:8px; font-weight:700; text-decoration:none;
+    border:2px solid rgba(255,255,255,0.6);
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .btn-outline-white:hover { background: rgba(255,255,255,0.15); color:#fff; text-decoration:none; }
+
+  .hero-stats { margin-top:-50px; position:relative; z-index:5; margin-bottom:60px; }
+  .hero-stats-grid {
+    background:#fff; border-radius:14px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.1);
+    display:grid; grid-template-columns:repeat(4,1fr); overflow:hidden;
+  }
+  .hero-stat { padding:28px 20px; text-align:center; border-right:1px solid var(--umc-border); }
+  .hero-stat:last-child { border-right:none; }
+  .hero-stat .num { font-size:32px; font-weight:800; color: var(--umc-blue); line-height:1; }
+  .hero-stat .label { color: var(--umc-muted); font-size:13px; margin-top:6px; }
+  .hero-stat i { color: var(--umc-orange); font-size:22px; margin-bottom:10px; }
+
+  .umc-section { padding:70px 0; }
+  .umc-section-header { text-align:center; max-width:720px; margin:0 auto 48px; }
+  .umc-eyebrow { color: var(--umc-cyan); font-weight:700; text-transform:uppercase; letter-spacing:2px; font-size:13px; margin-bottom:12px; display:inline-block; }
+  .umc-title { font-size:32px; font-weight:800; color: var(--umc-blue); margin-bottom:14px; text-transform:uppercase; }
+  .umc-subtitle { color: var(--umc-muted); font-size:16px; line-height:1.6; }
+
+  .service-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:22px; }
+  .service-card {
+    background:#fff; border-radius:12px; padding:26px;
+    border-bottom:4px solid var(--umc-cyan);
+    transition:all 0.2s; text-decoration:none; color:inherit; display:block;
+  }
+  .service-card:hover { transform:translateY(-5px); box-shadow:0 16px 40px rgba(14,58,106,0.15); color:inherit; text-decoration:none; }
+  .service-icon {
+    width:60px; height:60px;
+    background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+    color: var(--umc-blue); border-radius:14px;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:24px; margin-bottom:16px;
+  }
+  .service-title { font-size:18px; font-weight:700; color:var(--umc-blue); margin-bottom:8px; }
+  .service-desc { color:var(--umc-muted); font-size:14px; line-height:1.6; }
+  .service-card.danger { border-bottom-color:#dc2626; }
+  .service-card.danger .service-icon { background:#fee2e2; color:#dc2626; }
+  .service-card.warning { border-bottom-color:#f59e0b; }
+  .service-card.warning .service-icon { background:#fef3c7; color:#f59e0b; }
+
+  .why-section { background:#fff; }
+  .why-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:30px; }
+  .why-card { text-align:center; padding:36px 24px; background:var(--umc-bg); border-radius:14px; transition:all 0.3s; }
+  .why-card:hover { transform:translateY(-5px); }
+  .why-icon {
+    width:80px; height:80px;
+    background: linear-gradient(135deg, var(--umc-cyan), var(--umc-blue));
+    color:#fff; border-radius:50%;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:32px; margin-bottom:20px;
+  }
+  .why-title { font-size:19px; font-weight:700; color:var(--umc-blue); margin-bottom:12px; }
+  .why-text { color:var(--umc-muted); font-size:14px; line-height:1.7; }
+
+  .news-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:26px; }
+  .news-card {
+    background:#fff; border-radius:12px; overflow:hidden;
+    box-shadow:0 4px 18px rgba(0,0,0,0.06);
+    transition:all 0.3s; text-decoration:none; color:inherit;
+    display:flex; flex-direction:column;
+  }
+  .news-card:hover { transform:translateY(-5px); box-shadow:0 16px 40px rgba(0,0,0,0.12); text-decoration:none; color:inherit; }
+  .news-image { width:100%; height:200px; background:linear-gradient(135deg,#e0f2fe,#bae6fd); position:relative; }
+  .news-image img { width:100%; height:100%; object-fit:cover; display:block; }
+  .news-category {
+    position:absolute; top:14px; left:14px;
+    background: var(--umc-orange); color:#fff;
+    padding:4px 10px; border-radius:6px;
+    font-size:11px; font-weight:700; text-transform:uppercase;
+  }
+  .news-content { padding:22px; flex:1; display:flex; flex-direction:column; }
+  .news-date { color:var(--umc-muted); font-size:13px; margin-bottom:10px; }
+  .news-title-card { font-size:17px; font-weight:700; color:var(--umc-blue); margin-bottom:12px; line-height:1.4; min-height:48px; }
+  .news-excerpt { color:var(--umc-muted); font-size:14px; line-height:1.6; flex:1; }
+  .news-readmore { color:var(--umc-cyan); font-weight:700; margin-top:14px; font-size:14px; }
+
+  .doctors-section { background: linear-gradient(180deg, var(--umc-bg) 0%, #fff 100%); }
+  .doctor-grid-umc { display:grid; grid-template-columns:repeat(4,1fr); gap:26px; }
+  .doctor-card-umc {
+    background:#fff; border-radius:12px; overflow:hidden;
+    box-shadow:0 4px 14px rgba(0,0,0,0.06);
+    transition:all 0.3s; text-decoration:none; color:inherit;
+  }
+  .doctor-card-umc:hover { transform:translateY(-5px); box-shadow:0 18px 40px rgba(0,0,0,0.12); text-decoration:none; color:inherit; }
+  .doctor-photo {
+    width:100%; height:280px;
+    background: linear-gradient(135deg, #dbeafe, #93c5fd);
+    overflow:hidden; position:relative;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .doctor-photo img { width:100%; height:100%; object-fit:cover; }
+  .doctor-photo .placeholder-icon { font-size:100px; color:var(--umc-blue); opacity:0.6; }
+  .doctor-info-umc { padding:20px; text-align:center; border-top:3px solid var(--umc-cyan); }
+  .doctor-name-umc { font-size:17px; font-weight:800; color:var(--umc-blue); margin-bottom:6px; }
+  .doctor-spec-umc { color:var(--umc-orange); font-weight:600; font-size:13px; margin-bottom:12px; text-transform:uppercase; }
+  .doctor-rating-umc { color:#f59e0b; font-size:14px; }
+  .doctor-rating-umc .small { color:var(--umc-muted); font-size:12px; }
+
+  .reviews-section { background:#fff; }
+  .reviews-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:26px; }
+  .review-card {
+    background: linear-gradient(135deg, #fff 0%, var(--umc-bg) 100%);
+    border-radius:14px; padding:26px;
+    border:1px solid var(--umc-border);
+    position:relative;
+    box-shadow:0 4px 16px rgba(0,0,0,0.04);
+  }
+  .review-card::before {
+    content:'"'; position:absolute; top:8px; left:18px;
+    font-size:80px; font-family:Georgia,serif;
+    color:var(--umc-cyan); opacity:0.18; line-height:1;
+  }
+  .review-stars-umc { color:#f59e0b; font-size:16px; margin-bottom:14px; position:relative; z-index:2; }
+  .review-comment {
+    color:var(--umc-text); font-size:14px; line-height:1.7;
+    margin-bottom:18px; font-style:italic;
+    position:relative; z-index:2;
+  }
+  .review-meta { display:flex; align-items:center; gap:12px; padding-top:16px; border-top:1px dashed var(--umc-border); }
+  .review-avatar {
+    width:44px; height:44px;
+    background: linear-gradient(135deg, var(--umc-cyan), var(--umc-blue));
+    color:#fff; border-radius:50%;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-weight:700; flex-shrink:0;
+  }
+  .review-name { font-weight:700; color:var(--umc-blue); font-size:14px; }
+  .review-doctor { color:var(--umc-muted); font-size:12px; }
+
+  .umc-cta {
+    background: linear-gradient(135deg, var(--umc-blue), var(--umc-blue-dark));
+    color:#fff; padding:70px 0; text-align:center;
+  }
+  .umc-cta h2 { font-size:32px; font-weight:800; margin-bottom:14px; }
+  .umc-cta p { opacity:0.9; font-size:16px; margin-bottom:26px; }
+
+  @media (max-width: 992px) {
+    .umc-hero h1 { font-size:36px; }
+    .hero-stats-grid { grid-template-columns:repeat(2,1fr); }
+    .hero-stat { border-right:none; border-bottom:1px solid var(--umc-border); }
+    .service-grid, .why-grid, .news-grid, .reviews-grid { grid-template-columns:repeat(2,1fr); }
+    .doctor-grid-umc { grid-template-columns:repeat(2,1fr); }
+    .umc-title { font-size:26px; }
+  }
+  @media (max-width: 576px) {
+    .umc-hero { padding:50px 0 70px; }
+    .umc-hero h1 { font-size:28px; }
+    .service-grid, .why-grid, .news-grid, .reviews-grid, .doctor-grid-umc { grid-template-columns:1fr; }
+    .hero-stats-grid { grid-template-columns:1fr; }
+    .umc-section { padding:50px 0; }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
+<div class="umc-home">
 
-	<!-- banner -->
-	<div class="slider">
-		<div class="callbacks_container">
-			<ul class="rslides callbacks callbacks1" id="slider4">
-				<li>
-					<div class="banner-top1">
-						<div class="banner-info_agile_w3ls">
-							<div class="container">
-								<h3>{% trans "Dịch vụ y tế mà bạn" %}
-									<span>{% trans "có thể tin cậy" %}</span>
-								</h3>
-								<p class="mt-3 mb-md-5 mb-3">{% trans "Dự báo chẩn đoán bệnh lý đa khoa bằng các mô hình Học Máy chuẩn xác và bảo mật. Trợ lý Ảo AI tư vấn cá nhân hóa." %}</p>
-								<a href="{% url 'doctor' %}">{% trans "Tìm hiểu thêm" %}
-									<i class="fa fa-caret-right ml-2" aria-hidden="true"></i>
-								</a>
-							</div>
-						</div>
-					</div>
-				</li>
-				<li>
-					<div class="banner-top2">
-						<div class="banner-info_agile_w3ls">
-							<div class="container">
-								<h3>{% trans "Chất lượng y tế" %}
-									<span>{% trans "mỗi ngày" %}</span>
-								</h3>
-								<p class="mt-3 mb-md-5 mb-3">{% trans "Triển khai Machine Learning cho Chẩn đoán Ung Thư Vú, Bệnh Tim, Tiểu Đường và mô hình Học Sâu (Deep Learning) cho Viêm phổi." %}</p>
-								<a href="{% url 'doctor' %}">{% trans "Tìm hiểu thêm" %}
-									<i class="fa fa-caret-right ml-2" aria-hidden="true"></i>
-								</a>
-							</div>
-						</div>
-					</div>
-				</li>
-				<li>
-					<div class="banner-top3">
-						<div class="banner-info_agile_w3ls">
-							<div class="container">
-								<h3>{% trans "Bệnh viện của" %}
-									<span>{% trans "tương lai" %}</span>
-								</h3>
-								<p class="mt-3 mb-md-5 mb-3">{% trans "Xây dựng Bệnh Án Điện Tử EMR và Hệ thống cảnh báo tự động SMS/Email, tối ưu quy trình làm việc của Bác Sĩ." %}</p>
-								<a href="{% url 'doctor' %}">{% trans "Tìm hiểu thêm" %}
-									<i class="fa fa-caret-right ml-2" aria-hidden="true"></i>
-								</a>
-							</div>
-						</div>
-					</div>
-				</li>
-			</ul>
-		</div>
-	</div>
-	<!-- //banner -->
-	<div class="clearfix"></div>
+  <div class="top-hotline">
+    <div class="container d-flex flex-wrap justify-content-between">
+      <div><i class="fas fa-clock"></i> {% trans "Thứ 2 - Thứ 7: 07:30 - 16:30" %}</div>
+      <div><i class="fas fa-phone-alt"></i> {% trans "Tổng đài:" %} <a href="tel:19006923">1900 6923</a></div>
+    </div>
+  </div>
 
-	<!-- banner bottom -->
-	<div class="banner-bottom py-5">
-		<div class="d-flex container py-xl-3 py-lg-3">
-			<div class="banner-left-bottom-w3ls offset-lg-2 offset-md-1">
-				<h6 class="text-white">{% trans "Công nghệ Đột phá" %}</h6>
-				<h3 class="text-white my-3">{% trans "Bác sĩ và Trợ Lý Ảo" %}</h3>
-				<p>{% trans "Hệ thống không chỉ có các Y bác sĩ chuyên môn cao mà còn được trợ lực bởi sức mạnh của Generative AI (LLM)." %}</p>
-			</div>
-			<div class="button">
-				<a href="{% url 'doctor' %}" class="w3ls-button-agile">{% trans "Tìm hiểu thêm" %}
-					<i class="fas fa-hand-point-right"></i>
-				</a>
-			</div>
-		</div>
-	</div>
-	<!-- //banner bottom -->
+  <section class="umc-hero">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-lg-7 umc-hero-content">
+          <div class="umc-hero-eyebrow"><i class="fas fa-heartbeat"></i> {% trans "Phòng khám AI thông minh" %}</div>
+          <h1>{% trans "Y tế chuẩn mực" %} <span>{% trans "trợ lực AI" %}</span><br>{% trans "vì sức khỏe của bạn" %}</h1>
+          <p>{% trans "Medic là phòng khám điện tử ứng dụng AI cho 6 bệnh phổ biến: tiểu đường, tim mạch, ung thư vú, thận, viêm phổi, ung thư da. Đặt lịch online, chat với bác sĩ, quản lý bệnh án điện tử an toàn." %}</p>
+          <div class="umc-hero-btns">
+            <a href="{% url 'doctor' %}" class="btn-orange"><i class="fas fa-calendar-plus"></i> {% trans "Đặt lịch khám" %}</a>
+            <a href="#services" class="btn-outline-white"><i class="fas fa-microscope"></i> {% trans "Sàng lọc AI" %}</a>
+          </div>
+        </div>
+        <div class="col-lg-5 d-none d-lg-block text-center">
+          <i class="fas fa-user-md" style="font-size:200px; opacity:0.25; color:#fff;"></i>
+        </div>
+      </div>
+    </div>
+  </section>
 
-	
+  <div class="hero-stats">
+    <div class="container">
+      <div class="hero-stats-grid">
+        <div class="hero-stat"><i class="fas fa-user-md"></i><div class="num">{{ total_doctors|default:"30+" }}</div><div class="label">{% trans "Bác sĩ chuyên môn" %}</div></div>
+        <div class="hero-stat"><i class="fas fa-stethoscope"></i><div class="num">{{ total_specialties|default:"11" }}</div><div class="label">{% trans "Chuyên khoa" %}</div></div>
+        <div class="hero-stat"><i class="fas fa-robot"></i><div class="num">6</div><div class="label">{% trans "Mô hình AI" %}</div></div>
+        <div class="hero-stat"><i class="fas fa-shield-alt"></i><div class="num">24/7</div><div class="label">{% trans "Chat AI tư vấn" %}</div></div>
+      </div>
+    </div>
+  </div>
 
-	<!-- services -->
-	<div class="why-choose-agile pt-5" id="services">
-		<div class="container pt-xl-5 pt-lg-3">
-			<div class="w3ls-titles text-center mb-5">
-				<h3 class="title">{% trans "Dịch vụ ưu việt" %}</h3>
-				<span>
-					<i class="fas fa-user-md"></i>
-				</span>
-				<p class="mt-2">{% trans "Chúng tôi cung cấp các giải pháp công nghệ hiện đại nhất áp dụng trong chăm sóc sức khỏe." %}</p>
-			</div>
-			<div class="row why-choose-agile-grids-top">
-				<div class="col-lg-4 agileits-w3layouts-grid">
-					<div class="row wthree_agile_us">
-						<div class="col-3 agile-why-text p-0 text-right">
-							<div class="wthree_features_grid">
-								<i class="fas fa-stethoscope"></i>
-							</div>
-						</div>
-						<div class="col-9 agile-why-text-2">
-							<h4 class="text-dark font-weight-bold mb-3">{% trans "Chẩn Đoán Đa Khoa" %}</h4>
-							<p>{% trans "Ứng dụng Random Forest & KNN phân lớp rủi ro bệnh lý tức thì." %}</p>
-						</div>
-					</div>
-					<div class="row wthree_agile_us my-5">
-						<div class="col-3 agile-why-text p-0 text-right">
-							<div class="wthree_features_grid">
-								<i class="fas fa-robot"></i>
-							</div>
-						</div>
-						<div class="col-9 agile-why-text-2">
-							<h4 class="text-dark font-weight-bold mb-3">{% trans "Trợ lý Y tế AI" %}</h4>
-							<p>{% trans "Chatbot thông minh Google Gemini tư vấn 24/7 theo bệnh án." %}</p>
-						</div>
-					</div>
-					<div class="row wthree_agile_us">
-						<div class="col-3 agile-why-text p-0 text-right">
-							<div class="wthree_features_grid">
-								<i class="fas fa-file-medical-alt"></i>
-							</div>
-						</div>
-						<div class="col-9 agile-why-text-2">
-							<h4 class="text-dark font-weight-bold mb-3">{% trans "Bệnh Án EMR" %}</h4>
-							<p>{% trans "Quản lý hồ sơ điện tử, đơn thuốc, lịch trình theo dõi an toàn." %}</p>
-						</div>
-					</div>
-				</div>
-				<div class="col-lg-4 agileits-w3layouts-grid img text-center">
-					<img src="{% static '' %}images/b3.png" alt=" " class="img-fluid" />
-				</div>
-				<div class="col-lg-4 agileits-w3layouts-grid">
-					<div class="row wthree_agile_us">
-						<div class="col-9 agile-why-text-2">
-							<h4 class="text-dark font-weight-bold mb-3">{% trans "Lịch Khám Online" %}</h4>
-							<p>{% trans "Chống trùng lịch, tự động nhắc hẹn bệnh nhân qua Email." %}</p>
-						</div>
-						<div class="col-3 agile-why-text p-0">
-							<div class="wthree_features_grid">
-								<i class="fas fa-calendar-check"></i>
-							</div>
-						</div>
-					</div>
-					<div class="row wthree_agile_us my-5">
-						<div class="col-9 agile-why-text-2">
-							<h4 class="text-dark font-weight-bold mb-3">{% trans "Chẩn đoán Hình Ảnh" %}</h4>
-							<p>{% trans "Phát hiện viêm phổi X-Quang chuẩn xác bằng công nghệ CNN." %}</p>
-						</div>
-						<div class="col-3 agile-why-text p-0">
-							<div class="wthree_features_grid">
-								<i class="fas fa-x-ray"></i>
-							</div>
-						</div>
-					</div>
-					</div>
-					<div class="row wthree_agile_us">
-						<div class="col-9 agile-why-text-2">
-							<h4 class="text-dark font-weight-bold mb-3">{% trans "Biểu Đồ Sức Khỏe" %}</h4>
-							<p>{% trans "Theo dõi tiến trình sinh tồn qua Dashboard thời gian thực." %}</p>
-						</div>
-						<div class="col-3 agile-why-text p-0">
-							<div class="wthree_features_grid">
-								<i class="fas fa-chart-line"></i>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-	<!-- //services -->
+  <section class="umc-section" id="services">
+    <div class="container">
+      <div class="umc-section-header">
+        <span class="umc-eyebrow">{% trans "AI Sàng lọc" %}</span>
+        <h2 class="umc-title">{% trans "6 mô hình AI hỗ trợ chẩn đoán" %}</h2>
+        <p class="umc-subtitle">{% trans "Ứng dụng Machine Learning và Deep Learning để phát hiện sớm bệnh. Kết quả tham khảo, không thay thế bác sĩ." %}</p>
+      </div>
+      <div class="service-grid">
+        <a href="{% url 'diabetes' %}" class="service-card warning"><div class="service-icon"><i class="fas fa-vial"></i></div><div class="service-title">{% trans "Sàng lọc tiểu đường" %}</div><div class="service-desc">{% trans "Đánh giá nguy cơ tiểu đường qua 8 chỉ số xét nghiệm. Mô hình KNN." %}</div></a>
+        <a href="{% url 'breast' %}" class="service-card danger"><div class="service-icon"><i class="fas fa-ribbon"></i></div><div class="service-title">{% trans "Sàng lọc ung thư vú" %}</div><div class="service-desc">{% trans "Phân loại lành tính / ác tính dựa trên đặc trưng tế bào. Random Forest." %}</div></a>
+        <a href="{% url 'heart' %}" class="service-card danger"><div class="service-icon"><i class="fas fa-heartbeat"></i></div><div class="service-title">{% trans "Sàng lọc bệnh tim" %}</div><div class="service-desc">{% trans "Đánh giá nguy cơ tim mạch từ 13 chỉ số lâm sàng. Random Forest." %}</div></a>
+        <a href="{% url 'kidney' %}" class="service-card"><div class="service-icon"><i class="fas fa-tint"></i></div><div class="service-title">{% trans "Sàng lọc bệnh thận" %}</div><div class="service-desc">{% trans "Đánh giá nguy cơ suy thận theo ngưỡng KDIGO. Rule-based scoring." %}</div></a>
+        <a href="{% url 'pneumonia_detector' %}" class="service-card"><div class="service-icon"><i class="fas fa-x-ray"></i></div><div class="service-title">{% trans "Sàng lọc viêm phổi" %}</div><div class="service-desc">{% trans "Phát hiện viêm phổi từ ảnh X-quang phổi. CNN Deep Learning." %}</div></a>
+        <a href="{% url 'skin_cancer_detector' %}" class="service-card danger"><div class="service-icon"><i class="fas fa-allergies"></i></div><div class="service-title">{% trans "Sàng lọc ung thư da" %}</div><div class="service-desc">{% trans "Phân loại 7 nhóm tổn thương da từ ảnh dermoscopy. CNN HAM10000." %}</div></a>
+      </div>
+    </div>
+  </section>
 
+  <section class="umc-section why-section">
+    <div class="container">
+      <div class="umc-section-header">
+        <span class="umc-eyebrow">{% trans "Ưu thế" %}</span>
+        <h2 class="umc-title">{% trans "Tại sao chọn Medic?" %}</h2>
+      </div>
+      <div class="why-grid">
+        <div class="why-card"><div class="why-icon"><i class="fas fa-laptop-medical"></i></div><div class="why-title">{% trans "Công nghệ AI tiên phong" %}</div><div class="why-text">{% trans "Tích hợp 6 mô hình ML/DL state-of-the-art, hỗ trợ bác sĩ ra quyết định nhanh và chính xác." %}</div></div>
+        <div class="why-card"><div class="why-icon"><i class="fas fa-user-md"></i></div><div class="why-title">{% trans "Bác sĩ chuyên môn cao" %}</div><div class="why-text">{% trans "Đội ngũ bác sĩ giàu kinh nghiệm trong 11 chuyên khoa, được đánh giá thực bởi bệnh nhân." %}</div></div>
+        <div class="why-card"><div class="why-icon"><i class="fas fa-shield-alt"></i></div><div class="why-title">{% trans "Bệnh án điện tử an toàn" %}</div><div class="why-text">{% trans "Lưu trữ vĩnh viễn, audit trail mọi thay đổi, phân quyền chặt chẽ theo role bác sĩ/bệnh nhân." %}</div></div>
+      </div>
+    </div>
+  </section>
 
+  {% latest_news 6 as news_items %}
+  {% if news_items %}
+  <section class="umc-section">
+    <div class="container">
+      <div class="umc-section-header">
+        <span class="umc-eyebrow">{% trans "Tin tức" %}</span>
+        <h2 class="umc-title">{% trans "Tin tức & Sự kiện" %}</h2>
+        <p class="umc-subtitle">{% trans "Cập nhật thông tin y học và sản phẩm mới nhất từ Medic." %}</p>
+      </div>
+      <div class="news-grid">
+        {% for item in news_items %}
+        <a href="{{ item.link|default:'#' }}" class="news-card">
+          <div class="news-image">
+            {% if item.image_url %}<img src="{{ item.image_url }}" alt="{{ item.title }}">{% endif %}
+            <span class="news-category">{{ item.category }}</span>
+          </div>
+          <div class="news-content">
+            <div class="news-date"><i class="far fa-calendar-alt"></i> {{ item.date }}</div>
+            <h3 class="news-title-card">{{ item.title }}</h3>
+            <p class="news-excerpt">{{ item.excerpt|truncatechars:140 }}</p>
+            <span class="news-readmore">{% trans "Xem thêm" %} <i class="fas fa-arrow-right"></i></span>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
 
+  {% if featured_doctors %}
+  <section class="umc-section doctors-section">
+    <div class="container">
+      <div class="umc-section-header">
+        <span class="umc-eyebrow">{% trans "Đội ngũ" %}</span>
+        <h2 class="umc-title">{% trans "Đội ngũ Bác sĩ Medic" %}</h2>
+        <p class="umc-subtitle">{% trans "Đội ngũ bác sĩ chuyên môn cao, kinh nghiệm dày dạn trên 11 chuyên khoa." %}</p>
+      </div>
+      <div class="doctor-grid-umc">
+        {% for doctor in featured_doctors %}
+        <a href="{% url 'doctor-profile-detail' doctor.id %}" class="doctor-card-umc">
+          <div class="doctor-photo">
+            {% if doctor.image %}<img src="{{ doctor.image.url }}" alt="{{ doctor.first_name }}">{% else %}<i class="fas fa-user-md placeholder-icon"></i>{% endif %}
+          </div>
+          <div class="doctor-info-umc">
+            <div class="doctor-name-umc">BS. {{ doctor.first_name }} {{ doctor.last_name }}</div>
+            <div class="doctor-spec-umc">{% if doctor.doctor_profile.specialization %}{{ doctor.doctor_profile.specialization|specialty_label }}{% else %}{% trans "Đa khoa" %}{% endif %}</div>
+            <div class="doctor-rating-umc">
+              {% if doctor.avg_rating %}
+                {% for i in "12345" %}{% if forloop.counter <= doctor.avg_rating %}★{% else %}☆{% endif %}{% endfor %}
+                <span class="small">({{ doctor.review_count|default:0 }})</span>
+              {% else %}
+                <span class="small">{% trans "Chưa có đánh giá" %}</span>
+              {% endif %}
+            </div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      <div class="text-center mt-5">
+        <a href="{% url 'doctor' %}" class="btn-orange"><i class="fas fa-users"></i> {% trans "Xem toàn bộ bác sĩ" %}</a>
+      </div>
+    </div>
+  </section>
+  {% endif %}
 
+  {% latest_reviews 6 as reviews %}
+  {% if reviews %}
+  <section class="umc-section reviews-section">
+    <div class="container">
+      <div class="umc-section-header">
+        <span class="umc-eyebrow">{% trans "Nhận xét" %}</span>
+        <h2 class="umc-title">{% trans "Nhận xét của bệnh nhân" %}</h2>
+        <p class="umc-subtitle">{% trans "Đánh giá thực từ bệnh nhân đã trải nghiệm dịch vụ Medic." %}</p>
+      </div>
+      <div class="reviews-grid">
+        {% trans "Bác sĩ tận tâm, chuyên nghiệp. Tôi rất hài lòng với dịch vụ tại Medic." as default_review_comment %}
+        {% for review in reviews %}
+        <div class="review-card">
+          <div class="review-stars-umc">
+            {% for i in "12345" %}{% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}{% endfor %}
+          </div>
+          <p class="review-comment">{{ review.comment|default:default_review_comment|truncatechars:200 }}</p>
+          <div class="review-meta">
+            <div class="review-avatar">{{ review.patient.first_name|slice:":1"|upper }}{{ review.patient.last_name|slice:":1"|upper }}</div>
+            <div>
+              <div class="review-name">{{ review.patient.first_name }} {{ review.patient.last_name }}</div>
+              <div class="review-doctor">{% trans "Khám với" %} BS. {{ review.doctor.first_name }} {{ review.doctor.last_name }}</div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
 
-	{% endblock %}
+  <section class="umc-cta">
+    <div class="container">
+      <h2>{% trans "Sẵn sàng chăm sóc sức khỏe?" %}</h2>
+      <p>{% trans "Đăng ký Medic miễn phí, sàng lọc bệnh bằng AI, đặt lịch khám với bác sĩ chuyên môn." %}</p>
+      <div class="d-flex justify-content-center" style="gap:14px; flex-wrap:wrap;">
+        {% if not request.user.is_authenticated %}
+          <a href="{% url 'patient-register' %}" class="btn-orange"><i class="fas fa-user-plus"></i> {% trans "Đăng ký miễn phí" %}</a>
+          <a href="{% url 'login' %}" class="btn-outline-white"><i class="fas fa-sign-in-alt"></i> {% trans "Đăng nhập" %}</a>
+        {% else %}
+          <a href="{% url 'doctor' %}" class="btn-orange"><i class="fas fa-calendar-plus"></i> {% trans "Đặt lịch khám" %}</a>
+          <a href="{% url 'history' %}" class="btn-outline-white"><i class="fas fa-history"></i> {% trans "Xem lịch sử" %}</a>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+</div>
+{% endblock %}

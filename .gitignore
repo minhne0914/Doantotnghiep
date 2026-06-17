@@ -25,6 +25,12 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 staticfiles/
+static/admin/
+static/jazzmin/
+/static/assets/build/
+/static/assets/docs/
+/static/assets/pages/
+/static/assets/plugins/
 
 # Media: upload của user. Whitelist file demo bằng !path/to/file nếu cần.
 media/
@@ -47,8 +53,9 @@ logs/
 Thumbs.db
 
 # --- Build artifacts ---
-build/
-dist/
+/build/
+/dist/
+*.map
 *.egg-info/
 .eggs/
 htmlcov/
@@ -65,9 +72,9 @@ htmlcov/
 *.iso
 xampp-*.exe
 
-# --- ML model artifacts (uncomment nếu sinh tự động) ---
-# *.pkl
-# *.h5
+# --- ML model artifacts ---
+*.pkl
+*.h5
 
 # --- Scratch / file tạm khi dev ---
 scratch_*.py

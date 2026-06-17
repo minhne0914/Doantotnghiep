@@ -9,9 +9,12 @@ Thay đổi chính:
 
 import json
 import logging
+from decimal import Decimal, InvalidOperation
 from datetime import datetime
 
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
@@ -35,13 +38,14 @@ logger = logging.getLogger(__name__)
 _DEFAULT_VITAL = {
     'weight_kg': 0,
     'height_cm': 0,
-    'blood_pressure_systolic': 0,
-    'blood_pressure_diastolic': 0,
-    'heart_rate': 0,
+    'blood_pressure_systolic': 120,
+    'blood_pressure_diastolic': 80,
+    'heart_rate': 75,
     'temperature_c': 36.5,
 }
 
 _RECORD_TEXT_FIELDS = ('symptoms', 'diagnosis', 'clinical_notes', 'follow_up_plan')
+_VITAL_DECIMAL_FIELDS = {'weight_kg', 'height_cm', 'temperature_c'}
 
 
 # =============================================================================
@@ -53,6 +57,14 @@ def load_json_body(request):
         return json.loads(request.body or '{}')
     except json.JSONDecodeError:
         return None
+
+
+def validation_error_response(exc):
+    if hasattr(exc, 'message_dict'):
+        errors = exc.message_dict
+    else:
+        errors = {'__all__': exc.messages}
+    return JsonResponse({'errors': errors}, status=400)
 
 
 def serialize_record(record):
@@ -124,15 +136,39 @@ def _apply_vital_sign(record, data):
     """Tạo/cập nhật VitalSign cho record. Mặc định values an toàn."""
     if not data:
         return
-    defaults = {key: data.get(key, default) for key, default in _DEFAULT_VITAL.items()}
-    VitalSign.objects.update_or_create(emr_record=record, defaults=defaults)
+    if not isinstance(data, dict):
+        raise ValidationError({'vital_sign': 'Vital sign must be an object.'})
+    defaults = {}
+    for key, default in _DEFAULT_VITAL.items():
+        value = data.get(key, default)
+        if key in _VITAL_DECIMAL_FIELDS:
+            try:
+                value = Decimal(str(value))
+            except (InvalidOperation, TypeError, ValueError):
+                raise ValidationError({key: 'Invalid decimal value.'})
+        defaults[key] = value
+    try:
+        vital_sign = record.vital_sign
+    except VitalSign.DoesNotExist:
+        vital_sign = VitalSign(emr_record=record)
+    for key, value in defaults.items():
+        setattr(vital_sign, key, value)
+    vital_sign.full_clean()
+    vital_sign.save()
 
 
 def _apply_prescriptions(record, items):
     """Replace toàn bộ prescriptions của record bằng list mới."""
-    record.prescriptions.all().delete()
+    if items is None:
+        items = []
+    if not isinstance(items, list):
+        raise ValidationError({'prescriptions': 'Prescriptions must be a list.'})
+
+    prescriptions = []
     for index, item in enumerate(items or [], start=1):
-        PrescriptionItem.objects.create(
+        if not isinstance(item, dict):
+            raise ValidationError({'prescriptions': 'Each prescription must be an object.'})
+        prescription = PrescriptionItem(
             emr_record=record,
             medicine_name=item.get('medicine_name', ''),
             dosage=item.get('dosage', ''),
@@ -141,6 +177,11 @@ def _apply_prescriptions(record, items):
             instructions=item.get('instructions', ''),
             order=item.get('order', index),
         )
+        prescription.full_clean()
+        prescriptions.append(prescription)
+
+    record.prescriptions.all().delete()
+    PrescriptionItem.objects.bulk_create(prescriptions)
 
 
 def _ensure_doctor(request, booking):
@@ -336,20 +377,29 @@ def emr_record_create_api(request, booking_id):
     if data is None:
         return JsonResponse({'error': 'Invalid JSON payload.'}, status=400)
 
-    record, _created = EMRRecord.objects.update_or_create(
-        appointment=booking,
-        defaults={
-            'patient': booking.user,
-            'doctor': booking.appointment.user,
-            **{f: data.get(f, '') for f in _RECORD_TEXT_FIELDS},
-        },
-    )
+    try:
+        with transaction.atomic():
+            record, _created = EMRRecord.objects.get_or_create(
+                appointment=booking,
+                defaults={
+                    'patient': booking.user,
+                    'doctor': booking.appointment.user,
+                },
+            )
+            record.patient = booking.user
+            record.doctor = booking.appointment.user
+            for field in _RECORD_TEXT_FIELDS:
+                setattr(record, field, data.get(field, ''))
+            record.full_clean()
+            record.save()
 
-    _apply_vital_sign(record, data.get('vital_sign'))
-    _apply_prescriptions(record, data.get('prescriptions'))
+            _apply_vital_sign(record, data.get('vital_sign'))
+            _apply_prescriptions(record, data.get('prescriptions'))
 
-    booking.status = TakeAppointment.STATUS_COMPLETED
-    booking.save(update_fields=['status'])
+            booking.status = TakeAppointment.STATUS_COMPLETED
+            booking.save(update_fields=['status'])
+    except ValidationError as exc:
+        return validation_error_response(exc)
     return JsonResponse(serialize_record(record), status=201)
 
 
@@ -376,16 +426,20 @@ def emr_record_update_api(request, record_id):
     if data is None:
         return JsonResponse({'error': 'Invalid JSON payload.'}, status=400)
 
-    for field in _RECORD_TEXT_FIELDS:
-        if field in data:
-            setattr(record, field, data[field])
-    record.save()
+    try:
+        with transaction.atomic():
+            for field in _RECORD_TEXT_FIELDS:
+                if field in data:
+                    setattr(record, field, data[field])
+            record.full_clean()
+            record.save()
 
-
-    if 'vital_sign' in data:
-        _apply_vital_sign(record, data['vital_sign'])
-    if 'prescriptions' in data:
-        _apply_prescriptions(record, data['prescriptions'])
+            if 'vital_sign' in data:
+                _apply_vital_sign(record, data['vital_sign'])
+            if 'prescriptions' in data:
+                _apply_prescriptions(record, data['prescriptions'])
+    except ValidationError as exc:
+        return validation_error_response(exc)
 
     return JsonResponse(serialize_record(record))
 

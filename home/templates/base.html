@@ -1,6 +1,7 @@
-{% load static %}
+{% load static i18n %}
+{% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
-<html lang="zxx">
+<html lang="{{ LANGUAGE_CODE|default:'vi' }}">
 
     {% include "partials/head.html" %}
     {% block style %}{% endblock %}
@@ -13,9 +14,7 @@
     {% include "partials/realtime_notifications.html" %}
     {% block scripts %}
     {% endblock %}
-    {% if request.user.is_authenticated %}
-        {% include "partials/chatbot.html" %}
-    {% endif %}
+    {% include "partials/chatbot.html" %}
 </body>
 
 </html>    

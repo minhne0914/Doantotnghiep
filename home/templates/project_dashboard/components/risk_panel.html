@@ -1,0 +1,21 @@
+<section class="pm-panel" aria-label="Project risks">
+    <div class="pm-panel-header">
+        <div>
+            <span class="pm-eyebrow">Risk watch</span>
+            <h2>Cảnh báo rủi ro</h2>
+        </div>
+    </div>
+
+    <div class="pm-risk-list">
+        {% for risk in risks %}
+            <article class="pm-risk">
+                <div>
+                    <strong>{{ risk.title }}</strong>
+                    <p>{{ risk.description }}</p>
+                    <small>{{ risk.owner }}</small>
+                </div>
+                <span class="pm-badge {{ risk.level_tone }}">{{ risk.level }}</span>
+            </article>
+        {% endfor %}
+    </div>
+</section>

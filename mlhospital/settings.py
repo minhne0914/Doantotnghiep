@@ -106,7 +106,7 @@ ASGI_APPLICATION = 'mlhospital.asgi.application'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -191,7 +191,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+_static_root = os.getenv('DJANGO_STATIC_ROOT', 'staticfiles')
+if not Path(_static_root).is_absolute():
+    _static_root = str(BASE_DIR / _static_root)
+STATIC_ROOT = _static_root
+STATICFILES_DIRS = [str(BASE_DIR / 'static')] if (BASE_DIR / 'static').exists() else []
 
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
@@ -205,6 +209,23 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('DATA_UPLOAD_MAX_MEMORY_SIZE', 5 * 1024 * 1024))   # 5 MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('FILE_UPLOAD_MAX_MEMORY_SIZE', 5 * 1024 * 1024))   # 5 MB
 DATA_UPLOAD_MAX_NUMBER_FIELDS = int(os.getenv('DATA_UPLOAD_MAX_NUMBER_FIELDS', 1000))
+MAX_CHAT_ATTACHMENT_BYTES = int(os.getenv('MAX_CHAT_ATTACHMENT_BYTES', 10 * 1024 * 1024))
+ALLOWED_CHAT_ATTACHMENT_CONTENT_TYPES = tuple(
+    content_type.strip()
+    for content_type in os.getenv(
+        'ALLOWED_CHAT_ATTACHMENT_CONTENT_TYPES',
+        'image/jpeg,image/png,image/webp,application/pdf,text/plain',
+    ).split(',')
+    if content_type.strip()
+)
+ALLOWED_CHAT_ATTACHMENT_EXTENSIONS = tuple(
+    ext.strip().lower()
+    for ext in os.getenv(
+        'ALLOWED_CHAT_ATTACHMENT_EXTENSIONS',
+        '.jpg,.jpeg,.png,.webp,.pdf,.txt',
+    ).split(',')
+    if ext.strip()
+)
 
 # Always-on security headers (safe to enable in DEBUG too)
 SECURE_BROWSER_XSS_FILTER = True
@@ -353,35 +374,42 @@ LOGGING = {
 # =============================================================================
 JAZZMIN_SETTINGS = {
     # Branding
-    "site_title": "Medic Admin",
-    "site_header": "Medic - Hospital Management",
-    "site_brand": "Medic",
+    "site_title": "Medic Control",
+    "site_header": "Medic Control Center",
+    "site_brand": "Medic Admin",
     "site_logo": None,  # đường dẫn ảnh logo trong static/
     "login_logo": None,
     "site_icon": None,
-    "welcome_sign": "Chào mừng tới hệ thống quản trị Medic",
-    "copyright": "Medic Project - Đồ án tốt nghiệp",
+    "welcome_sign": "Quản trị hệ thống Medic",
+    "copyright": "Medic Healthcare Platform",
 
     # Search nhanh
-    "search_model": ["accounts.User", "appoinment.Appointment", "emr.EMRRecord"],
+    "search_model": [
+        "accounts.User",
+        "appoinment.Appointment",
+        "appoinment.TakeAppointment",
+        "emr.EMRRecord",
+        "home.MedicalHistory",
+    ],
 
     # Top menu
     "topmenu_links": [
-        {"name": "Trang chủ", "url": "admin:index", "permissions": ["auth.view_user"]},
+        {"name": "Tổng quan", "url": "admin:index", "permissions": ["accounts.view_user"]},
         {"name": "Web app", "url": "/", "new_window": True},
+        {"name": "Bác sĩ", "url": "/appoinment/doctor/", "new_window": True},
+        {"name": "Dashboard", "url": "/account/doctor/dashboard/", "new_window": True},
         {"model": "accounts.User"},
-        {"app": "appoinment"},
     ],
 
     # User menu (góc trên phải)
     "usermenu_links": [
-        {"name": "Hỗ trợ", "url": "https://github.com/", "new_window": True},
+        {"name": "Trang chủ Medic", "url": "/", "new_window": True},
         {"model": "accounts.user"},
     ],
 
     # Sidebar
     "show_sidebar": True,
-    "navigation_expanded": True,
+    "navigation_expanded": False,
     "hide_apps": [],
     "hide_models": [],
     "order_with_respect_to": [
@@ -393,18 +421,23 @@ JAZZMIN_SETTINGS = {
         "auth": "fas fa-users-cog",
         "auth.user": "fas fa-user",
         "auth.Group": "fas fa-users",
-        "accounts.User": "fas fa-user-md",
-        "accounts.DoctorProfile": "fas fa-user-md",
+        "accounts": "fas fa-user-shield",
+        "accounts.User": "fas fa-users",
+        "accounts.DoctorProfile": "fas fa-stethoscope",
+        "appoinment": "fas fa-calendar-check",
         "appoinment.Appointment": "fas fa-calendar-alt",
         "appoinment.TakeAppointment": "fas fa-calendar-check",
         "appoinment.AppointmentChangeLog": "fas fa-history",
         "appoinment.DoctorReview": "fas fa-star",
         "appoinment.DirectMessage": "fas fa-comments",
+        "emr": "fas fa-notes-medical",
         "emr.EMRRecord": "fas fa-file-medical",
         "emr.VitalSign": "fas fa-heartbeat",
         "emr.PrescriptionItem": "fas fa-prescription-bottle-alt",
+        "home": "fas fa-clinic-medical",
         "home.MedicalHistory": "fas fa-notes-medical",
         "home.ChatMessage": "fas fa-robot",
+        "notifications": "fas fa-bell",
         "notifications.NotificationPreference": "fas fa-cog",
         "notifications.AppointmentNotificationLog": "fas fa-envelope",
         "notifications.RealtimeNotification": "fas fa-bell",
@@ -414,9 +447,9 @@ JAZZMIN_SETTINGS = {
 
     # UI tweaks
     "related_modal_active": True,
-    "custom_css": None,
-    "custom_js": None,
-    "use_google_fonts_cdn": True,
+    "custom_css": "admin/css/medic_admin_shell.css",
+    "custom_js": "admin/js/medic_admin.js",
+    "use_google_fonts_cdn": False,
     "show_ui_builder": False,
 
     # Form layout
@@ -432,10 +465,10 @@ JAZZMIN_UI_TWEAKS = {
     "footer_small_text": False,
     "body_small_text": False,
     "brand_small_text": False,
-    "brand_colour": "navbar-primary",
-    "accent": "accent-primary",
-    "navbar": "navbar-primary navbar-dark",
-    "no_navbar_border": False,
+    "brand_colour": "navbar-dark",
+    "accent": "accent-teal",
+    "navbar": "navbar-dark",
+    "no_navbar_border": True,
     "navbar_fixed": True,
     "layout_boxed": False,
     "footer_fixed": False,
@@ -443,14 +476,14 @@ JAZZMIN_UI_TWEAKS = {
     "sidebar": "sidebar-dark-primary",
     "sidebar_nav_small_text": False,
     "sidebar_disable_expand": False,
-    "sidebar_nav_child_indent": True,
-    "sidebar_nav_compact_style": False,
+    "sidebar_nav_child_indent": False,
+    "sidebar_nav_compact_style": True,
     "sidebar_nav_legacy_style": False,
-    "sidebar_nav_flat_style": False,
-    "theme": "default",
+    "sidebar_nav_flat_style": True,
+    "theme": "flatly",
     "dark_mode_theme": None,
     "button_classes": {
-        "primary": "btn-primary",
+        "primary": "btn-info",
         "secondary": "btn-secondary",
         "info": "btn-info",
         "warning": "btn-warning",

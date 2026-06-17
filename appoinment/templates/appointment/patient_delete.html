@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}Hủy lịch khám{% endblock %}
+{% block title %}{% trans "Hủy lịch khám" %}{% endblock %}
 
 {% block content %}
 <div class="inner-banner-w3ls"><div class="container"></div></div>
@@ -99,11 +100,11 @@
         <div class="col-lg-9">
             <div class="cancel-card-ui">
                 <div class="cancel-header-ui">
-                    <h3><i class="fas fa-exclamation-circle mr-2"></i>Xác nhận hủy lịch khám</h3>
-                    <p class="mb-0 text-muted">Hủy lịch sẽ giải phóng slot để bệnh nhân khác có thể đặt lại. Bác sĩ cũng sẽ nhận được thông báo thay đổi lịch.</p>
+                    <h3><i class="fas fa-exclamation-circle mr-2"></i>{% trans "Xác nhận hủy lịch khám" %}</h3>
+                    <p class="mb-0 text-muted">{% trans "Hủy lịch sẽ giải phóng slot để bệnh nhân khác có thể đặt lại. Bác sĩ cũng sẽ nhận được thông báo thay đổi lịch." %}</p>
                     {% if can_modify %}
                     <div class="cancel-warning-ui">
-                        <i class="fas fa-clock mr-2"></i>Nếu hủy trong vòng {{ change_deadline_hours }} giờ trước giờ khám, hệ thống sẽ không cho phép thao tác này.
+                        <i class="fas fa-clock mr-2"></i>{% trans "Nếu hủy trong vòng" %} {{ change_deadline_hours }} {% trans "giờ trước giờ khám, hệ thống sẽ không cho phép thao tác này." %}
                     </div>
                     {% endif %}
                 </div>
@@ -111,24 +112,25 @@
                 <div class="cancel-body-ui">
                     {% if not can_modify %}
                     <div class="alert alert-danger mb-4">{{ modify_reason }}</div>
-                    <a href="{% url 'patient-my-appointments' %}" class="btn btn-outline-secondary">Quay lại</a>
+                    <a href="{% url 'patient-my-appointments' %}" class="btn btn-outline-secondary">{% trans "Quay lại" %}</a>
                     {% else %}
                     <div class="cancel-grid-ui">
                         <div class="cancel-info-ui">
-                            <span>Bác sĩ</span>
+                            <span>{% trans "Bác sĩ" %}</span>
                             <strong>{{ object.appointment.full_name }}</strong>
                         </div>
                         <div class="cancel-info-ui">
-                            <span>Số điện thoại</span>
+                            <span>{% trans "Số điện thoại" %}</span>
                             <strong>{{ object.phone_number }}</strong>
                         </div>
                         <div class="cancel-info-ui">
-                            <span>Ngày giờ khám</span>
+                            <span>{% trans "Ngày giờ khám" %}</span>
                             <strong>{{ object.date|date:"d/m/Y" }} • {{ object.time|time:"H:i" }}</strong>
                         </div>
                         <div class="cancel-info-ui">
-                            <span>Ghi chú hiện tại</span>
-                            <strong>{{ object.message|default:"Chưa có ghi chú" }}</strong>
+                            <span>{% trans "Ghi chú hiện tại" %}</span>
+                            {% trans "Chưa có ghi chú" as default_note %}
+                            <strong>{{ object.message|default:default_note }}</strong>
                         </div>
                     </div>
 
@@ -140,9 +142,9 @@
                         </div>
                         <div class="cancel-actions-ui">
                             <button class="btn btn-danger" type="submit">
-                                <i class="fas fa-times-circle mr-2"></i>Xác nhận hủy
+                                <i class="fas fa-times-circle mr-2"></i>{% trans "Xác nhận hủy" %}
                             </button>
-                            <a href="{% url 'patient-my-appointments' %}" class="btn btn-outline-secondary">Giữ lại lịch</a>
+                            <a href="{% url 'patient-my-appointments' %}" class="btn btn-outline-secondary">{% trans "Giữ lại lịch" %}</a>
                         </div>
                     </form>
                     {% endif %}

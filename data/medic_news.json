@@ -1,0 +1,59 @@
+{
+  "version": "1.0",
+  "news": [
+    {
+      "id": "ai-skin-cancer",
+      "title": "Medic ra mắt tính năng AI sàng lọc ung thư da",
+      "excerpt": "Hệ thống Medic vừa tích hợp mô hình CNN phân loại 7 nhóm tổn thương da dựa trên dataset HAM10000, giúp người dùng tự kiểm tra nốt ruồi/tổn thương ngay tại nhà.",
+      "category": "Tin sản phẩm",
+      "date": "29/04/2026",
+      "image_url": "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=600&h=400&fit=crop",
+      "link": "/skin_cancer/"
+    },
+    {
+      "id": "abcde-melanoma",
+      "title": "Quy tắc ABCDE: Phát hiện sớm ung thư hắc tố melanoma",
+      "excerpt": "Tự kiểm tra nốt ruồi theo 5 tiêu chí: Asymmetry, Border, Color, Diameter, Evolution. Phát hiện sớm tăng tỷ lệ sống trên 95%.",
+      "category": "Y học thường thức",
+      "date": "20/04/2026",
+      "image_url": "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&h=400&fit=crop",
+      "link": "#"
+    },
+    {
+      "id": "diabetes-screening",
+      "title": "5 chỉ số xét nghiệm bạn nên biết để phòng tiểu đường",
+      "excerpt": "Glucose máu lúc đói, HbA1c, BMI, huyết áp, insulin - các chỉ số quan trọng giúp Medic AI dự đoán nguy cơ tiểu đường type 2 cho bạn.",
+      "category": "Y học thường thức",
+      "date": "15/04/2026",
+      "image_url": "https://images.unsplash.com/photo-1559757175-5700dde675bc?w=600&h=400&fit=crop",
+      "link": "/diabetes/"
+    },
+    {
+      "id": "telehealth",
+      "title": "Medic nâng cấp chat realtime với bác sĩ",
+      "excerpt": "Bệnh nhân có thể trò chuyện trực tiếp với bác sĩ qua WebSocket sau khi đặt lịch, gửi câu hỏi và nhận tư vấn nhanh trước giờ khám.",
+      "category": "Tin sản phẩm",
+      "date": "10/04/2026",
+      "image_url": "https://images.unsplash.com/photo-1638202993928-7267aad84c31?w=600&h=400&fit=crop",
+      "link": "#"
+    },
+    {
+      "id": "pneumonia-xray",
+      "title": "AI phân tích ảnh X-quang phát hiện viêm phổi",
+      "excerpt": "Mô hình CNN của Medic đạt accuracy ~90% trên Chest X-Ray dataset, hỗ trợ sàng lọc viêm phổi trước khi đến gặp bác sĩ.",
+      "category": "Tin sản phẩm",
+      "date": "05/04/2026",
+      "image_url": "https://images.unsplash.com/photo-1530497610245-94d3c16cda28?w=600&h=400&fit=crop",
+      "link": "/pneumonia_detector/"
+    },
+    {
+      "id": "heart-disease",
+      "title": "Phòng tránh bệnh tim mạch ở người trẻ",
+      "excerpt": "Bệnh tim mạch ngày càng trẻ hóa. Khám sức khỏe định kỳ + kiểm soát stress + chế độ ăn ít muối là chìa khóa phòng ngừa.",
+      "category": "Y học thường thức",
+      "date": "28/03/2026",
+      "image_url": "https://images.unsplash.com/photo-1559757175-0eb30cd8c063?w=600&h=400&fit=crop",
+      "link": "/heart/"
+    }
+  ]
+}

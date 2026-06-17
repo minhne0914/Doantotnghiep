@@ -20,7 +20,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from django.conf import settings
-from django.db.models import Avg, Q
+from django.db.models import Avg, Count, Exists, OuterRef, Q
 from django.utils import timezone
 
 
@@ -40,6 +40,7 @@ MAX_DOCTORS_IN_CONTEXT = 5
 MAX_SLOTS_IN_CONTEXT = 5
 MAX_HISTORY_IN_CONTEXT = 3
 MAX_BOOKINGS_IN_CONTEXT = 3
+MAX_CHAT_MESSAGES_IN_CONTEXT = 8
 
 
 # =============================================================================
@@ -56,14 +57,16 @@ INTENT_KEYWORDS = {
     'appointment': [
         'lịch', 'đặt khám', 'đặt hẹn', 'book', 'appointment', 'ca khám',
         'thứ', 'chủ nhật', 'sáng mai', 'hôm nay', 'ngày mai', 'tuần',
-        'giờ khám', 'slot', 'khung giờ',
+        'giờ khám', 'slot', 'khung giờ', 'hẹn khám', 'khám lúc nào',
     ],
     'my_history': [
         'lịch sử của tôi', 'kết quả của tôi', 'tôi đã khám', 'tôi đã làm',
-        'tôi có', 'của tôi', 'my history', 'my result',
+        'tôi có', 'tôi bị', 'tôi đang', 'của tôi', 'của mình', 'mình bị',
+        'mình đang', 'my history', 'my result', 'chỉ số của tôi',
     ],
     'my_bookings': [
         'lịch của tôi', 'lịch tôi đã đặt', 'lịch hẹn của tôi',
+        'lịch hẹn', 'cuộc hẹn', 'đã đặt lịch', 'đặt lịch chưa',
         'my appointment', 'my booking',
     ],
     'emergency': [
@@ -208,7 +211,14 @@ def search_doctors(user_message, top_k=MAX_DOCTORS_IN_CONTEXT):
         if vn_lower in msg_lower or vn_no_accent in msg_no_accent:
             matched_specialties.append(en)
 
-    queryset = User.objects.filter(role=UserRole.DOCTOR).select_related('doctor_profile')
+    queryset = (
+        User.objects.filter(role=UserRole.DOCTOR)
+        .select_related('doctor_profile')
+        .annotate(
+            avg_rating=Avg('doctor_reviews__rating'),
+            review_count=Count('doctor_reviews'),
+        )
+    )
     if matched_specialties:
         # Match exact specialty trong DoctorProfile
         queryset = queryset.filter(doctor_profile__specialization__in=matched_specialties)
@@ -218,16 +228,28 @@ def search_doctors(user_message, top_k=MAX_DOCTORS_IN_CONTEXT):
 
 def search_available_slots(user_message, top_k=MAX_SLOTS_IN_CONTEXT):
     """Tìm slot khám trống trong vòng 7 ngày tới."""
-    from appoinment.models import Appointment
+    from appoinment.models import Appointment, TakeAppointment
 
     today = timezone.localdate()
     week_later = today + timedelta(days=7)
+    active_bookings = TakeAppointment.objects.filter(
+        appointment=OuterRef('pk'),
+        date=OuterRef('date'),
+        time=OuterRef('start_time'),
+        status__in=TakeAppointment.ACTIVE_STATUSES,
+    )
 
-    queryset = Appointment.objects.filter(
-        is_active=True,
-        date__gte=today,
-        date__lte=week_later,
-    ).select_related('user').order_by('date', 'start_time')
+    queryset = (
+        Appointment.objects.filter(
+            is_active=True,
+            date__gte=today,
+            date__lte=week_later,
+        )
+        .select_related('user')
+        .annotate(is_booked=Exists(active_bookings))
+        .filter(is_booked=False)
+        .order_by('date', 'start_time')
+    )
 
     # Filter theo chuyên khoa nếu có trong câu hỏi
     msg_lower, msg_no_accent = _normalize(user_message)
@@ -273,6 +295,20 @@ def get_user_bookings(user, top_k=MAX_BOOKINGS_IN_CONTEXT):
     )
 
 
+def get_recent_chat_messages(user, exclude_message_id=None, top_k=MAX_CHAT_MESSAGES_IN_CONTEXT):
+    """Lấy vài tin nhắn gần nhất để Gemini hiểu câu hỏi nối tiếp."""
+    from .models import ChatMessage
+
+    if not user or not user.is_authenticated:
+        return []
+
+    queryset = ChatMessage.objects.filter(user=user)
+    if exclude_message_id:
+        queryset = queryset.exclude(pk=exclude_message_id)
+
+    return list(queryset.order_by('-created_at')[:top_k])[::-1]
+
+
 # =============================================================================
 # Format helpers - convert objects -> markdown text cho Gemini đọc
 # =============================================================================
@@ -284,6 +320,10 @@ def _format_doctor(doctor):
     line = f'- BS. {doctor.first_name} {doctor.last_name} ({doctor.email}), chuyên khoa {spec}'
     if qual:
         line += f', bằng cấp: {qual[:60]}'
+    avg_rating = getattr(doctor, 'avg_rating', None)
+    review_count = getattr(doctor, 'review_count', 0) or 0
+    if avg_rating:
+        line += f', đánh giá TB: {avg_rating:.1f}/5 ({review_count} lượt)'
     return line
 
 
@@ -301,7 +341,7 @@ def _format_slot(slot):
 def _format_history(item):
     return (
         f'- {item.created_at.strftime("%d/%m/%Y %H:%M")}: {item.disease_type} '
-        f'→ {item.prediction_result}'
+        f'-> {item.prediction_result}; chỉ số: {item.input_data or {}}'
     )
 
 
@@ -314,17 +354,33 @@ def _format_booking(booking):
     )
 
 
+def _format_chat_message(message):
+    sender = 'Người dùng' if message.sender == 'user' else 'Medic AI'
+    text = re.sub(r'\s+', ' ', message.message or '').strip()
+    if len(text) > 360:
+        text = text[:357] + '...'
+    return f'- {sender} ({message.created_at.strftime("%d/%m/%Y %H:%M")}): {text}'
+
+
 # =============================================================================
 # Main entry point - build RAG context
 # =============================================================================
 
-def build_rag_context(user, user_message):
+def build_rag_context(user, user_message, current_message_id=None):
     """Build context block để inject vào prompt Gemini.
 
     Trả về string đã format, có thể empty nếu không tìm thấy info nào.
     """
     intents = detect_intents(user_message)
     blocks = []
+
+    # 0. Bộ nhớ hội thoại gần đây - giúp trả lời các câu hỏi nối tiếp như
+    # "vậy tôi nên làm gì tiếp?" mà không bắt user lặp lại toàn bộ ngữ cảnh.
+    recent_messages = get_recent_chat_messages(user, exclude_message_id=current_message_id)
+    if recent_messages:
+        lines = ['## Ngữ cảnh hội thoại gần đây:']
+        lines.extend(_format_chat_message(m) for m in recent_messages)
+        blocks.append('\n'.join(lines))
 
     # 1. FAQ - luôn search vì câu hỏi nào cũng có thể trùng FAQ
     faqs = search_faqs(user_message)
@@ -338,34 +394,42 @@ def build_rag_context(user, user_message):
     # 2. Bác sĩ
     if 'doctor' in intents:
         doctors = search_doctors(user_message)
+        lines = ['## Bác sĩ trong hệ thống (phù hợp với câu hỏi):']
         if doctors:
-            lines = ['## Bác sĩ trong hệ thống (phù hợp với câu hỏi):']
             lines.extend(_format_doctor(d) for d in doctors)
-            blocks.append('\n'.join(lines))
+        else:
+            lines.append('- Chưa tìm thấy bác sĩ phù hợp trong dữ liệu hiện có.')
+        blocks.append('\n'.join(lines))
 
     # 3. Lịch khám trống
     if 'appointment' in intents:
         slots = search_available_slots(user_message)
+        lines = ['## Lịch khám trống trong 7 ngày tới:']
         if slots:
-            lines = ['## Lịch khám trống trong 7 ngày tới:']
             lines.extend(_format_slot(s) for s in slots)
-            blocks.append('\n'.join(lines))
+        else:
+            lines.append('- Chưa tìm thấy slot trống phù hợp trong 7 ngày tới.')
+        blocks.append('\n'.join(lines))
 
     # 4. Lịch sử user (nếu hỏi về bản thân)
     if 'my_history' in intents or 'screening' in intents:
         history = get_user_medical_history(user)
+        lines = ['## Lịch sử sàng lọc AI của bạn (3 mục gần nhất):']
         if history:
-            lines = ['## Lịch sử sàng lọc AI của bạn (3 mục gần nhất):']
             lines.extend(_format_history(h) for h in history)
-            blocks.append('\n'.join(lines))
+        else:
+            lines.append('- Bạn chưa có lịch sử sàng lọc AI trong hệ thống.')
+        blocks.append('\n'.join(lines))
 
     # 5. Booking của user
     if 'my_bookings' in intents:
         bookings = get_user_bookings(user)
+        lines = ['## Lịch khám bạn đã đặt (sắp tới):']
         if bookings:
-            lines = ['## Lịch khám bạn đã đặt (sắp tới):']
             lines.extend(_format_booking(b) for b in bookings)
-            blocks.append('\n'.join(lines))
+        else:
+            lines.append('- Bạn chưa có lịch khám sắp tới đang hoạt động.')
+        blocks.append('\n'.join(lines))
 
     # 6. Cảnh báo cấp cứu - nếu detect → AI sẽ ưu tiên trả lời 115
     if 'emergency' in intents:

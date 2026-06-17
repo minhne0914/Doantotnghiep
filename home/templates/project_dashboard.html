@@ -1,0 +1,45 @@
+{% extends 'app.html' %}
+{% load static %}
+
+{% block page_title %}Project Dashboard{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/project_dashboard.css' %}">
+
+<div class="content-wrapper pm-dashboard">
+    <section class="content-header pm-content-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-sm-7">
+                    <h1 class="m-0">Dashboard quản lý dự án</h1>
+                    <p class="text-muted mb-0">Theo dõi tiến độ, nhân sự, task và rủi ro trong một màn hình.</p>
+                </div>
+                <div class="col-sm-5">
+                    <ol class="breadcrumb float-sm-right mb-0">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}">Trang chủ</a></li>
+                        <li class="breadcrumb-item active">Project dashboard</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content pb-4">
+        <div class="container-fluid">
+            {% include "project_dashboard/components/header.html" %}
+            {% include "project_dashboard/components/stats_cards.html" %}
+            {% include "project_dashboard/components/chart_section.html" %}
+            <div class="pm-lower-grid">
+                {% include "project_dashboard/components/task_table.html" %}
+                <aside class="pm-side-stack">
+                    {% include "project_dashboard/components/risk_panel.html" %}
+                    {% include "project_dashboard/components/staff_panel.html" %}
+                </aside>
+            </div>
+        </div>
+    </section>
+</div>
+
+{{ chart_data|json_script:"project-dashboard-data" }}
+<script defer src="{% static 'js/project_dashboard.js' %}"></script>
+{% endblock %}
