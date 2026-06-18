@@ -3,91 +3,122 @@
 
 {% block title %}{% trans "Đăng ký Bệnh nhân" %}{% endblock %}
 
+{% block style %}
+<style>
+    .auth-register-section {
+        min-height: calc(100vh - 250px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 16px 72px;
+        background: #f6f9fc;
+    }
+
+    .auth-register-card {
+        width: min(100%, 520px);
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 20px 48px rgba(15, 23, 42, 0.08);
+        padding: 30px;
+    }
+
+    .auth-register-card h3 {
+        margin-bottom: 24px;
+        color: #0f172a;
+        font-weight: 900;
+        text-align: center;
+    }
+
+    .auth-register-card label {
+        color: #334155;
+        font-weight: 700;
+    }
+
+    .auth-register-card .form-control {
+        min-height: 46px;
+        border-radius: 10px;
+        border-color: #cbd5e1;
+        box-shadow: none;
+    }
+
+    .auth-register-card .form-control:focus {
+        border-color: #0891b2;
+        box-shadow: 0 0 0 0.2rem rgba(8, 145, 178, 0.12);
+    }
+
+    .auth-register-card .btn {
+        width: 100%;
+        min-height: 46px;
+        border-radius: 10px;
+        font-weight: 800;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="inner-banner-w3ls">
-    <div class="container">
-
-    </div>
-    <!-- //banner 2 -->
+    <div class="container"></div>
 </div>
-	<!-- page details -->
-	<div class="breadcrumb-agile">
-		<div aria-label="breadcrumb">
-			<ol class="breadcrumb">
-				<li class="breadcrumb-item">
-					<a href="/">{% trans "Trang chủ" %}</a>
-				</li>
-				<li class="breadcrumb-item active" aria-current="page">{% trans "Đăng ký Bệnh nhân" %}</li>
-			</ol>
-		</div>
-	</div>
-	<!-- //page details -->
 
-<div class="container">
+<div class="breadcrumb-agile">
+    <div aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="/">{% trans "Trang chủ" %}</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">{% trans "Đăng ký Bệnh nhân" %}</li>
+        </ol>
+    </div>
+</div>
 
-<div class="row justify-content-center">
+<section class="auth-register-section">
+    <div class="auth-register-card">
+        <h3>{% trans "Đăng ký Bệnh nhân" %}</h3>
 
-                <div class="col-lg-5 mb-5 mb-lg-0">
-                    <center> <h3>{% trans "Đăng ký Bệnh nhân" %}</h3></center>
-
-                    <form action="" method="POST">{% csrf_token %}
-                        {% if form.errors %}
-                            <div class="alert alert-danger">
-                                <ul>
-                                {% for field, errors in form.errors.items %}
-                                    {% for error in errors %}
-                                        <li><strong>{{ field|title }}</strong>: {{ error }}</li>
-                                    {% endfor %}
-                                {% endfor %}
-                                </ul>
-                            </div>
-                        {% endif %}
-                        {% for field in form %}
-                    {% if field.name == 'gender' %}
-
-                        <div class="form-group">
-                            <label for="gender">{% trans "Giới tính" %}</label>
-                            <br>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="gender" id="male gender"
-                                       value="male">
-                                <label style="color: black;" class="form-check-label" for="male">{% trans "Nam" %}</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="gender" id="female"
-                                       value="female">
-                                <label style="color: black;" class="form-check-label" for="female">{% trans "Nữ" %}</label>
-                            </div>
-                        </div>
-
-                    {% else %}
-
-                        <div class="form-group">
-                            <label for="id_{{ field.name }}">{{ field.label }}</label>
-                            <input type="{{ field.field.widget.input_type }}"
-                                   class="form-control"
-                                   name="{{ field.name }}"
-                                   id="id_{{ field.name }}"
-                                   placeholder="{{ field.field.widget.attrs.placeholder }}">
-                        </div>
-
-                          {% endif %}
-                {% endfor %}
-
-                        <div class="row form-group">
-                            <div class="col-md-12">
-                                <input type="submit" value="{% trans 'Đăng ký' %}" class="btn btn-primary btn-md text-white">
-                            </div>
-                        </div>
-
-
-                    </form>
+        <form action="" method="POST">
+            {% csrf_token %}
+            {% if form.errors %}
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <li><strong>{{ field|title }}</strong>: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    </ul>
                 </div>
+            {% endif %}
 
-            </div>
-        </div>
+            {% for field in form %}
+                {% if field.name == 'gender' %}
+                    <div class="form-group">
+                        <label>{% trans "Giới tính" %}</label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="gender" id="gender-male" value="male">
+                                <label class="form-check-label" for="gender-male">{% trans "Nam" %}</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="gender" id="gender-female" value="female">
+                                <label class="form-check-label" for="gender-female">{% trans "Nữ" %}</label>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="form-group">
+                        <label for="id_{{ field.name }}">{{ field.label }}</label>
+                        <input type="{{ field.field.widget.input_type }}"
+                               class="form-control"
+                               name="{{ field.name }}"
+                               id="id_{{ field.name }}"
+                               placeholder="{{ field.field.widget.attrs.placeholder }}">
+                    </div>
+                {% endif %}
+            {% endfor %}
 
+            <button type="submit" class="btn btn-primary text-white">{% trans "Đăng ký" %}</button>
+        </form>
+    </div>
+</section>
 {% endblock %}
-
-

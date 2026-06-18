@@ -34,6 +34,19 @@ class DirectChatConsumerTests(TestCase):
         self.assertIsNotNone(error)
 
 
+class DirectMessageAdminPrivacyTests(TestCase):
+    def test_admin_cannot_open_direct_message_changelist(self):
+        admin_user = User.objects.create_superuser(
+            email='admin@example.com',
+            password='secret123',
+        )
+        self.client.force_login(admin_user)
+
+        response = self.client.get(reverse('admin:appoinment_directmessage_changelist'))
+
+        self.assertEqual(response.status_code, 403)
+
+
 class DoctorDirectoryTests(TestCase):
     def test_directory_lists_doctors_without_requiring_today_slot(self):
         doctor = User.objects.create_user(
@@ -106,6 +119,23 @@ class DoctorDirectoryTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'BS. Minh Heart')
         self.assertNotContains(response, 'BS. Khoa Eye')
+
+    def test_directory_shows_eight_doctors_per_page(self):
+        for index in range(9):
+            doctor = User.objects.create_user(
+                email=f'doctor-page-{index}@example.com',
+                password='secret123',
+                first_name=f'Doctor{index}',
+                last_name='Demo',
+                role='doctor',
+            )
+            DoctorProfile.objects.create(user=doctor, specialization='Heart Disease')
+
+        response = self.client.get(reverse('doctor'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['doctor']), 8)
+        self.assertEqual(response.context['page_obj'].paginator.num_pages, 2)
 
 
 class AppointmentFlowTests(TestCase):
@@ -254,7 +284,7 @@ class AppointmentFlowTests(TestCase):
         self.assertEqual(response.status_code, 302)
         booking.refresh_from_db()
         self.assertEqual(booking.appointment_id, new_appointment.id)
-        self.assertEqual(booking.status, TakeAppointment.STATUS_CONFIRMED)
+        self.assertEqual(booking.status, TakeAppointment.STATUS_PENDING)
         self.assertEqual(booking.notification_version, 2)
         self.assertTrue(
             AppointmentChangeLog.objects.filter(
@@ -307,6 +337,7 @@ class AppointmentFlowTests(TestCase):
             booking.time,
             timezone.datetime.strptime('08:00', '%H:%M').time(),
         )
+        self.assertEqual(booking.status, TakeAppointment.STATUS_PENDING)
 
     def test_patient_can_cancel_future_booking(self):
         self.client.force_login(self.patient)

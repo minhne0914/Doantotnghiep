@@ -65,7 +65,7 @@ class UserLoginForm(forms.Form):
         if email and password:
             self.user = authenticate(email=email, password=password)
             if self.user is None:
-                raise forms.ValidationError('User does not exist.')
+                raise forms.ValidationError('Email or password is incorrect.')
             if not self.user.is_active:
                 raise forms.ValidationError('User is not active.')
 

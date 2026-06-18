@@ -1,4 +1,4 @@
-﻿"""Views appoinment đã được làm thin - chỉ điều phối form và service.
+"""Views appoinment đã được làm thin - chỉ điều phối form và service.
 
 Toàn bộ business logic (lock slot, change log, notification) nằm ở services.py.
 """
@@ -158,7 +158,7 @@ DEPARTMENT_CHOICES_VI = [
 
 
 class DoctorPageView(ListView):
-    paginate_by = 9
+    paginate_by = 8
     model = User
     context_object_name = 'doctor'
     template_name = 'doctor.html'
@@ -510,7 +510,6 @@ class PatientRescheduleView(UpdateView):
                 form.add_error(field if field != '__all__' else None, msg)
             return self.form_invalid(form)
 
-        messages.success(self.request, 'Đổi lịch thành công. Slot cũ đã được giải phóng.')
         return redirect(self.success_url)
 
 

@@ -132,8 +132,16 @@ class LogoutView(RedirectView):
     url = '/'
 
     def get(self, request, *args, **kwargs):
+        next_url = request.GET.get('next')
+        if next_url and url_has_allowed_host_and_scheme(
+            next_url,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure(),
+        ):
+            self.url = next_url
         auth.logout(request)
-        messages.success(request, 'You are now logged out')
+        if self.url == '/':
+            messages.success(request, 'You are now logged out')
         return super().get(request, *args, **kwargs)
 
 

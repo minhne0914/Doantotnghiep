@@ -207,25 +207,35 @@ class DoctorReviewAdmin(admin.ModelAdmin):
 
 @admin.register(DirectMessage)
 class DirectMessageAdmin(admin.ModelAdmin):
-    list_display = ('id', 'sender_email', 'booking_id', 'short_content', 'is_read', 'created_at')
+    """Hide private doctor-patient chat from Django admin."""
+
+    list_display = ('id', 'sender_email', 'booking_id', 'is_read', 'created_at')
     list_filter = ('is_read', 'created_at')
-    search_fields = ('sender__email', 'content', 'booking__full_name')
+    search_fields = ('sender__email', 'booking__full_name')
     list_select_related = ('sender', 'booking')
     list_per_page = 50
     date_hierarchy = 'created_at'
-    readonly_fields = ('booking', 'sender', 'content', 'attachments', 'created_at')
+    readonly_fields = ('booking', 'sender', 'created_at')
 
     def sender_email(self, obj):
         return obj.sender.email
     sender_email.short_description = 'Người gửi'
 
-    def short_content(self, obj):
-        return (obj.content[:60] + '...') if len(obj.content) > 60 else obj.content
-    short_content.short_description = 'Nội dung'
+    def has_module_permission(self, request):
+        return False
+
+    def has_view_permission(self, request, obj=None):
+        return False
 
     def has_add_permission(self, request):
         return False  # Tin nhắn chỉ được tạo qua chat UI
 
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 # =============================================================================
 # AppointmentChangeLog (audit) - hoàn toàn read-only

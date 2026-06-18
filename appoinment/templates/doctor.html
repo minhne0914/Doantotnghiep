@@ -10,7 +10,8 @@
     }
 
     .doctor-directory .container {
-        max-width: 1180px;
+        width: min(100% - 48px, 1480px);
+        max-width: none;
     }
 
     .doctor-directory-title {
@@ -52,7 +53,7 @@
         border-radius: 12px;
         background: #fff;
         box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
-        padding: 18px;
+        padding: 20px;
         margin-bottom: 28px;
     }
 
@@ -136,7 +137,9 @@
     }
 
     .doctor-grid {
-        row-gap: 24px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
     }
 
     .doctor-card {
@@ -299,6 +302,55 @@
         box-shadow: 0 16px 36px rgba(15, 23, 42, 0.06);
     }
 
+    .doctor-pagination {
+        position: static !important;
+        inset: auto !important;
+        clear: both;
+        width: 100%;
+        margin: 42px 0 0;
+        padding: 6px 0 0;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .doctor-pagination .pagination {
+        position: static !important;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        background: transparent !important;
+        border: 0;
+    }
+
+    .doctor-pagination .page-link {
+        border-radius: 10px;
+        border: 1px solid #dbe7f1;
+        background: #fff;
+        color: #0e7490;
+        font-weight: 700;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+    }
+
+    .doctor-pagination .page-link:hover {
+        border-color: #0891b2;
+        background: #ecfeff;
+        color: #075985;
+    }
+
+    .doctor-pagination .page-item.active .page-link {
+        border-color: #0891b2;
+        background: #0891b2;
+        color: #fff;
+        box-shadow: 0 10px 24px rgba(8, 145, 178, 0.22);
+    }
+
+    .doctor-pagination .page-item.disabled .page-link {
+        background: #f8fafc;
+        color: #94a3b8;
+        box-shadow: none;
+    }
+
     @media (max-width: 991.98px) {
         .doctor-filter-grid {
             grid-template-columns: 1fr 1fr;
@@ -311,6 +363,10 @@
     }
 
     @media (max-width: 575.98px) {
+        .doctor-directory .container {
+            width: min(100% - 28px, 1480px);
+        }
+
         .doctor-directory-title h3 {
             font-size: 1.7rem;
         }
@@ -417,7 +473,7 @@
                 {% endif %}
 
                 {% for doc in doctor %}
-                    <div class="col-lg-4 col-md-6">
+                    <div>
                         <article class="doctor-card">
                             <div class="doctor-photo">
                                 <img src="{{ doc.image.url }}" alt="BS. {{ doc.first_name }} {{ doc.last_name }}">
@@ -497,7 +553,7 @@
 			</div>
 
             {% if page_obj.has_other_pages %}
-                <nav aria-label="Page navigation" class="mt-5">
+                <nav aria-label="Page navigation" class="doctor-pagination">
                     <ul class="pagination justify-content-center">
                         {% if page_obj.has_previous %}
                             <li class="page-item">

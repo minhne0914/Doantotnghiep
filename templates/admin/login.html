@@ -1,0 +1,216 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Đăng nhập quản trị" %} | {{ site_title|default:_("Django site admin") }}{% endblock %}
+
+{% block bodyclass %}{{ block.super }} login medic-admin-login{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    body.medic-admin-login {
+        background: #f3f7fb !important;
+    }
+
+    body.medic-admin-login #jazzy-logo,
+    body.medic-admin-login .main-header,
+    body.medic-admin-login .main-sidebar,
+    body.medic-admin-login .content-header,
+    body.medic-admin-login .main-footer {
+        display: none !important;
+    }
+
+    body.medic-admin-login .wrapper,
+    body.medic-admin-login .content-wrapper {
+        min-height: 100vh !important;
+        margin-left: 0 !important;
+        background: #f3f7fb !important;
+    }
+
+    .medic-login-shell {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 18px;
+    }
+
+    .medic-login-card {
+        width: min(100%, 520px);
+        border: 1px solid #dbe5ef;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.1);
+        padding: 30px;
+    }
+
+    .medic-login-logo {
+        width: 96px;
+        height: 96px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 18px;
+        border-radius: 999px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        color: #0e7490;
+        font-size: 42px;
+    }
+
+    .medic-login-title {
+        margin: 0 0 8px;
+        color: #0f172a;
+        font-size: 1.35rem;
+        font-weight: 900;
+        text-align: center;
+    }
+
+    .medic-login-subtitle {
+        margin: 0 0 24px;
+        color: #64748b;
+        text-align: center;
+        line-height: 1.55;
+    }
+
+    .medic-login-card .form-row,
+    .medic-login-card .form-group {
+        margin-bottom: 16px;
+    }
+
+    .medic-login-card label {
+        display: block;
+        margin-bottom: 7px;
+        color: #334155;
+        font-weight: 800;
+    }
+
+    .medic-login-card input[type="text"],
+    .medic-login-card input[type="email"],
+    .medic-login-card input[type="password"] {
+        width: 100%;
+        min-height: 48px;
+        border: 1px solid #cbd5e1;
+        border-radius: 12px;
+        padding: 0 14px;
+        color: #0f172a;
+        background: #fff;
+        box-shadow: none;
+    }
+
+    .medic-login-card input:focus {
+        border-color: #0891b2;
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(8, 145, 178, 0.12);
+    }
+
+    .medic-login-card .submit-row {
+        padding: 0;
+        margin: 22px 0 0;
+        background: transparent;
+        border: 0;
+    }
+
+    .medic-login-card input[type="submit"] {
+        width: 100%;
+        min-height: 48px;
+        border: 0;
+        border-radius: 12px;
+        background: #0891b2;
+        color: #fff;
+        font-weight: 900;
+        cursor: pointer;
+        transition: background 0.18s ease, transform 0.18s ease;
+    }
+
+    .medic-login-card input[type="submit"]:hover {
+        background: #0e7490;
+        transform: translateY(-1px);
+    }
+
+    .medic-login-alert {
+        margin-bottom: 18px;
+        border-left: 4px solid #ef4444;
+        border-radius: 12px;
+        background: #fee2e2;
+        color: #7f1d1d;
+        padding: 14px 16px;
+        line-height: 1.55;
+    }
+
+    .medic-login-switch {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        margin-top: 12px;
+        padding: 0 16px;
+        border-radius: 12px;
+        background: #0f172a;
+        color: #fff !important;
+        font-weight: 800;
+        text-decoration: none !important;
+    }
+
+    .medic-login-switch:hover {
+        background: #1e293b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="medic-login-shell">
+    <div class="medic-login-card">
+        <div class="medic-login-logo">
+            <i class="fas fa-user-shield" aria-hidden="true"></i>
+        </div>
+        <h1 class="medic-login-title">{% trans "Quản trị hệ thống Medic" %}</h1>
+        <p class="medic-login-subtitle">{% trans "Đăng nhập bằng tài khoản quản trị để tiếp tục." %}</p>
+
+        {% if form.errors and not form.non_field_errors %}
+            <div class="medic-login-alert">
+                {% trans "Vui lòng kiểm tra lại email và mật khẩu." %}
+            </div>
+        {% endif %}
+
+        {% if form.non_field_errors %}
+            {% for error in form.non_field_errors %}
+                <div class="medic-login-alert">{{ error }}</div>
+            {% endfor %}
+        {% endif %}
+
+        {% if user.is_authenticated %}
+            <div class="medic-login-alert">
+                {% blocktranslate trimmed %}
+                    Bạn đã xác thực bằng tài khoản {{ username }}, nhưng không đủ quyền để truy cập trang này.
+                    Bạn có muốn đăng nhập bằng một tài khoản khác?
+                {% endblocktranslate %}
+                <br>
+                <a class="medic-login-switch" href="{% url 'logout' %}?next=/admin/login/">&#272;&#259;ng xu&#7845;t t&#224;i kho&#7843;n hi&#7879;n t&#7841;i</a>
+            </div>
+        {% endif %}
+
+        <form action="{{ app_path }}" method="post" id="login-form">
+            {% csrf_token %}
+            <div class="form-row">
+                {{ form.username.label_tag }}
+                {{ form.username }}
+            </div>
+            <div class="form-row">
+                {{ form.password.label_tag }}
+                {{ form.password }}
+                <input type="hidden" name="next" value="{{ next }}">
+            </div>
+            {% url 'admin_password_reset' as password_reset_url %}
+            {% if password_reset_url %}
+                <div class="password-reset-link">
+                    <a href="{{ password_reset_url }}">{% trans "Quên mật khẩu?" %}</a>
+                </div>
+            {% endif %}
+            <div class="submit-row">
+                <input type="submit" value="{% trans 'Đăng nhập' %}">
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

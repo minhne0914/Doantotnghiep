@@ -1,7 +1,10 @@
 from datetime import timedelta
 
+from django.contrib.auth.tokens import default_token_generator
 from django.test import TestCase
 from django.urls import reverse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from django.utils import timezone
 
 from appoinment.models import Appointment, AppointmentChangeLog, TakeAppointment
@@ -59,6 +62,66 @@ class RegistrationFormTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], '/')
+
+    def test_login_wrong_password_shows_credential_error(self):
+        User.objects.create_user(
+            email='patient@example.com',
+            password='StrongPass123',
+            role='patient',
+        )
+
+        response = self.client.post(
+            reverse('login'),
+            {
+                'email': 'patient@example.com',
+                'password': 'WrongPass123',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Email or password is incorrect.')
+        self.assertNotContains(response, 'User does not exist.')
+
+    def test_password_reset_redirects_to_done_page(self):
+        User.objects.create_user(
+            email='reset@example.com',
+            password='StrongPass123',
+            role='patient',
+        )
+
+        response = self.client.post(
+            reverse('password_reset'),
+            {'email': 'reset@example.com'},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('password_reset_done'))
+
+    def test_password_reset_confirm_changes_password(self):
+        user = User.objects.create_user(
+            email='reset-confirm@example.com',
+            password='OldStrongPass123',
+            role='patient',
+        )
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+        response = self.client.get(
+            reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+        )
+        self.assertEqual(response.status_code, 302)
+
+        response = self.client.post(
+            response['Location'],
+            {
+                'new_password1': 'NewStrongPass123',
+                'new_password2': 'NewStrongPass123',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('password_reset_complete'))
+        user.refresh_from_db()
+        self.assertTrue(user.check_password('NewStrongPass123'))
 
 
 class DoctorDashboardFeedTests(TestCase):

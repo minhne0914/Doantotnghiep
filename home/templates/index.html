@@ -16,6 +16,10 @@
   }
   .umc-home { background: var(--umc-bg); }
   .umc-home * { box-sizing: border-box; }
+  .umc-home .container {
+    width: min(100% - 48px, 1480px);
+    max-width: none;
+  }
 
   .top-hotline { background: var(--umc-blue); color:#fff; padding:8px 0; font-size:13px; }
   .top-hotline a { color:#fde68a; text-decoration:none; font-weight:700; }
@@ -70,7 +74,7 @@
   .umc-title { font-size:32px; font-weight:800; color: var(--umc-blue); margin-bottom:14px; text-transform:uppercase; }
   .umc-subtitle { color: var(--umc-muted); font-size:16px; line-height:1.6; }
 
-  .service-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:22px; }
+  .service-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:22px; }
   .service-card {
     background:#fff; border-radius:12px; padding:26px;
     border-bottom:4px solid var(--umc-cyan);
@@ -92,7 +96,7 @@
   .service-card.warning .service-icon { background:#fef3c7; color:#f59e0b; }
 
   .why-section { background:#fff; }
-  .why-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:30px; }
+  .why-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:30px; }
   .why-card { text-align:center; padding:36px 24px; background:var(--umc-bg); border-radius:14px; transition:all 0.3s; }
   .why-card:hover { transform:translateY(-5px); }
   .why-icon {
@@ -105,7 +109,7 @@
   .why-title { font-size:19px; font-weight:700; color:var(--umc-blue); margin-bottom:12px; }
   .why-text { color:var(--umc-muted); font-size:14px; line-height:1.7; }
 
-  .news-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:26px; }
+  .news-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:26px; }
   .news-card {
     background:#fff; border-radius:12px; overflow:hidden;
     box-shadow:0 4px 18px rgba(0,0,0,0.06);
@@ -128,7 +132,7 @@
   .news-readmore { color:var(--umc-cyan); font-weight:700; margin-top:14px; font-size:14px; }
 
   .doctors-section { background: linear-gradient(180deg, var(--umc-bg) 0%, #fff 100%); }
-  .doctor-grid-umc { display:grid; grid-template-columns:repeat(4,1fr); gap:26px; }
+  .doctor-grid-umc { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:26px; }
   .doctor-card-umc {
     background:#fff; border-radius:12px; overflow:hidden;
     box-shadow:0 4px 14px rgba(0,0,0,0.06);
@@ -150,7 +154,7 @@
   .doctor-rating-umc .small { color:var(--umc-muted); font-size:12px; }
 
   .reviews-section { background:#fff; }
-  .reviews-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:26px; }
+  .reviews-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:26px; }
   .review-card {
     background: linear-gradient(135deg, #fff 0%, var(--umc-bg) 100%);
     border-radius:14px; padding:26px;
@@ -191,11 +195,10 @@
     .umc-hero h1 { font-size:36px; }
     .hero-stats-grid { grid-template-columns:repeat(2,1fr); }
     .hero-stat { border-right:none; border-bottom:1px solid var(--umc-border); }
-    .service-grid, .why-grid, .news-grid, .reviews-grid { grid-template-columns:repeat(2,1fr); }
-    .doctor-grid-umc { grid-template-columns:repeat(2,1fr); }
     .umc-title { font-size:26px; }
   }
   @media (max-width: 576px) {
+    .umc-home .container { width: min(100% - 28px, 1480px); }
     .umc-hero { padding:50px 0 70px; }
     .umc-hero h1 { font-size:28px; }
     .service-grid, .why-grid, .news-grid, .reviews-grid, .doctor-grid-umc { grid-template-columns:1fr; }

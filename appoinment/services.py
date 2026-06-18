@@ -301,7 +301,7 @@ class BookingService:
             locked_booking.date = new_slot.date
             locked_booking.time = new_time
             locked_booking.message = new_message or locked_booking.message
-            locked_booking.status = TakeAppointment.STATUS_CONFIRMED
+            locked_booking.status = TakeAppointment.STATUS_PENDING
             locked_booking.notification_version += 1
             locked_booking.save(update_fields=[
                 'appointment', 'date', 'time', 'message', 'status', 'notification_version',
@@ -327,8 +327,11 @@ class BookingService:
 
         notify_doctor(
             locked_booking,
-            title='Bệnh nhân vừa đổi lịch',
-            message=f'{locked_booking.full_name} đã đổi sang {_fmt_dt(locked_booking.date, locked_booking.time)}.',
+            title='Bệnh nhân yêu cầu đổi lịch',
+            message=(
+                f'{locked_booking.full_name} đã đổi sang {_fmt_dt(locked_booking.date, locked_booking.time)}. '
+                'Vui lòng xác nhận lịch mới.'
+            ),
             level='warning',
         )
 
@@ -349,8 +352,11 @@ class BookingService:
 
         notify_patient(
             locked_booking,
-            title='Đổi lịch thành công',
-            message=f'Lịch khám của bạn đã chuyển sang {_fmt_dt(locked_booking.date, locked_booking.time)}.',
+            title='Đã gửi yêu cầu đổi lịch',
+            message=(
+                f'Lịch khám của bạn đã chuyển sang {_fmt_dt(locked_booking.date, locked_booking.time)} '
+                'và đang chờ bác sĩ xác nhận.'
+            ),
             level='success',
         )
         return locked_booking, None

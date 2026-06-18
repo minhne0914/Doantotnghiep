@@ -270,7 +270,13 @@ ALLOWED_XRAY_CONTENT_TYPES = tuple(
 # Email / SMTP
 EMAIL_BACKEND = os.getenv(
     'EMAIL_BACKEND',
-    'django.core.mail.backends.locmem.EmailBackend' if RUNNING_TESTS else 'django.core.mail.backends.smtp.EmailBackend',
+    'django.core.mail.backends.locmem.EmailBackend'
+    if RUNNING_TESTS
+    else (
+        'django.core.mail.backends.console.EmailBackend'
+        if DEBUG
+        else 'django.core.mail.backends.smtp.EmailBackend'
+    ),
 )
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.sendgrid.net')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
@@ -408,7 +414,6 @@ JAZZMIN_SETTINGS = {
         {"name": "Tổng quan", "url": "admin:index", "permissions": ["accounts.view_user"]},
         {"name": "Web app", "url": "/", "new_window": True},
         {"name": "Bác sĩ", "url": "/appoinment/doctor/", "new_window": True},
-        {"name": "Dashboard", "url": "/account/doctor/dashboard/", "new_window": True},
         {"model": "accounts.User"},
     ],
 
