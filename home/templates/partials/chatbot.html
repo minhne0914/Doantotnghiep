@@ -217,6 +217,31 @@
     background: #fef2f2;
 }
 
+.chat-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 14px 0;
+    background: #fff;
+}
+
+.chat-suggestion {
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #334155;
+    padding: 7px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.chat-suggestion:hover {
+    background: #ecfeff;
+    border-color: #0891b2;
+    color: #075985;
+}
+
 #chatInputContainer {
     padding: 14px;
     border-top: 1px solid #e2e8f0;
@@ -344,7 +369,7 @@
 }
 </style>
 
-<button id="chatbotToggle" type="button" onclick="toggleChat()" aria-label="Mở Medic AI" title="Mở Medic AI">
+<button id="chatbotToggle" type="button" onclick="toggleChat()" aria-label="Open Medic AI" title="Open Medic AI">
     <span class="chatbot-toggle-icon" aria-hidden="true"><i class="fas fa-robot"></i></span>
     <span class="chatbot-toggle-text">Medic AI</span>
     <span class="chatbot-toggle-status" aria-hidden="true"></span>
@@ -354,24 +379,30 @@
     <div id="chatHeader">
         <div class="chat-title">
             <strong><i class="fas fa-stethoscope mr-1"></i> Medic AI</strong>
-            <span>Trợ lý tham khảo sức khỏe cá nhân</span>
+            <span>Personal health and appointment assistant</span>
         </div>
         <div class="chat-actions">
-            <button id="clearChatBtn" class="chat-action-btn" type="button" onclick="clearChat()">Xóa chat</button>
-            <button class="chat-action-btn" type="button" onclick="toggleChat()">Đóng</button>
+            <button id="clearChatBtn" class="chat-action-btn" type="button" onclick="clearChat()">Clear</button>
+            <button class="chat-action-btn" type="button" onclick="toggleChat()">Close</button>
         </div>
     </div>
 
-    <div id="chatStatus">Sẵn sàng hỗ trợ. Cuộc trò chuyện sẽ được lưu trong tài khoản của bạn.</div>
+    <div id="chatStatus">Ready to help. Your chat history is saved to your account.</div>
     <div id="chatMessages"></div>
 
     <div id="chatInputContainer">
+        <div class="chat-suggestions" id="chatSuggestions">
+            <button class="chat-suggestion" type="button" data-message="Do I have appointments today?">My schedule today</button>
+            <button class="chat-suggestion" type="button" data-message="Find available cardiology appointments this week">Find cardiology</button>
+            <button class="chat-suggestion" type="button" data-message="Show my recent AI screening results">AI results</button>
+            <button class="chat-suggestion" type="button" data-message="I have chest pain and shortness of breath">Emergency advice</button>
+        </div>
         <div class="chat-input-row">
-            <textarea id="chatInput" rows="2" maxlength="1000" placeholder="Nhập câu hỏi về sức khỏe, triệu chứng hoặc lời khuyên chăm sóc..."></textarea>
+            <textarea id="chatInput" rows="2" maxlength="1000" placeholder="Ask about doctors, appointments, symptoms, or AI screening results..."></textarea>
             <button id="chatSend" type="button" onclick="sendMessage()">
                 <i class="fas fa-paper-plane"></i>
             </button>
-            <a id="chatLoginLink" class="chat-login-link" href="{{ chatbot_login_url }}?next={{ request.get_full_path|urlencode }}">Đăng nhập</a>
+            <a id="chatLoginLink" class="chat-login-link" href="{{ chatbot_login_url }}?next={{ request.get_full_path|urlencode }}">Login</a>
         </div>
     </div>
 </div>
@@ -489,10 +520,10 @@
     function showLoginPrompt() {
         const messages = document.getElementById('chatMessages');
         messages.innerHTML = '';
-        appendMessage('bot', 'Bạn cần đăng nhập để sử dụng Medic AI và lưu lịch sử trò chuyện.');
-        setChatStatus('Đăng nhập để bắt đầu trò chuyện với Medic AI.', 'info');
+        appendMessage('bot', 'Please log in to use Medic AI and save your chat history.');
+        setChatStatus('Log in to start chatting with Medic AI.', 'info');
         document.getElementById('chatInput').disabled = true;
-        document.getElementById('chatInput').placeholder = 'Đăng nhập để sử dụng Medic AI';
+        document.getElementById('chatInput').placeholder = 'Log in to use Medic AI';
         document.getElementById('chatSend').style.display = 'none';
         document.getElementById('clearChatBtn').style.display = 'none';
         document.getElementById('chatLoginLink').style.display = 'inline-flex';
@@ -507,7 +538,7 @@
             return;
         }
 
-        setChatStatus('Đang tải lịch sử hội thoại...', 'loading');
+        setChatStatus('Loading chat history...', 'loading');
         try {
             const response = await fetch('/api/chat/history/');
             const data = await response.json();
@@ -518,14 +549,14 @@
                 data.messages.forEach((message) => {
                     appendMessage(message.sender, message.message, message.created_at);
                 });
-                setChatStatus('Đã tải lịch sử hội thoại gần nhất.', 'success');
+                setChatStatus('Recent chat history loaded.', 'success');
             } else {
-                appendMessage('bot', 'Xin chào! Tôi là Medic AI. Bạn có thể hỏi tôi về kết quả sàng lọc và lời khuyên chăm sóc sức khỏe.');
-                setChatStatus('Chưa có lịch sử chat. Hãy bắt đầu cuộc trò chuyện mới.', 'info');
+                appendMessage('bot', 'Hello, I am Medic AI. You can ask about doctors, appointments, symptoms, and AI screening results.');
+                setChatStatus('No chat history yet. Start a new conversation.', 'info');
             }
             chatLoaded = true;
         } catch (error) {
-            setChatStatus('Không thể tải lịch sử chat lúc này.', 'error');
+            setChatStatus('Unable to load chat history right now.', 'error');
         }
     }
 
@@ -559,10 +590,10 @@
         const text = input.value.trim();
         if (!text || chatBusy) return;
 
-        appendMessage('user', text, 'Đang gửi...');
+        appendMessage('user', text, 'Sending...');
         input.value = '';
         setBusyState(true);
-        setChatStatus('Medic AI đang suy nghĩ...', 'loading');
+        setChatStatus('Medic AI is thinking...', 'loading');
         showTyping();
 
         try {
@@ -578,16 +609,16 @@
             hideTyping();
 
             if (response.ok) {
-                appendMessage('bot', data.reply || 'AI chưa trả về nội dung hợp lệ.', '', data.actions || []);
-                setChatStatus('Phản hồi đã được lưu vào lịch sử chat.', 'success');
+                appendMessage('bot', data.reply || 'AI did not return a valid response.', '', data.actions || []);
+                setChatStatus('Response saved to chat history.', 'success');
             } else {
-                appendMessage('bot', data.error || 'Xin lỗi, hệ thống AI tạm thời không phản hồi được.');
-                setChatStatus('Đã gặp lỗi khi gửi tin nhắn.', 'error');
+                appendMessage('bot', data.error || 'Sorry, the AI system is temporarily unavailable.');
+                setChatStatus('There was an error sending your message.', 'error');
             }
         } catch (error) {
             hideTyping();
-            appendMessage('bot', 'Lỗi kết nối mạng, vui lòng thử lại sau.');
-            setChatStatus('Kết nối mạng không ổn định.', 'error');
+            appendMessage('bot', 'Network connection error. Please try again later.');
+            setChatStatus('Network connection is unstable.', 'error');
         } finally {
             setBusyState(false);
             document.getElementById('chatInput').focus();
@@ -601,10 +632,10 @@
         }
 
         if (chatBusy) return;
-        if (!confirm('Bạn có chắc muốn xóa toàn bộ lịch sử hội thoại?')) return;
+        if (!confirm('Are you sure you want to clear the entire chat history?')) return;
 
         setBusyState(true);
-        setChatStatus('Đang xóa lịch sử hội thoại...', 'loading');
+        setChatStatus('Clearing chat history...', 'loading');
         try {
             const response = await fetch('/api/chat/clear/', {
                 method: 'POST',
@@ -617,17 +648,25 @@
             if (response.ok && data.success) {
                 const messages = document.getElementById('chatMessages');
                 messages.innerHTML = '';
-                appendMessage('bot', 'Lịch sử hội thoại đã được xóa. Bạn có thể bắt đầu cuộc trò chuyện mới.');
-                setChatStatus('Đã xóa toàn bộ lịch sử chat.', 'success');
+                appendMessage('bot', 'Chat history has been cleared. You can start a new conversation.');
+                setChatStatus('Chat history cleared.', 'success');
             } else {
-                setChatStatus(data.error || 'Không thể xóa lịch sử chat.', 'error');
+                setChatStatus(data.error || 'Unable to clear chat history.', 'error');
             }
         } catch (error) {
-            setChatStatus('Lỗi kết nối khi xóa lịch sử chat.', 'error');
+            setChatStatus('Connection error while clearing chat history.', 'error');
         } finally {
             setBusyState(false);
         }
     }
+
+    document.getElementById('chatSuggestions').addEventListener('click', function (event) {
+        const button = event.target.closest('.chat-suggestion');
+        if (!button) return;
+        const input = document.getElementById('chatInput');
+        input.value = button.dataset.message || '';
+        sendMessage();
+    });
 
     document.getElementById('chatInput').addEventListener('keydown', handleKeyPress);
 </script>

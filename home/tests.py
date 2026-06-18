@@ -395,6 +395,62 @@ class ChatEndpointTests(TestCase):
         self.assertEqual(payload['source'], 'local_bookings')
         self.assertIn('Hom nay ban khong co lich kham', payload['reply'])
 
+    def test_chatbot_returns_doctor_schedule_for_doctor_user(self):
+        from appoinment.models import Appointment, TakeAppointment
+
+        doctor = User.objects.create_user(
+            email='doctor-schedule@example.com',
+            password='secret123',
+            role='doctor',
+            first_name='An',
+            last_name='Tran',
+        )
+        patient = User.objects.create_user(
+            email='patient-schedule@example.com',
+            password='secret123',
+            role='patient',
+            first_name='Patient',
+            last_name='One',
+        )
+        appointment = Appointment.objects.create(
+            user=doctor,
+            full_name='BS An Tran',
+            location='Da Nang',
+            qualification_name='CKI',
+            institute_name='Medic',
+            hospital_name='Medic Center',
+            department='Cardiology',
+            start_time=time(8, 30),
+            end_time=time(9, 0),
+            date=timezone.localdate(),
+        )
+        TakeAppointment.objects.create(
+            user=patient,
+            appointment=appointment,
+            full_name='Patient One',
+            phone_number='0900000001',
+            date=appointment.date,
+            time=appointment.start_time,
+            status=TakeAppointment.STATUS_CONFIRMED,
+        )
+
+        payload = build_local_chat_response(doctor, 'Do I have appointments today?')
+
+        self.assertEqual(payload['source'], 'local_doctor_schedule')
+        self.assertIn('Today you have these active appointments', payload['reply'])
+        self.assertIn('Patient One', payload['reply'])
+        self.assertTrue(any(action['label'] == 'Open first patient chat' for action in payload['actions']))
+
+    def test_chatbot_emergency_warning_uses_local_response(self):
+        payload = build_local_chat_response(
+            self.user,
+            'I have chest pain and shortness of breath',
+        )
+
+        self.assertEqual(payload['source'], 'local_emergency')
+        self.assertIn('115', payload['reply'])
+        self.assertTrue(payload['actions'])
+
     def test_chat_history_endpoint_returns_messages(self):
         self.client.force_login(self.user)
         ChatMessage.objects.create(user=self.user, sender='user', message='Xin chao')

@@ -79,6 +79,35 @@ INTENT_KEYWORDS = {
     ],
 }
 
+INTENT_KEYWORDS['doctor'].extend([
+    'bac si', 'chuyen khoa', 'da lieu', 'tim mach', 'tieu duong',
+    'ung thu', 'mat', 'tai mui hong', 'than kinh', 'nha khoa',
+])
+INTENT_KEYWORDS['appointment'].extend([
+    'lich', 'lich kham', 'lich hen', 'dat kham', 'dat hen', 'ca kham',
+    'hom nay', 'ngay mai', 'tuan nay', 'gio kham', 'kham luc nao',
+    'con lich', 'con trong', 'ranh', 'available',
+])
+INTENT_KEYWORDS['my_history'].extend([
+    'lich su cua toi', 'ket qua cua toi', 'toi da kham', 'toi da lam',
+    'cua toi', 'cua minh', 'tom tat suc khoe', 'ho so cua toi',
+])
+INTENT_KEYWORDS['my_bookings'].extend([
+    'lich cua toi', 'lich hen cua toi', 'lich kham cua toi',
+    'toi co lich', 'hom nay co lich', 'ngay mai co lich',
+])
+INTENT_KEYWORDS['emergency'].extend([
+    'cap cuu', 'khan cap', 'kho tho', 'dau nguc', 'mat y thuc',
+    'co giat', 'chay mau', 'dot quy', 'yeu liet', 'noi kho',
+    'sot cao', 'dau dau du doi',
+    'chest pain', 'shortness of breath', 'seizure', 'stroke',
+    'unconscious', 'heavy bleeding', 'severe headache',
+])
+INTENT_KEYWORDS['screening'].extend([
+    'sang loc', 'du doan', 'kiem tra', 'ket qua ai', 'da ai',
+    'skin', 'da', 'x ray', 'xray',
+])
+
 
 def _normalize(text):
     """Lowercase + bỏ dấu để so sánh keyword chính xác hơn.
@@ -349,6 +378,28 @@ def get_user_bookings(user, top_k=MAX_BOOKINGS_IN_CONTEXT, target_date=None):
     return list(queryset[:top_k])
 
 
+def get_doctor_bookings(user, top_k=8, target_date=None):
+    """Return active bookings for the logged-in doctor."""
+    from appoinment.models import TakeAppointment
+
+    if not user or not user.is_authenticated or getattr(user, 'role', '') != 'doctor':
+        return []
+    today = timezone.localdate()
+    filters = {
+        'appointment__user': user,
+        'status__in': TakeAppointment.ACTIVE_STATUSES,
+    }
+    if target_date:
+        filters['date'] = target_date
+    else:
+        filters['date__gte'] = today
+    return list(
+        TakeAppointment.objects.filter(**filters)
+        .select_related('appointment', 'user')
+        .order_by('date', 'time')[:top_k]
+    )
+
+
 def get_recent_chat_messages(user, exclude_message_id=None, top_k=MAX_CHAT_MESSAGES_IN_CONTEXT):
     """Lấy vài tin nhắn gần nhất để Gemini hiểu câu hỏi nối tiếp."""
     from .models import ChatMessage
@@ -526,6 +577,16 @@ def _format_booking_card(booking):
     )
 
 
+def _format_doctor_booking_card(booking):
+    appointment = booking.appointment
+    note = f" - note: {booking.message}" if booking.message else ""
+    return (
+        f"{booking.date.strftime('%d/%m/%Y')} at {booking.time.strftime('%H:%M')} - "
+        f"{booking.full_name} ({booking.phone_number}) "
+        f"for {appointment.department}; status: {booking.get_status_display()}{note}."
+    )
+
+
 def _format_slot_card(slot):
     return (
         f"{slot.date.strftime('%d/%m/%Y')} {slot.start_time.strftime('%H:%M')}-"
@@ -545,6 +606,42 @@ def build_local_chat_response(user, user_message):
     booking_date_filter = _extract_booking_date_filter(user_message)
     today = timezone.localdate()
     actions = []
+
+    if getattr(user, 'role', '') == 'doctor' and (
+        'my_bookings' in intents or 'appointment' in intents
+    ):
+        target_date = booking_date_filter or today
+        bookings = get_doctor_bookings(user, top_k=10, target_date=target_date)
+        actions.extend([
+            _action('Open doctor dashboard', '/account/doctor/dashboard/', 'primary'),
+            _action('Open appointment calendar', '/appoinment/doctor/appointment/', 'secondary'),
+        ])
+        if bookings:
+            if target_date == today:
+                lines = ['Today you have these active appointments:']
+            else:
+                lines = [f'Appointments on {target_date.strftime("%d/%m/%Y")}:']
+            lines.extend(f'- {_format_doctor_booking_card(booking)}' for booking in bookings)
+            first_booking = bookings[0]
+            actions.insert(
+                0,
+                _action('Open first patient chat', f'/appoinment/doctor/inbox/{first_booking.id}/', 'success'),
+            )
+            return {
+                'reply': '\n'.join(lines),
+                'actions': actions,
+                'source': 'local_doctor_schedule',
+            }
+        empty = (
+            'You do not have active appointments today.'
+            if target_date == today
+            else f'You do not have active appointments on {target_date.strftime("%d/%m/%Y")}.'
+        )
+        return {
+            'reply': empty,
+            'actions': actions,
+            'source': 'local_doctor_schedule',
+        }
 
     if 'emergency' in intents:
         return {

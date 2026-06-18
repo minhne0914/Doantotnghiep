@@ -1,6 +1,6 @@
 ﻿{% extends 'app.html' %}
 {% load static %}
-{% block title %}Quáº£n lÃ½ Lá»‹ch KhÃ¡m{% endblock %}
+{% block title %}Appointment Calendar{% endblock %}
 
 {% block content %}
 <div class="content-wrapper" style="min-height: 100vh;">
@@ -8,13 +8,13 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1 class="m-0">Lá»‹ch KhÃ¡m ChuyÃªn SÃ¢u</h1>
+                    <h1 class="m-0">Advanced Appointment Calendar</h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item"><a href="/">Trang chá»§</a></li>
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
                         <li class="breadcrumb-item"><a href="{% url 'doctor-dashboard' %}">Dashboard</a></li>
-                        <li class="breadcrumb-item active">Lá»‹ch khÃ¡m</li>
+                        <li class="breadcrumb-item active">Appointments</li>
                     </ol>
                 </div>
             </div>
@@ -39,8 +39,6 @@
 
 <!-- FullCalendar -->
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-<!-- Äá»‹nh dáº¡ng tiáº¿ng Viá»‡t cho FullCalendar -->
-<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.11/locales/vi.global.min.js"></script>
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -62,13 +60,13 @@
             },
             customButtons: {
                 myCustomButton: {
-                    text: '+ Má»Ÿ phÃ¢n ca',
+                    text: '+ Add schedule',
                     click: function () {
                         window.location.href = "{% url 'doctor-appointment-create' %}";
                     }
                 }
             },
-            locale: 'vi',
+            locale: 'en',
             slotMinTime: '06:00:00',
             slotMaxTime: '22:00:00',
             allDaySlot: true,
@@ -76,7 +74,7 @@
             nowIndicator: true,
             events: '{% url "doctor-calendar-events" %}',
             eventClick: function (info) {
-                // Bá» qua click nÃªÃº Ä‘Ã³ lÃ  background event (Khung giá» trá»‘ng)
+                // Ignore background availability blocks.
                 if (info.event.display === 'background') {
                     return;
                 }
@@ -85,35 +83,35 @@
                 var startDate = info.event.start;
                 var endDate = info.event.end;
 
-                var timeStr = startDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) +
+                var timeStr = startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) +
                     ' - ' +
-                    endDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                    endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
                 const confirmButton = props.raw_status === 'pending'
                     ? `<button type="button" class="btn btn-success w-100 mb-2" id="confirm-booking-btn">
-                            <i class="fas fa-check-circle mr-2"></i>Xac nhan lich
+                            <i class="fas fa-check-circle mr-2"></i>Confirm appointment
                        </button>`
                     : '';
 
                 Swal.fire({
-                    title: 'Chi tiet lich dat',
+                    title: 'Appointment details',
                     html: `
                         <div style="text-align: left; padding: 10px;">
                             <p style="font-size: 1.1rem;"><strong>${props.patient_name}</strong></p>
                             <p><i class="fas fa-phone mr-2 text-muted"></i> ${props.phone}</p>
                             <p><i class="fas fa-clock mr-2 text-muted"></i> ${timeStr}</p>
-                            <p><i class="fas fa-calendar-day mr-2 text-muted"></i> ${startDate.toLocaleDateString('vi-VN')}</p>
-                            <p><i class="fas fa-info-circle mr-2 text-muted"></i> Trang thai: <b style="color: ${info.event.backgroundColor}">${props.status}</b></p>
-                            <p><i class="fas fa-comment-medical mr-2 text-muted"></i> Loi nhan: <i>${props.message}</i></p>
+                            <p><i class="fas fa-calendar-day mr-2 text-muted"></i> ${startDate.toLocaleDateString('en-US')}</p>
+                            <p><i class="fas fa-info-circle mr-2 text-muted"></i> Status: <b style="color: ${info.event.backgroundColor}">${props.status}</b></p>
+                            <p><i class="fas fa-comment-medical mr-2 text-muted"></i> Note: <i>${props.message || 'No note'}</i></p>
                             <hr/>
                             <div class="mt-3">
                                 ${confirmButton}
-                                <a href="/appoinment/doctor/inbox/${props.booking_id}/" class="btn btn-info w-100"><i class="fas fa-comments mr-2"></i>Cuoc tro chuyen</a>
+                                <a href="/appoinment/doctor/inbox/${props.booking_id}/" class="btn btn-info w-100"><i class="fas fa-comments mr-2"></i>Open chat</a>
                             </div>
                         </div>
                     `,
                     showConfirmButton: true,
-                    confirmButtonText: 'Dong',
+                    confirmButtonText: 'Close',
                     confirmButtonColor: '#6c757d',
                     didOpen: () => {
                         const confirmBtn = document.getElementById('confirm-booking-btn');
@@ -122,7 +120,7 @@
                         }
                         confirmBtn.addEventListener('click', async () => {
                             confirmBtn.disabled = true;
-                            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Dang xac nhan...';
+                            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Confirming...';
                             try {
                                 const response = await fetch(`/appoinment/doctor/bookings/${props.booking_id}/confirm/`, {
                                     method: 'POST',
@@ -133,17 +131,17 @@
                                 });
                                 const payload = await response.json();
                                 if (!response.ok || !payload.ok) {
-                                    throw new Error(payload.error || 'Khong the xac nhan lich.');
+                                    throw new Error(payload.error || 'Unable to confirm this appointment.');
                                 }
                                 Swal.fire({
                                     icon: 'success',
-                                    title: 'Da xac nhan lich',
+                                    title: 'Appointment confirmed',
                                     timer: 1400,
                                     showConfirmButton: false
                                 });
                                 calendar.refetchEvents();
                             } catch (error) {
-                                Swal.fire('Khong the xac nhan', error.message, 'error');
+                                Swal.fire('Unable to confirm', error.message, 'error');
                             }
                         });
                     }
@@ -152,14 +150,14 @@
             dateClick: function (info) {
                 const dateStr = info.dateStr.split('T')[0];
                 Swal.fire({
-                    title: 'Má»Ÿ thÃªm ca lÃ m viá»‡c?',
-                    text: `NgÃ y ${new Date(dateStr).toLocaleDateString('vi-VN')}`,
+                    title: 'Add a working schedule?',
+                    text: `Date ${new Date(dateStr).toLocaleDateString('en-US')}`,
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#0f766e',
                     cancelButtonColor: '#d33',
-                    confirmButtonText: 'Táº¡o ca lÃ m viá»‡c',
-                    cancelButtonText: 'Há»§y'
+                    confirmButtonText: 'Create schedule',
+                    cancelButtonText: 'Cancel'
                 }).then((result) => {
                     if (result.isConfirmed) {
                         window.location.href = `{% url 'doctor-appointment-create' %}?date=${dateStr}`;
@@ -172,7 +170,7 @@
 </script>
 
 <style>
-    /* Tuá»³ chá»‰nh UI cho gá»n gÃ ng vÃ  Ä‘áº¹p hÆ¡n cá»§a FullCalendar */
+    /* Compact FullCalendar styling. */
     .fc-theme-standard .fc-scrollgrid {
         border-radius: 12px;
         overflow: hidden;

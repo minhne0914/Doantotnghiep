@@ -15,7 +15,7 @@
             </div>
             {% if request.user.is_authenticated and request.user.role == 'doctor' %}
             <div class="info">
-                <a href="{% url 'doctor-profile' %}" class="d-block">Xin chao {{ request.user.last_name }}</a>
+                <a href="{% url 'doctor-profile' %}" class="d-block">Hello {{ request.user.last_name }}</a>
             </div>
             {% endif %}
         </div>
@@ -34,28 +34,28 @@
                 <li class="nav-item">
                     <a href="{% url 'doctor-appointment' %}" class="nav-link {% if request.resolver_match.url_name == 'doctor-appointment' %}active{% endif %}">
                         <i class="nav-icon fas fa-calendar-alt"></i>
-                        <p>Lich kham</p>
+                        <p>Appointments</p>
                     </a>
                 </li>
 
                 <li class="nav-item">
                     <a href="{% url 'doctor-profile' %}" class="nav-link {% if request.resolver_match.url_name == 'doctor-profile' %}active{% endif %}">
                         <i class="nav-icon fas fa-user-md"></i>
-                        <p>Thong tin ca nhan</p>
+                        <p>Profile</p>
                     </a>
                 </li>
 
                 <li class="nav-item">
                     <a href="{% url 'patient-list' %}" class="nav-link {% if request.resolver_match.url_name == 'patient-list' %}active{% endif %}">
                         <i class="nav-icon fas fa-procedures"></i>
-                        <p>Nguoi benh</p>
+                        <p>Patients</p>
                     </a>
                 </li>
 
                 <li class="nav-item">
                     <a href="{% url 'doctor-inbox' %}" class="nav-link {% if request.resolver_match.url_name == 'doctor-inbox' or request.resolver_match.url_name == 'doctor-inbox-detail' %}active{% endif %}">
                         <i class="nav-icon fas fa-comments"></i>
-                        <p>Tin nhan</p>
+                        <p>Messages</p>
                     </a>
                 </li>
             </ul>
@@ -66,7 +66,7 @@
 <script>
     const currentDateSpan = document.getElementById('currentDate');
     if (currentDateSpan) {
-        const daysOfWeek = ['Chu Nhat', 'Thu Hai', 'Thu Ba', 'Thu Tu', 'Thu Nam', 'Thu Sau', 'Thu Bay'];
+        const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         const currentDate = new Date();
         const dayOfWeek = currentDate.getDay();
         const day = currentDate.getDate();
