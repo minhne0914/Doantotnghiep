@@ -74,7 +74,7 @@ class TakeAppointment(models.Model):
     date = models.DateField(null=True, blank=True, db_index=True)
     time = models.TimeField()
     status = models.CharField(
-        max_length=20, choices=STATUS_CHOICES, default=STATUS_CONFIRMED, db_index=True
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING, db_index=True
     )
     notification_version = models.PositiveIntegerField(default=1)
     cancelled_at = models.DateTimeField(null=True, blank=True)
@@ -94,11 +94,13 @@ class TakeAppointment(models.Model):
 
 class AppointmentChangeLog(models.Model):
     ACTION_BOOKED = 'booked'
+    ACTION_CONFIRMED = 'confirmed'
     ACTION_RESCHEDULED = 'rescheduled'
     ACTION_CANCELLED = 'cancelled'
 
     ACTION_CHOICES = (
         (ACTION_BOOKED, 'Booked'),
+        (ACTION_CONFIRMED, 'Confirmed'),
         (ACTION_RESCHEDULED, 'Rescheduled'),
         (ACTION_CANCELLED, 'Cancelled'),
     )

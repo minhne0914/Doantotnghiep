@@ -13,7 +13,7 @@ from django.utils import timezone
 from PIL import Image
 
 from .models import ChatMessage, MedicalHistory
-from .services_chat import build_rag_context
+from .services_chat import build_local_chat_response, build_rag_context, detect_intents
 
 
 User = get_user_model()
@@ -230,7 +230,7 @@ class ChatEndpointTests(TestCase):
         self.assertEqual(response.status_code, 302)
 
     @override_settings(GEMINI_API_KEY='')
-    def test_chat_api_returns_503_when_key_missing(self):
+    def test_chat_api_uses_local_fallback_when_key_missing(self):
         self.client.force_login(self.user)
 
         response = self.client.post(
@@ -239,8 +239,9 @@ class ChatEndpointTests(TestCase):
             content_type='application/json',
         )
 
-        self.assertEqual(response.status_code, 503)
-        self.assertEqual(ChatMessage.objects.count(), 0)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('reply', response.json())
+        self.assertEqual(ChatMessage.objects.filter(user=self.user).count(), 2)
 
     @override_settings(GEMINI_API_KEY='test-key', GEMINI_MODEL='gemini-2.5-flash')
     def test_chat_api_returns_reply_and_saves_messages(self):
@@ -283,7 +284,7 @@ class ChatEndpointTests(TestCase):
         self.assertEqual(prompt.count('Vậy tôi nên làm gì tiếp?'), 1)
 
     @override_settings(GEMINI_API_KEY='test-key')
-    def test_chat_api_handles_provider_failure(self):
+    def test_chat_api_uses_local_fallback_when_provider_fails(self):
         self.client.force_login(self.user)
 
         with patch('google.genai.Client', side_effect=RuntimeError('provider down')):
@@ -294,7 +295,105 @@ class ChatEndpointTests(TestCase):
                     content_type='application/json',
                 )
 
-        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('reply', response.json())
+        self.assertEqual(ChatMessage.objects.filter(user=self.user).count(), 2)
+
+    @override_settings(GEMINI_API_KEY='')
+    def test_chat_api_returns_db_backed_booking_actions(self):
+        from appoinment.models import Appointment, TakeAppointment
+
+        doctor = User.objects.create_user(
+            email='doctor-actions@example.com',
+            password='secret123',
+            role='doctor',
+            first_name='An',
+            last_name='Nguyen',
+        )
+        appointment = Appointment.objects.create(
+            user=doctor,
+            full_name='BS An Nguyen',
+            location='Ha Noi',
+            qualification_name='CKI',
+            institute_name='Medic',
+            hospital_name='Medic Center',
+            department='Heart Disease',
+            start_time=time(9, 0),
+            end_time=time(9, 30),
+            date=timezone.localdate() + timedelta(days=1),
+        )
+        TakeAppointment.objects.create(
+            user=self.user,
+            appointment=appointment,
+            full_name='Patient Test',
+            phone_number='0900000000',
+            date=appointment.date,
+            time=appointment.start_time,
+            status=TakeAppointment.STATUS_CONFIRMED,
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('chat_api'),
+            data=json.dumps({'message': 'Toi co lich hen nao sap toi khong?'}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertIn('BS. An Nguyen', payload['reply'])
+        self.assertTrue(payload['actions'])
+        self.assertEqual(payload['source'], 'local_bookings')
+
+    def test_chatbot_treats_today_schedule_question_as_user_bookings(self):
+        from appoinment.models import Appointment, TakeAppointment
+
+        doctor = User.objects.create_user(
+            email='doctor-today@example.com',
+            password='secret123',
+            role='doctor',
+            first_name='Minh',
+            last_name='Hoang',
+        )
+        appointment = Appointment.objects.create(
+            user=doctor,
+            full_name='BS Minh Hoang',
+            location='Da Nang',
+            qualification_name='CKI',
+            institute_name='Medic',
+            hospital_name='Medic Center',
+            department='Eye Care',
+            start_time=time(14, 0),
+            end_time=time(14, 30),
+            date=timezone.localdate(),
+        )
+        TakeAppointment.objects.create(
+            user=self.user,
+            appointment=appointment,
+            full_name='Patient Test',
+            phone_number='0900000000',
+            date=appointment.date,
+            time=appointment.start_time,
+            status=TakeAppointment.STATUS_CONFIRMED,
+        )
+
+        message = 'hom nay co lich kham khong?'
+        self.assertIn('my_bookings', detect_intents(message))
+
+        payload = build_local_chat_response(self.user, message)
+
+        self.assertEqual(payload['source'], 'local_bookings')
+        self.assertIn('Hom nay ban co lich kham', payload['reply'])
+        self.assertIn('BS. Minh Hoang', payload['reply'])
+        self.assertNotIn('khung kham con trong', payload['reply'])
+
+    def test_chatbot_says_no_booking_for_empty_today_schedule(self):
+        message = 'hom nay co lich kham khong?'
+
+        payload = build_local_chat_response(self.user, message)
+
+        self.assertEqual(payload['source'], 'local_bookings')
+        self.assertIn('Hom nay ban khong co lich kham', payload['reply'])
 
     def test_chat_history_endpoint_returns_messages(self):
         self.client.force_login(self.user)

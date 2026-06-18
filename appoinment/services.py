@@ -1,4 +1,4 @@
-"""Business logic cho appoinment app.
+﻿"""Business logic cho appoinment app.
 
 Tách khỏi views để:
 - views.py chỉ làm validation form + render response
@@ -206,7 +206,7 @@ class BookingService:
                 message=message,
                 date=locked_slot.date,
                 time=selected_time,
-                status=TakeAppointment.STATUS_CONFIRMED,
+                status=TakeAppointment.STATUS_PENDING,
             )
             create_change_log(
                 booking,
@@ -216,18 +216,51 @@ class BookingService:
             )
 
         # Side-effects sau khi commit (nằm ngoài atomic để tránh rollback notification)
-        try:
-            schedule_booking_notifications(booking)
-        except Exception:
-            logger.exception('schedule_booking_notifications failed for booking %s', booking.id)
-
         notify_doctor(
             booking,
-            title='Có lịch hẹn mới',
-            message=f'{booking.full_name} vừa đặt lịch lúc {_fmt_dt(booking.date, booking.time)}.',
-            level='success',
+            title='Co lich hen cho xac nhan',
+            message=f'{booking.full_name} vua dat lich luc {_fmt_dt(booking.date, booking.time)}. Vui long xac nhan.',
+            level='warning',
         )
         return BookingResult(booking=booking)
+
+    @staticmethod
+    def confirm_booking(*, booking, changed_by):
+        with transaction.atomic():
+            locked = (
+                TakeAppointment.objects.select_for_update()
+                .select_related('appointment', 'appointment__user', 'user')
+                .get(pk=booking.pk)
+            )
+            if locked.status != TakeAppointment.STATUS_PENDING:
+                return None, 'Chi co the xac nhan lich dang o trang thai cho xac nhan.'
+
+            locked.status = TakeAppointment.STATUS_CONFIRMED
+            locked.notification_version += 1
+            locked.save(update_fields=['status', 'notification_version'])
+
+            create_change_log(
+                locked,
+                AppointmentChangeLog.ACTION_CONFIRMED,
+                changed_by=changed_by,
+                reason='Bac si xac nhan lich kham.',
+                old_appointment=locked.appointment,
+                old_date=locked.date,
+                old_time=locked.time,
+            )
+
+        try:
+            schedule_booking_notifications(locked)
+        except Exception:
+            logger.exception('schedule_booking_notifications failed for booking %s', locked.id)
+
+        notify_patient(
+            locked,
+            title='Lich kham da duoc xac nhan',
+            message=f'Lich kham cua ban luc {_fmt_dt(locked.date, locked.time)} da duoc bac si xac nhan.',
+            level='success',
+        )
+        return locked, None
 
     # --- Đổi lịch ---
     @staticmethod

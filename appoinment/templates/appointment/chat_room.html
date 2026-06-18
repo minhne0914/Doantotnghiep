@@ -6,12 +6,24 @@
 {% block content %}
 <style>
     .chat-container {
-        max-width: 800px;
-        margin: 40px auto;
-        border-radius: 15px;
+        width: min(920px, 100%);
+        margin: 0 auto;
+        border-radius: 18px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         overflow: hidden;
         background: #fff;
+        display: flex;
+        flex-direction: column;
+        min-height: 620px;
+        max-height: calc(100vh - 180px);
+    }
+    .patient-chat-page {
+        min-height: calc(100vh - 190px);
+        padding: 48px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(180deg, #f8fbff 0%, #eef7fb 100%);
     }
     .chat-header {
         background: #007bff;
@@ -28,7 +40,8 @@
         object-fit: cover;
     }
     .chat-messages {
-        height: 400px;
+        flex: 1;
+        min-height: 340px;
         overflow-y: auto;
         padding: 20px;
         background: #f4f6f9;
@@ -66,6 +79,7 @@
         border-top: 1px solid #e1e4e8;
         display: flex;
         gap: 10px;
+        position: relative;
     }
     .chat-input-area input {
         flex: 1;
@@ -90,8 +104,27 @@
         border-bottom: 1px solid #ffeeba;
         font-size: 0.9rem;
     }
+    @media (max-width: 768px) {
+        .patient-chat-page {
+            min-height: calc(100vh - 130px);
+            padding: 24px 12px;
+            align-items: stretch;
+        }
+        .chat-container {
+            min-height: calc(100vh - 160px);
+            max-height: none;
+            border-radius: 14px;
+        }
+        .message {
+            max-width: 86%;
+        }
+        .chat-header {
+            align-items: flex-start;
+        }
+    }
 </style>
 
+<div class="patient-chat-page">
 <div class="chat-container">
     <div class="chat-header">
         {% if other_user.image %}
@@ -141,6 +174,9 @@
     </div>
 
     {% if chat_enabled %}
+    <div class="status-alert" id="chat-status">
+        <i class="fas fa-circle-notch fa-spin mr-1"></i> Dang ket noi phong chat...
+    </div>
     <div class="chat-input-area">
         <input type="file" id="chat-attachment" accept="image/*" style="display:none;">
         <button type="button" id="btn-attach" style="background:#f8f9fa; color:#6c757d; border:1px solid #ced4da;" onclick="document.getElementById('chat-attachment').click();"><i class="fas fa-paperclip"></i></button>
@@ -150,6 +186,7 @@
     </div>
     {% endif %}
 </div>
+</div>
 
 {% if chat_enabled %}
 <script>
@@ -158,6 +195,7 @@
         const chatInput = document.getElementById('chat-input');
         const chatSend = document.getElementById('chat-send');
         const noMessages = document.getElementById('no-messages');
+        const chatStatus = document.getElementById('chat-status');
 
         // Scroll to bottom
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -167,29 +205,70 @@
         const wsUrl = wsProtocol + '://' + window.location.host + '/ws/chat/{{ booking.id }}/';
         const chatSocket = new WebSocket(wsUrl);
 
-        chatSocket.onmessage = function(e) {
-            const data = JSON.parse(e.data);
+        function setChatStatus(message, type = 'warning') {
+            if (!chatStatus) {
+                return;
+            }
+            chatStatus.style.display = message ? 'block' : 'none';
+            chatStatus.textContent = message || '';
+            chatStatus.style.background = type === 'danger' ? '#fde2e2' : '#fff3cd';
+            chatStatus.style.color = type === 'danger' ? '#991b1b' : '#856404';
+        }
+
+        function appendMessage(data) {
             if (noMessages) {
                 noMessages.style.display = 'none';
             }
-            
+
             const myUserId = parseInt("{{ request.user.id|default:'0' }}", 10);
             const isMe = data.sender_id === myUserId;
             const msgDiv = document.createElement('div');
             msgDiv.className = 'message ' + (isMe ? 'message-me' : 'message-other');
-            
-            msgDiv.innerHTML = `
-                ${data.attachment_url ? \`<div class="mb-2"><img src="\${data.attachment_url}" style="max-width:200px; border-radius:10px;"></div>\` : ''}
-                <div>${data.message}</div>
-                <div class="message-timestamp">${data.timestamp}</div>
-            `;
-            
+
+            if (data.attachment_url) {
+                const attachmentWrap = document.createElement('div');
+                attachmentWrap.className = 'mb-2';
+                const image = document.createElement('img');
+                image.src = data.attachment_url;
+                image.alt = 'Attachment';
+                image.style.maxWidth = '200px';
+                image.style.borderRadius = '10px';
+                attachmentWrap.appendChild(image);
+                msgDiv.appendChild(attachmentWrap);
+            }
+
+            const contentDiv = document.createElement('div');
+            contentDiv.textContent = data.message || '';
+            msgDiv.appendChild(contentDiv);
+
+            const timestampDiv = document.createElement('div');
+            timestampDiv.className = 'message-timestamp';
+            timestampDiv.textContent = data.timestamp || '';
+            msgDiv.appendChild(timestampDiv);
+
             chatBox.appendChild(msgDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        chatSocket.onopen = function() {
+            setChatStatus('');
+        };
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            if (data.type === 'error') {
+                setChatStatus(data.error || 'Khong the gui tin nhan luc nay.', 'danger');
+                return;
+            }
+            appendMessage(data);
+        };
+
+        chatSocket.onerror = function() {
+            setChatStatus('Ket noi chat bi loi. Vui long tai lai trang hoac thu lai sau.', 'danger');
         };
 
         chatSocket.onclose = function(e) {
-            console.error('Chat socket closed unexpectedly');
+            setChatStatus('Ket noi chat da dong. Vui long tai lai trang neu ban muon gui tiep.', 'danger');
         };
 
         let currentAttachmentData = null;
@@ -222,6 +301,10 @@
         function sendMessage() {
             const message = chatInput.value.trim();
             if (message || currentAttachmentData) {
+                if (chatSocket.readyState !== WebSocket.OPEN) {
+                    setChatStatus('Chua ket noi duoc phong chat. Vui long doi hoac tai lai trang.', 'danger');
+                    return;
+                }
                 chatSocket.send(JSON.stringify({
                     'message': message,
                     'attachment_data': currentAttachmentData,

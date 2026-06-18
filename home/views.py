@@ -408,7 +408,10 @@ def index(request):
         from appoinment.models import Appointment, TakeAppointment
         from django.db.models import Avg, Count
 
-        context['total_doctors'] = User.objects.filter(role=UserRole.DOCTOR).count()
+        context['total_doctors'] = User.objects.filter(
+            role=UserRole.DOCTOR,
+            is_staff=False,
+        ).count()
         context['total_specialties'] = (
             DoctorProfile.objects
             .exclude(specialization__isnull=True)
@@ -420,7 +423,7 @@ def index(request):
 
         # Top 4 bác sĩ theo rating (nếu chưa có review thì lấy mới nhất)
         featured = (
-            User.objects.filter(role=UserRole.DOCTOR)
+            User.objects.filter(role=UserRole.DOCTOR, is_staff=False)
             .select_related('doctor_profile')
             .annotate(
                 avg_rating=Avg('doctor_reviews__rating'),
@@ -963,16 +966,6 @@ def chat_api(request):
             status=400,
         )
 
-    if not getattr(settings, 'GEMINI_API_KEY', ''):
-        logger.warning(
-            'Chat request rejected because GEMINI_API_KEY is missing for user_id=%s',
-            request.user.id,
-        )
-        return JsonResponse(
-            {'error': 'He thong chat AI chua duoc cau hinh.'},
-            status=503,
-        )
-
     now = time.time()
     last_sent_at = request.session.get('chat_last_sent_at', 0)
     if now - last_sent_at < 2:
@@ -987,6 +980,47 @@ def chat_api(request):
         sender=ChatMessage.SENDER_USER,
         message=user_message,
     )
+
+    from .services_chat import build_local_chat_response, detect_intents
+
+    local_response = build_local_chat_response(request.user, user_message)
+    local_intents = detect_intents(user_message)
+    prefer_local_response = bool(
+        local_intents
+        & {'doctor', 'appointment', 'my_bookings', 'screening', 'emergency'}
+    )
+
+    def save_and_return_bot_reply(reply, *, actions=None, source='gemini'):
+        ChatMessage.objects.create(
+            user=request.user,
+            sender=ChatMessage.SENDER_BOT,
+            message=reply,
+        )
+        if is_urgent_chat_reply(reply):
+            push_urgent_chat_notification(request.user, reply)
+        return JsonResponse({
+            'reply': reply,
+            'actions': actions or [],
+            'source': source,
+        })
+
+    if prefer_local_response:
+        return save_and_return_bot_reply(
+            local_response['reply'],
+            actions=local_response.get('actions', []),
+            source=local_response.get('source', 'local'),
+        )
+
+    if not getattr(settings, 'GEMINI_API_KEY', ''):
+        logger.info(
+            'GEMINI_API_KEY missing; using local Medic AI fallback for user_id=%s',
+            request.user.id,
+        )
+        return save_and_return_bot_reply(
+            local_response['reply'],
+            actions=local_response.get('actions', []),
+            source=local_response.get('source', 'local_missing_key'),
+        )
 
     try:
         from google import genai
@@ -1009,17 +1043,11 @@ def chat_api(request):
                 status=502,
             )
 
-        ChatMessage.objects.create(
-            user=request.user,
-            sender=ChatMessage.SENDER_BOT,
-            message=reply,
-        )
-        if is_urgent_chat_reply(reply):
-            push_urgent_chat_notification(request.user, reply)
-        return JsonResponse({'reply': reply})
+        return save_and_return_bot_reply(reply, source='gemini')
     except Exception:
         logger.exception('Gemini chat request failed for user_id=%s', request.user.id)
-        return JsonResponse(
-            {'error': 'He thong AI tam thoi gap su co. Vui long thu lai sau.'},
-            status=503,
+        return save_and_return_bot_reply(
+            local_response['reply'],
+            actions=local_response.get('actions', []),
+            source=local_response.get('source', 'local_provider_fallback'),
         )

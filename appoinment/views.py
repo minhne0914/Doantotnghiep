@@ -1,4 +1,4 @@
-"""Views appoinment đã được làm thin - chỉ điều phối form và service.
+﻿"""Views appoinment đã được làm thin - chỉ điều phối form và service.
 
 Toàn bộ business logic (lock slot, change log, notification) nằm ở services.py.
 """
@@ -104,6 +104,12 @@ class AppointmentListView(ListView):
             date__gte=timezone.localdate(),
         ).order_by('-id')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        context['user_image'] = user.image.url if user.image else None
+        return context
+
 
 class AppointmentDeleteView(DeleteView):
     model = Appointment
@@ -176,7 +182,7 @@ class DoctorPageView(ListView):
         target_date = self._parse_filter_date(request_get.get('date', '').strip())
 
         queryset = (
-            self.model.objects.filter(role=UserRole.DOCTOR)
+            self.model.objects.filter(role=UserRole.DOCTOR, is_staff=False)
             .select_related('doctor_profile')
             .annotate(
                 avg_rating=Avg('doctor_reviews__rating'),
@@ -421,13 +427,21 @@ class PatientOwnAppointmentListView(_PatientRequiredMixin, ListView):
         return context
 
     def get_queryset(self):
-        queryset = (
+        appointments = list(
             self.model.objects.filter(user=self.request.user)
             .select_related('appointment', 'appointment__user')
             .prefetch_related('change_logs')
-            .order_by('date', 'time')
         )
-        for booking in queryset:
+
+        def appointment_sort_key(booking):
+            appointment_dt = booking_datetime(booking)
+            if booking.status in TakeAppointment.ACTIVE_STATUSES:
+                return (0, appointment_dt.timestamp(), booking.id)
+            return (1, -appointment_dt.timestamp(), -booking.id)
+
+        appointments.sort(key=appointment_sort_key)
+
+        for booking in appointments:
             can_modify, reason = booking_can_be_modified(booking)
             badge_class, badge_label = status_badge(booking.status)
             booking.can_modify = can_modify
@@ -436,7 +450,7 @@ class PatientOwnAppointmentListView(_PatientRequiredMixin, ListView):
             booking.badge_label = badge_label
             booking.change_history = booking.change_logs.all()[:5]
             booking.has_review = hasattr(booking, 'review')
-        return queryset
+        return appointments
 
 
 class PatientRescheduleView(UpdateView):
@@ -474,6 +488,12 @@ class PatientRescheduleView(UpdateView):
         context = super().get_context_data(**kwargs)
         context['change_deadline_hours'] = APPOINTMENT_CHANGE_DEADLINE_HOURS
         context['current_appointment_dt'] = booking_datetime(self.object)
+        form = context.get('form')
+        if form:
+            context['reschedule_slot_times'] = {
+                str(slot.pk): slot.start_time.strftime('%H:%M')
+                for slot in form.fields['appointment'].queryset
+            }
         return context
 
     def form_valid(self, form):
@@ -624,6 +644,31 @@ class PatientDeleteView(DeleteView):
         return redirect(self.success_url)
 
 
+
+class DoctorConfirmBookingView(View):
+    @method_decorator(login_required(login_url=reverse_lazy('login')))
+    @method_decorator(user_is_doctor)
+    def post(self, request, pk, *args, **kwargs):
+        booking = get_object_or_404(
+            TakeAppointment,
+            pk=pk,
+            appointment__user=request.user,
+        )
+        _, error_message = BookingService.confirm_booking(
+            booking=booking,
+            changed_by=request.user,
+        )
+        if error_message:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'ok': False, 'error': error_message}, status=400)
+            messages.error(request, error_message)
+            return redirect('doctor-appointment')
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'ok': True})
+        messages.success(request, 'Da xac nhan lich kham cho benh nhan.')
+        return redirect('doctor-appointment')
+
 # =============================================================================
 # Doctor profile public + Reviews
 # =============================================================================
@@ -718,7 +763,7 @@ class ChatRoomView(View):
             messages.error(request, 'Bạn không có quyền truy cập đoạn chat này.')
             return redirect('home')
 
-        self.chat_enabled = self.booking.status not in ('completed', 'cancelled')
+        self.chat_enabled = self.booking.status in TakeAppointment.ACTIVE_STATUSES
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
@@ -733,14 +778,11 @@ class ChatRoomView(View):
             patient = request.user
             other_user = doctor
 
-        chat_qs = DirectMessage.objects.filter(
-            booking__appointment__user=doctor, booking__user=patient,
-        ).order_by('created_at')
+        chat_qs = DirectMessage.objects.filter(booking=self.booking).order_by('created_at')
 
         # Mark as read
         DirectMessage.objects.filter(
-            booking__appointment__user=doctor,
-            booking__user=patient,
+            booking=self.booking,
             sender=other_user,
             is_read=False,
         ).update(is_read=True)
@@ -764,11 +806,7 @@ class DoctorInboxView(View):
     def get(self, request, booking_id=None, *args, **kwargs):
         from .models import DirectMessage
 
-        active_statuses = (
-            TakeAppointment.STATUS_PENDING,
-            TakeAppointment.STATUS_CONFIRMED,
-            TakeAppointment.STATUS_ARRIVED,
-        )
+        active_statuses = TakeAppointment.ACTIVE_STATUSES
 
         all_bookings = (
             TakeAppointment.objects.filter(appointment__user=request.user)
@@ -806,15 +844,11 @@ class DoctorInboxView(View):
             active_booking = get_object_or_404(
                 TakeAppointment, id=booking_id, appointment__user=request.user
             )
-            chat_qs = DirectMessage.objects.filter(
-                booking__appointment__user=request.user,
-                booking__user=active_booking.user,
-            ).order_by('created_at')
+            chat_qs = DirectMessage.objects.filter(booking=active_booking).order_by('created_at')
             chat_enabled = active_booking.status in active_statuses
 
             DirectMessage.objects.filter(
-                booking__appointment__user=request.user,
-                booking__user=active_booking.user,
+                booking=active_booking,
                 sender=active_booking.user,
                 is_read=False,
             ).update(is_read=True)
@@ -891,6 +925,7 @@ class DoctorCalendarEventsAPI(View):
             start_dt = datetime.datetime.combine(booking.date, booking.time)
             end_dt = start_dt + datetime.timedelta(minutes=30)
             title_prefix = '[Đã Hủy] ' if booking.status == TakeAppointment.STATUS_CANCELLED else ''
+            _, status_label = status_badge(booking.status)
 
             events.append({
                 'id': f'booking_{booking.id}',
@@ -905,7 +940,7 @@ class DoctorCalendarEventsAPI(View):
                     'patient_name': f'{booking.user.first_name} {booking.user.last_name}',
                     'phone': booking.phone_number or 'Chưa cập nhật',
                     'message': booking.message or 'Không có',
-                    'status': booking.get_status_display(),
+                    'status': status_label,
                     'raw_status': booking.status,
                 },
             })

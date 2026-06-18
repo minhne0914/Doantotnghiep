@@ -176,12 +176,6 @@
 </style>
 
 <div class="container appointments-shell mb-5">
-    {% if messages %}
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
-
     <div class="appointments-hero">
         <div class="row align-items-center">
             <div class="col-lg-8">

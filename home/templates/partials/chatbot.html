@@ -172,6 +172,51 @@
     color: #64748b;
 }
 
+.chat-quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.chat-quick-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 10px;
+    border-radius: 999px;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #0f172a;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.chat-quick-action:hover {
+    color: #0f172a;
+    text-decoration: none;
+    background: #eef6f7;
+}
+
+.chat-quick-action.primary {
+    border-color: #0e8da5;
+    color: #075985;
+    background: #ecfeff;
+}
+
+.chat-quick-action.success {
+    border-color: #22c55e;
+    color: #166534;
+    background: #ecfdf5;
+}
+
+.chat-quick-action.danger {
+    border-color: #ef4444;
+    color: #991b1b;
+    background: #fef2f2;
+}
+
 #chatInputContainer {
     padding: 14px;
     border-top: 1px solid #e2e8f0;
@@ -373,7 +418,14 @@
         return formatted;
     }
 
-    function appendMessage(sender, text, timestamp = '') {
+    function normalizeActions(actions) {
+        if (!Array.isArray(actions)) return [];
+        return actions
+            .filter((action) => action && action.label && action.url)
+            .slice(0, 4);
+    }
+
+    function appendMessage(sender, text, timestamp = '', actions = []) {
         const messages = document.getElementById('chatMessages');
         const row = document.createElement('div');
         row.className = `chat-row ${sender}`;
@@ -383,6 +435,19 @@
         bubble.innerHTML = formatMessageText(text);
 
         row.appendChild(bubble);
+        const quickActions = normalizeActions(actions);
+        if (sender === 'bot' && quickActions.length) {
+            const actionWrap = document.createElement('div');
+            actionWrap.className = 'chat-quick-actions';
+            quickActions.forEach((action) => {
+                const link = document.createElement('a');
+                link.className = `chat-quick-action ${action.tone || 'secondary'}`;
+                link.href = action.url;
+                link.innerHTML = `<i class="fas fa-external-link-alt"></i>${escapeHtml(action.label)}`;
+                actionWrap.appendChild(link);
+            });
+            row.appendChild(actionWrap);
+        }
         if (timestamp) {
             const time = document.createElement('div');
             time.className = 'chat-time';
@@ -513,7 +578,7 @@
             hideTyping();
 
             if (response.ok) {
-                appendMessage('bot', data.reply || 'AI chưa trả về nội dung hợp lệ.');
+                appendMessage('bot', data.reply || 'AI chưa trả về nội dung hợp lệ.', '', data.actions || []);
                 setChatStatus('Phản hồi đã được lưu vào lịch sử chat.', 'success');
             } else {
                 appendMessage('bot', data.error || 'Xin lỗi, hệ thống AI tạm thời không phản hồi được.');

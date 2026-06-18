@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 import os
 import sys
+from importlib.util import find_spec
 from pathlib import Path
 
 
@@ -55,6 +56,11 @@ USE_REDIS_SERVICES = os.getenv(
 ).lower() == 'true'
 
 ALLOWED_HOSTS = [host for host in os.getenv('DJANGO_ALLOWED_HOSTS', '').split(',') if host]
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',')
+    if origin.strip()
+]
 
 # Fail fast in production if SECRET_KEY/ALLOWED_HOSTS are not configured.
 if not DEBUG and not RUNNING_TESTS:
@@ -99,6 +105,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+if find_spec('whitenoise'):
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
 ROOT_URLCONF = 'mlhospital.urls'
 ASGI_APPLICATION = 'mlhospital.asgi.application'
@@ -196,6 +205,8 @@ if not Path(_static_root).is_absolute():
     _static_root = str(BASE_DIR / _static_root)
 STATIC_ROOT = _static_root
 STATICFILES_DIRS = [str(BASE_DIR / 'static')] if (BASE_DIR / 'static').exists() else []
+if find_spec('whitenoise'):
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
@@ -245,7 +256,7 @@ if not DEBUG:
 
 # Google Gemini API Key
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
-GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.5-flash')
 MAX_XRAY_UPLOAD_BYTES = int(os.getenv('MAX_XRAY_UPLOAD_BYTES', 5 * 1024 * 1024))
 ALLOWED_XRAY_CONTENT_TYPES = tuple(
     content_type.strip()

@@ -6,6 +6,7 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.conf import settings
 from django.core.files.base import ContentFile
+from django.urls import reverse
 from django.utils.text import get_valid_filename
 
 from accounts.models import UserRole
@@ -201,7 +202,11 @@ class DirectChatConsumer(AsyncJsonWebsocketConsumer):
         )
         other_user = booking.user if self.user.role == UserRole.DOCTOR else booking.appointment.user
         sender_name = f'BS. {self.user.last_name}' if self.user.role == UserRole.DOCTOR else booking.full_name
-        link = f'/doctor/inbox/{booking.id}/' if other_user.role == UserRole.DOCTOR else f'/appointment/{booking.id}/chat/'
+        link = (
+            reverse('doctor-inbox-detail', args=[booking.id])
+            if other_user.role == UserRole.DOCTOR
+            else reverse('chat-room', args=[booking.id])
+        )
 
         push_realtime_notification(
             user=other_user,

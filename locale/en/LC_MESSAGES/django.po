@@ -567,7 +567,7 @@ msgstr ""
 "Deploy ML for Breast Cancer, Heart Disease, Diabetes and Deep Learning for "
 "Pneumonia."
 
-msgid "Trung Tâm Y Tế ĐH Công Nghiệp Hà Nội"
+msgid "Trung Tâm Y Tế  ĐH CNTT và TT Việt Hàn"
 msgstr "Haui Medical Center"
 
 msgid "Trạng thái"

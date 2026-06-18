@@ -22,9 +22,11 @@ RUN pip install -r requirements.txt
 
 # Copy the rest of the application code
 COPY . /app/
+RUN chmod +x /app/scripts/docker-entrypoint.sh
 
 # Expose port 8000
 EXPOSE 8000
 
 # Start ASGI server
+ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]
 CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "mlhospital.asgi:application"]

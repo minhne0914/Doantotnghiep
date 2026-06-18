@@ -183,3 +183,25 @@
     </div>
 </div>
 {% endblock %}
+
+{% block scripts %}
+{{ reschedule_slot_times|json_script:"reschedule-slot-times" }}
+<script>
+    (function () {
+        const appointmentSelect = document.getElementById('id_appointment');
+        const timeInput = document.getElementById('id_time');
+        const dataElement = document.getElementById('reschedule-slot-times');
+        if (!appointmentSelect || !timeInput || !dataElement) {
+            return;
+        }
+
+        const slotTimes = JSON.parse(dataElement.textContent || '{}');
+        appointmentSelect.addEventListener('change', function () {
+            const startTime = slotTimes[appointmentSelect.value];
+            if (startTime) {
+                timeInput.value = startTime;
+            }
+        });
+    }());
+</script>
+{% endblock %}

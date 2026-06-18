@@ -1,99 +1,77 @@
 {% load static %}
-<aside class="main-sidebar sidebar-dark-primary bg-gray-dark elevation-4" >
-    <!-- Brand Logo -->
+<aside class="main-sidebar sidebar-dark-primary bg-gray-dark elevation-4">
     <a href="{% url 'home' %}" class="brand-link" style="text-align: center;">
-      <i class="fa fa-university" aria-hidden="true"></i>
-      <span class="brand-text font-weight-light">Home</span>
+        <i class="fa fa-university" aria-hidden="true"></i>
+        <span class="brand-text font-weight-light">Home</span>
     </a>
 
-    <!-- Sidebar -->
     <div class="sidebar">
-      <!-- Sidebar user panel (optional) -->
-      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
-        <div class="image">
-          <img src="{% if user_image %}{{ user_image }}{% else %}{% static 'vendor/adminlte/img/user2-160x160.jpg' %}{% endif %}" class="img-circle elevation-2" alt="User Image" style="width: 50px; height: 50px;">
+        <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+            <div class="image">
+                <img src="{% if user_image %}{{ user_image }}{% else %}{% static 'vendor/adminlte/img/user2-160x160.jpg' %}{% endif %}"
+                     class="img-circle elevation-2"
+                     alt="User Image"
+                     style="width: 50px; height: 50px; object-fit: cover;">
+            </div>
+            {% if request.user.is_authenticated and request.user.role == 'doctor' %}
+            <div class="info">
+                <a href="{% url 'doctor-profile' %}" class="d-block">Xin chao {{ request.user.last_name }}</a>
+            </div>
+            {% endif %}
         </div>
-        {% if request.user.is_authenticated and request.user.role == 'doctor' %}
-        <div class="info">
-          <a href="#" class="d-block">Xin chào {{ request.user.last_name }} </a>
-        </div>
-        {% endif %} 
-      </div>
 
-      <!-- Sidebar Menu -->
-      <nav class="mt-2">
-        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-          <li class="nav-header mt-3 pb-3 mb-3" id="currentDate"> </li>
-          
-          <li class="nav-item">
-            <a href="{% url 'doctor-dashboard' %}" class="nav-link">
-              <i class="nav-icon fas fa-tachometer-alt"></i>
-              <p>Trang chủ Dashboard</p>
-            </a>
-          </li>
+        <nav class="mt-2">
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                <li class="nav-header mt-3 pb-3 mb-3" id="currentDate"></li>
 
-          <li class="nav-item">
-            <a href="{% url 'project_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'project_dashboard' %}active{% endif %}">
-              <i class="nav-icon fas fa-chart-pie"></i>
-              <p>Dashboard dự án</p>
-            </a>
-          </li>
-          
-          <li class="nav-item">
-            <a href="{% url 'doctor-appointment' %}" class="nav-link">
-              <i class="nav-icon fas fa-calendar-alt"></i>
-              <p>Lịch Khám (Calendar)</p>
-            </a>
-          </li>
-          
-          <li class="nav-item">
-            <a href="{% url 'doctor-profile' %}" class="nav-link">
-              <i class="fas fa-user"></i>
-              <p>Thông tin cá nhân</p>
-              <!-- <a class="dropdown-item " href="{% url 'doctor-profile-update' %}"> EDIT PROFILE</a> -->
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="{% url 'patient-list' %}" class="nav-link">
-              <i class="fas fa-solid fa-calendar-minus"></i>  
-              <p>Người bệnh</p>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="{% url 'doctor-inbox' %}" class="nav-link">
-              <i class="fas fa-regular fa-comments"></i>
-              <p>Tin nhắn</p>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="" class="nav-link">
-            <i class="fas fa-solid fa-users"></i>
-              <p>Sinh viên</p>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="#" class="nav-link">
-            <i class="fas fa-regular fa-calendar"></i>
-              <p>Thống kê</p>
-            </a>
-          </li>
-        </ul>
-      </nav>
-      <!-- /.sidebar-menu -->
+                <li class="nav-item">
+                    <a href="{% url 'doctor-dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'doctor-dashboard' %}active{% endif %}">
+                        <i class="nav-icon fas fa-tachometer-alt"></i>
+                        <p>Dashboard</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'doctor-appointment' %}" class="nav-link {% if request.resolver_match.url_name == 'doctor-appointment' %}active{% endif %}">
+                        <i class="nav-icon fas fa-calendar-alt"></i>
+                        <p>Lich kham</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'doctor-profile' %}" class="nav-link {% if request.resolver_match.url_name == 'doctor-profile' %}active{% endif %}">
+                        <i class="nav-icon fas fa-user-md"></i>
+                        <p>Thong tin ca nhan</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'patient-list' %}" class="nav-link {% if request.resolver_match.url_name == 'patient-list' %}active{% endif %}">
+                        <i class="nav-icon fas fa-procedures"></i>
+                        <p>Nguoi benh</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'doctor-inbox' %}" class="nav-link {% if request.resolver_match.url_name == 'doctor-inbox' or request.resolver_match.url_name == 'doctor-inbox-detail' %}active{% endif %}">
+                        <i class="nav-icon fas fa-comments"></i>
+                        <p>Tin nhan</p>
+                    </a>
+                </li>
+            </ul>
+        </nav>
     </div>
-    <!-- /.sidebar -->
-  </aside>
+</aside>
 
 <script>
-const currentDateSpan = document.getElementById('currentDate');
-        const daysOfWeek = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
-
+    const currentDateSpan = document.getElementById('currentDate');
+    if (currentDateSpan) {
+        const daysOfWeek = ['Chu Nhat', 'Thu Hai', 'Thu Ba', 'Thu Tu', 'Thu Nam', 'Thu Sau', 'Thu Bay'];
         const currentDate = new Date();
         const dayOfWeek = currentDate.getDay();
         const day = currentDate.getDate();
         const month = currentDate.getMonth() + 1;
         const year = currentDate.getFullYear();
-
-        const formattedDate = `${daysOfWeek[dayOfWeek]} (${day}/${month}/${year})`;
-        currentDateSpan.textContent = formattedDate;
+        currentDateSpan.textContent = `${daysOfWeek[dayOfWeek]} (${day}/${month}/${year})`;
+    }
 </script>

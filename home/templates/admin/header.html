@@ -46,7 +46,7 @@
     </li>
     <!-- Notifications Dropdown Menu -->
     <li class="nav-item dropdown">
-      <a class="nav-link" data-toggle="dropdown" href="#">
+      <a class="nav-link" data-toggle="dropdown" href="#" id="header-noti-toggle">
         <i class="far fa-bell"></i>
         <span class="badge badge-warning navbar-badge" id="header-noti-badge" style="display: none;">0</span>
       </a>
@@ -68,6 +68,17 @@
           const notiCountHeader = document.getElementById("header-noti-count");
           const notiList = document.getElementById("header-noti-list");
           const notiEmpty = document.getElementById("header-noti-empty");
+          const notiToggle = document.getElementById("header-noti-toggle");
+
+          if (notiToggle) {
+              notiToggle.addEventListener('click', function() {
+                  notiCount = 0;
+                  if (notiBadge) {
+                      notiBadge.innerText = '0';
+                      notiBadge.style.display = 'none';
+                  }
+              });
+          }
 
           document.addEventListener('medic:realtime-notification', function(e) {
               const data = e.detail;

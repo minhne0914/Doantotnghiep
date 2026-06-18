@@ -12,13 +12,11 @@ from .views import (
     index,
     kidney,
     pneumonia_detector,
-    project_dashboard,
     skin_cancer_detector,
 )
 
 urlpatterns = [
     path('', index, name='home'),
-    path('project-dashboard/', project_dashboard, name='project_dashboard'),
     path('diabetes/', diabetes, name='diabetes'),
     path('breast/', breast, name='breast'),
     path('heart/', heart, name='heart'),

@@ -583,7 +583,7 @@ translations = {'Anh tai len vuot qua gioi han dung luong cho phep.': 'Uploaded 
                                                                                                                                  'Learning '
                                                                                                                                  'for '
                                                                                                                                  'Pneumonia.',
- 'Trung Tâm Y Tế ĐH Công Nghiệp Hà Nội': 'Haui Medical Center',
+ 'Trung Tâm Y Tế ĐH CNTT và TT Việt Hàn': 'Viet Han Medical Center',
  'Trạng thái': 'Status',
  'Trợ lý Y tế AI': 'AI Health Assistant',
  'Tuổi': 'Age',

@@ -36,7 +36,7 @@ def admin_dashboard_metrics():
                 'percent': round((count / total_bookings) * 100) if total_bookings else 0,
             })
 
-        doctors = User.objects.filter(role=UserRole.DOCTOR).count()
+        doctors = User.objects.filter(role=UserRole.DOCTOR, is_staff=False).count()
         patients = User.objects.filter(role=UserRole.PATIENT).count()
         today_bookings = TakeAppointment.objects.filter(date=today).count()
         open_bookings = TakeAppointment.objects.filter(

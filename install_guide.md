@@ -50,7 +50,7 @@ CHANNEL_LAYER_BACKEND=inmemory
 CELERY_TASK_ALWAYS_EAGER=True
 DJANGO_STATIC_ROOT=staticfiles
 GEMINI_API_KEY=
-GEMINI_MODEL=gemini-2.5-flash
+GEMINI_MODEL=gemini-3.5-flash
 ```
 
 Ghi chu:
@@ -126,7 +126,7 @@ Can cau hinh:
 
 ```env
 GEMINI_API_KEY=your-api-key
-GEMINI_MODEL=gemini-2.5-flash
+GEMINI_MODEL=gemini-3.5-flash
 ```
 
 Neu de trong `GEMINI_API_KEY`, giao dien chat van mo duoc nhung API chat se tra loi `503` voi thong bao chua cau hinh.

@@ -1,6 +1,6 @@
-{% extends 'app.html' %}
+﻿{% extends 'app.html' %}
 {% load static %}
-{% block title %}Quản lý Lịch Khám{% endblock %}
+{% block title %}Quáº£n lÃ½ Lá»‹ch KhÃ¡m{% endblock %}
 
 {% block content %}
 <div class="content-wrapper" style="min-height: 100vh;">
@@ -8,13 +8,13 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1 class="m-0">Lịch Khám Chuyên Sâu</h1>
+                    <h1 class="m-0">Lá»‹ch KhÃ¡m ChuyÃªn SÃ¢u</h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+                        <li class="breadcrumb-item"><a href="/">Trang chá»§</a></li>
                         <li class="breadcrumb-item"><a href="{% url 'doctor-dashboard' %}">Dashboard</a></li>
-                        <li class="breadcrumb-item active">Lịch khám</li>
+                        <li class="breadcrumb-item active">Lá»‹ch khÃ¡m</li>
                     </ol>
                 </div>
             </div>
@@ -39,14 +39,20 @@
 
 <!-- FullCalendar -->
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-<!-- Định dạng tiếng Việt cho FullCalendar -->
+<!-- Äá»‹nh dáº¡ng tiáº¿ng Viá»‡t cho FullCalendar -->
 <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.11/locales/vi.global.min.js"></script>
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         var calendarEl = document.getElementById('calendar');
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return '';
+        }
         var calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'timeGridWeek',
             headerToolbar: {
@@ -56,8 +62,8 @@
             },
             customButtons: {
                 myCustomButton: {
-                    text: '+ Mở phân ca',
-                    click: function() {
+                    text: '+ Má»Ÿ phÃ¢n ca',
+                    click: function () {
                         window.location.href = "{% url 'doctor-appointment-create' %}";
                     }
                 }
@@ -69,8 +75,8 @@
             expandRows: true,
             nowIndicator: true,
             events: '{% url "doctor-calendar-events" %}',
-            eventClick: function(info) {
-                // Bỏ qua click nêú đó là background event (Khung giờ trống)
+            eventClick: function (info) {
+                // Bá» qua click nÃªÃº Ä‘Ã³ lÃ  background event (Khung giá» trá»‘ng)
                 if (info.event.display === 'background') {
                     return;
                 }
@@ -78,43 +84,82 @@
                 var props = info.event.extendedProps;
                 var startDate = info.event.start;
                 var endDate = info.event.end;
-                
-                var timeStr = startDate.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'}) + 
-                              ' - ' + 
-                              endDate.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
-                              
+
+                var timeStr = startDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) +
+                    ' - ' +
+                    endDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+
+                const confirmButton = props.raw_status === 'pending'
+                    ? `<button type="button" class="btn btn-success w-100 mb-2" id="confirm-booking-btn">
+                            <i class="fas fa-check-circle mr-2"></i>Xac nhan lich
+                       </button>`
+                    : '';
+
                 Swal.fire({
-                    title: 'Chi tiết lịch đặt',
+                    title: 'Chi tiet lich dat',
                     html: `
                         <div style="text-align: left; padding: 10px;">
                             <p style="font-size: 1.1rem;"><strong>${props.patient_name}</strong></p>
                             <p><i class="fas fa-phone mr-2 text-muted"></i> ${props.phone}</p>
                             <p><i class="fas fa-clock mr-2 text-muted"></i> ${timeStr}</p>
                             <p><i class="fas fa-calendar-day mr-2 text-muted"></i> ${startDate.toLocaleDateString('vi-VN')}</p>
-                            <p><i class="fas fa-info-circle mr-2 text-muted"></i> Trạng thái: <b style="color: ${info.event.backgroundColor}">${props.status}</b></p>
-                            <p><i class="fas fa-comment-medical mr-2 text-muted"></i> Lời nhắn: <i>${props.message}</i></p>
+                            <p><i class="fas fa-info-circle mr-2 text-muted"></i> Trang thai: <b style="color: ${info.event.backgroundColor}">${props.status}</b></p>
+                            <p><i class="fas fa-comment-medical mr-2 text-muted"></i> Loi nhan: <i>${props.message}</i></p>
                             <hr/>
-                            <div class="d-flex justify-content-center mt-3">
-                                <a href="/appointment/${props.booking_id}/chat/" class="btn btn-info w-100"><i class="fas fa-comments mr-2"></i>Mở kênh Chat</a>
+                            <div class="mt-3">
+                                ${confirmButton}
+                                <a href="/appoinment/doctor/inbox/${props.booking_id}/" class="btn btn-info w-100"><i class="fas fa-comments mr-2"></i>Cuoc tro chuyen</a>
                             </div>
                         </div>
                     `,
                     showConfirmButton: true,
-                    confirmButtonText: 'Đóng',
-                    confirmButtonColor: '#6c757d'
+                    confirmButtonText: 'Dong',
+                    confirmButtonColor: '#6c757d',
+                    didOpen: () => {
+                        const confirmBtn = document.getElementById('confirm-booking-btn');
+                        if (!confirmBtn) {
+                            return;
+                        }
+                        confirmBtn.addEventListener('click', async () => {
+                            confirmBtn.disabled = true;
+                            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Dang xac nhan...';
+                            try {
+                                const response = await fetch(`/appoinment/doctor/bookings/${props.booking_id}/confirm/`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRFToken': getCookie('csrftoken'),
+                                        'X-Requested-With': 'XMLHttpRequest'
+                                    }
+                                });
+                                const payload = await response.json();
+                                if (!response.ok || !payload.ok) {
+                                    throw new Error(payload.error || 'Khong the xac nhan lich.');
+                                }
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Da xac nhan lich',
+                                    timer: 1400,
+                                    showConfirmButton: false
+                                });
+                                calendar.refetchEvents();
+                            } catch (error) {
+                                Swal.fire('Khong the xac nhan', error.message, 'error');
+                            }
+                        });
+                    }
                 });
             },
-            dateClick: function(info) {
+            dateClick: function (info) {
                 const dateStr = info.dateStr.split('T')[0];
                 Swal.fire({
-                    title: 'Mở thêm ca làm việc?',
-                    text: `Ngày ${new Date(dateStr).toLocaleDateString('vi-VN')}`,
+                    title: 'Má»Ÿ thÃªm ca lÃ m viá»‡c?',
+                    text: `NgÃ y ${new Date(dateStr).toLocaleDateString('vi-VN')}`,
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#0f766e',
                     cancelButtonColor: '#d33',
-                    confirmButtonText: 'Tạo ca làm việc',
-                    cancelButtonText: 'Hủy'
+                    confirmButtonText: 'Táº¡o ca lÃ m viá»‡c',
+                    cancelButtonText: 'Há»§y'
                 }).then((result) => {
                     if (result.isConfirmed) {
                         window.location.href = `{% url 'doctor-appointment-create' %}?date=${dateStr}`;
@@ -127,37 +172,43 @@
 </script>
 
 <style>
-    /* Tuỳ chỉnh UI cho gọn gàng và đẹp hơn của FullCalendar */
+    /* Tuá»³ chá»‰nh UI cho gá»n gÃ ng vÃ  Ä‘áº¹p hÆ¡n cá»§a FullCalendar */
     .fc-theme-standard .fc-scrollgrid {
         border-radius: 12px;
         overflow: hidden;
         border-color: #e2e8f0;
     }
+
     .fc-event {
         cursor: pointer;
         padding: 2px 4px;
         font-size: 0.9em;
         border-radius: 6px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
         transition: transform 0.1s ease;
     }
+
     .fc-event:hover {
         transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
         z-index: 99 !important;
     }
+
     .fc-bg-event {
         opacity: 0.6 !important;
         cursor: pointer;
     }
+
     .fc-button-primary {
         background-color: #0f766e !important;
         border-color: #0f766e !important;
         border-radius: 8px !important;
     }
+
     .fc-button-primary:hover {
         background-color: #0d9488 !important;
     }
+
     .fc-myCustomButton-button {
         font-weight: bold;
         background-color: #10b981 !important;

@@ -82,6 +82,7 @@ class RescheduleAppointmentForm(forms.Form):
     )
     time = forms.TimeField(
         label='Giờ khám mới',
+        required=False,
         widget=forms.TimeInput(format='%H:%M', attrs={'type': 'time', 'class': 'form-control'}),
     )
     reason = forms.CharField(
@@ -112,6 +113,19 @@ class RescheduleAppointmentForm(forms.Form):
         cleaned_data = super().clean()
         appointment = cleaned_data.get('appointment')
         selected_time = cleaned_data.get('time')
+        if appointment and selected_time:
+            if (
+                self.current_booking
+                and appointment.pk != self.current_booking.appointment_id
+                and selected_time == self.current_booking.time
+                and not (appointment.start_time <= selected_time <= appointment.end_time)
+            ):
+                selected_time = appointment.start_time
+                cleaned_data['time'] = selected_time
+        elif appointment and not selected_time:
+            selected_time = appointment.start_time
+            cleaned_data['time'] = selected_time
+
         if appointment and selected_time:
             if appointment.date < timezone.localdate():
                 self.add_error('appointment', 'Chỉ có thể đổi sang lịch khám trong tương lai.')

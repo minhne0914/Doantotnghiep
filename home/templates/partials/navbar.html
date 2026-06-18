@@ -1,34 +1,34 @@
-<!-- header -->
 {% load i18n %}
+
 <header>
     <div class="top-bar py-3">
         <div class="container">
-            <div class="row">
+            <div class="row align-items-center">
                 <div class="col-lg-7 top-social-agile">
-                    <div class="row">
-                        <ul class="col-lg-4 col-6 top-right-info text-center">
+                    <div class="row align-items-center">
+                        <ul class="col-lg-4 col-6 top-right-info text-center mb-0">
                             <li><a href="#"><i class="fab fa-facebook-f"></i></a></li>
                             <li class="mx-3"><a href="#"><i class="fab fa-twitter"></i></a></li>
                             <li><a href="#"><i class="fab fa-google-plus-g"></i></a></li>
                             <li class="ml-3"><a href="#"><i class="fab fa-pinterest-p"></i></a></li>
                         </ul>
                         <div class="col-6 header-top_w3layouts pl-3 text-lg-left text-center">
-                            <p class="text-white">
-                                <i class="fas fa-map-marker-alt mr-2"></i>{% trans "Trung Tâm Y Tế ĐH Công Nghiệp Hà Nội" %}
+                            <p class="text-white mb-0">
+                                <i class="fas fa-map-marker-alt mr-2"></i>{% trans "Trung Tâm Y Tế ĐH CNTT và TT Việt Hàn" %}
                             </p>
                         </div>
                     </div>
                 </div>
                 <div class="col-lg-5 top-social-agile text-lg-right text-center">
-                    <div class="row">
+                    <div class="row align-items-center">
                         <div class="col-lg-7 col-6 top-w3layouts">
-                            <p class="text-white">
+                            <p class="text-white mb-0">
                                 <i class="far fa-envelope-open mr-2"></i>
                                 <a href="mailto:contact@haui.edu.vn" class="text-white">contact@haui.edu.vn</a>
                             </p>
                         </div>
                         <div class="col-lg-5 col-6 header-w3layouts pl-4 text-lg-left">
-                            <p class="text-white">
+                            <p class="text-white mb-0">
                                 <i class="fas fa-phone mr-2"></i>{% trans "Hotline 24/7:" %} 1900 8888
                             </p>
                         </div>
@@ -49,95 +49,134 @@
                         <i class="fas fa-syringe"></i>
                     </a>
                 </h1>
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
-                    aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{% trans 'Mở menu điều hướng' %}">
+
+                <button class="navbar-toggler" type="button" data-toggle="collapse"
+                    data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+                    aria-label="{% trans 'Mở menu điều hướng' %}">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
                 <div class="collapse navbar-collapse text-center" id="navbarSupportedContent">
                     <ul class="navbar-nav ml-lg-auto">
                         <li class="nav-item active mt-lg-0 mt-3">
-                            <a class="nav-link" href="{% url 'home' %}"><i class="fas fa-home mr-1"></i>{% trans "Trang chủ" %}
+                            <a class="nav-link" href="{% url 'home' %}">
+                                <i class="fas fa-home mr-1"></i>{% trans "Trang chủ" %}
                                 <span class="sr-only">({% trans "đang chọn" %})</span>
                             </a>
                         </li>
 
-                        <li class="nav-item dropdown nav-item mx-lg-3 my-lg-0 my-3">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
-                                aria-haspopup="true" aria-expanded="false">
+                        <li class="nav-item dropdown mx-lg-3 my-lg-0 my-3">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="fas fa-microscope mr-1"></i>{% trans "Sàng lọc nguy cơ" %}
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                <a class="dropdown-item" href="{% url 'diabetes' %}"><i class="fas fa-vial mr-2"></i>{% trans "Nguy cơ tiểu đường" %}</a>
-                                <a class="dropdown-item" href="{% url 'breast' %}"><i class="fas fa-ribbon mr-2"></i>{% trans "Nguy cơ ung thư vú" %}</a>
-                                <a class="dropdown-item" href="{% url 'heart' %}"><i class="fas fa-heartbeat mr-2"></i>{% trans "Nguy cơ bệnh tim" %}</a>
-                                <a class="dropdown-item" href="{% url 'kidney' %}"><i class="fas fa-tint mr-2"></i>{% trans "Nguy cơ bệnh thận" %}</a>
-                                <a class="dropdown-item" href="{% url 'pneumonia_detector' %}"><i class="fas fa-x-ray mr-2"></i>{% trans "Nguy cơ viêm phổi" %}</a>
-                                <a class="dropdown-item" href="{% url 'skin_cancer_detector' %}"><i class="fas fa-allergies mr-2"></i>{% trans "Nguy cơ ung thư da" %}</a>
+                                <a class="dropdown-item" href="{% url 'diabetes' %}">
+                                    <i class="fas fa-vial mr-2"></i>{% trans "Nguy cơ tiểu đường" %}
+                                </a>
+                                <a class="dropdown-item" href="{% url 'breast' %}">
+                                    <i class="fas fa-ribbon mr-2"></i>{% trans "Nguy cơ ung thư vú" %}
+                                </a>
+                                <a class="dropdown-item" href="{% url 'heart' %}">
+                                    <i class="fas fa-heartbeat mr-2"></i>{% trans "Nguy cơ bệnh tim" %}
+                                </a>
+                                <a class="dropdown-item" href="{% url 'kidney' %}">
+                                    <i class="fas fa-tint mr-2"></i>{% trans "Nguy cơ bệnh thận" %}
+                                </a>
+                                <a class="dropdown-item" href="{% url 'pneumonia_detector' %}">
+                                    <i class="fas fa-x-ray mr-2"></i>{% trans "Nguy cơ viêm phổi" %}
+                                </a>
+                                <a class="dropdown-item" href="{% url 'skin_cancer_detector' %}">
+                                    <i class="fas fa-allergies mr-2"></i>{% trans "Nguy cơ ung thư da" %}
+                                </a>
                             </div>
                         </li>
 
                         <li class="nav-item mx-lg-4">
-                            <a class="nav-link" href="{% url 'doctor' %}"><i class="fas fa-user-md mr-1"></i>{% trans "Bác sĩ" %}</a>
+                            <a class="nav-link" href="{% url 'doctor' %}">
+                                <i class="fas fa-user-md mr-1"></i>{% trans "Bác sĩ" %}
+                            </a>
                         </li>
 
                         {% if request.user.is_authenticated and request.user.role == 'doctor' %}
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownDoctor" role="button" data-toggle="dropdown"
-                                aria-haspopup="true" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownDoctor" role="button"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="fas fa-user-circle mr-1"></i>{{ request.user.first_name }}
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdownDoctor">
-                                <a class="dropdown-item" href="{% url 'doctor-dashboard' %}"><i class="fas fa-cog"></i> {% trans "Cài đặt" %}</a>
-                                <a class="dropdown-item" href="{% url 'doctor-appointment' %}"><i class="fas fa-calendar-alt"></i> {% trans "Lịch hẹn" %}</a>
-                                <a class="dropdown-item" href="{% url 'doctor-appointment-create' %}"><i class="fas fa-plus-circle"></i> {% trans "Tạo lịch khám" %}</a>
-                                <a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> {% trans "Đăng xuất" %}</a>
+                                <a class="dropdown-item" href="{% url 'doctor-dashboard' %}">
+                                    <i class="fas fa-cog mr-2"></i>{% trans "Cài đặt" %}
+                                </a>
+                                <a class="dropdown-item" href="{% url 'doctor-appointment' %}">
+                                    <i class="fas fa-calendar-alt mr-2"></i>{% trans "Lịch hẹn" %}
+                                </a>
+                                <a class="dropdown-item" href="{% url 'doctor-appointment-create' %}">
+                                    <i class="fas fa-plus-circle mr-2"></i>{% trans "Tạo lịch khám" %}
+                                </a>
+                                <a class="dropdown-item" href="{% url 'logout' %}">
+                                    <i class="fas fa-sign-out-alt mr-2"></i>{% trans "Đăng xuất" %}
+                                </a>
                             </div>
                         </li>
-
                         {% elif request.user.is_authenticated and request.user.role == 'patient' %}
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownPatient" role="button" data-toggle="dropdown"
-                                aria-haspopup="true" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownPatient" role="button"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="fas fa-user-circle mr-1"></i>{{ request.user.first_name }}
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdownPatient">
-                                <a class="dropdown-item" href="{% url 'history' %}"><i class="fas fa-history"></i> {% trans "Lịch sử sức khỏe" %}</a>
-                                <a class="dropdown-item" href="{% url 'patient-my-appointments' %}"><i class="fas fa-calendar-check"></i> {% trans "Lịch hẹn của tôi" %}</a>
-                                <a class="dropdown-item" href="{% url 'patient-emr-timeline' %}"><i class="fas fa-file-medical"></i> {% trans "Hồ sơ bệnh án" %}</a>
-                                <a class="dropdown-item" href="{% url 'patient-profile-update' %}"><i class="fas fa-user-edit"></i> {% trans "Chỉnh sửa hồ sơ" %}</a>
-                                <a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> {% trans "Đăng xuất" %}</a>
+                                <a class="dropdown-item" href="{% url 'history' %}">
+                                    <i class="fas fa-history mr-2"></i>{% trans "Lịch sử sức khỏe" %}
+                                </a>
+                                <a class="dropdown-item" href="{% url 'patient-my-appointments' %}">
+                                    <i class="fas fa-calendar-check mr-2"></i>{% trans "Lịch hẹn của tôi" %}
+                                </a>
+                                <a class="dropdown-item" href="{% url 'patient-emr-timeline' %}">
+                                    <i class="fas fa-file-medical mr-2"></i>{% trans "Hồ sơ bệnh án" %}
+                                </a>
+                                <a class="dropdown-item" href="{% url 'patient-profile-update' %}">
+                                    <i class="fas fa-user-edit mr-2"></i>{% trans "Chỉnh sửa hồ sơ" %}
+                                </a>
+                                <a class="dropdown-item" href="{% url 'logout' %}">
+                                    <i class="fas fa-sign-out-alt mr-2"></i>{% trans "Đăng xuất" %}
+                                </a>
                             </div>
                         </li>
-
                         {% else %}
-                        <li class="nav-item dropdown nav-item mx-lg-3 my-lg-0 my-3">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownRegister" role="button" data-toggle="dropdown"
-                                aria-haspopup="true" aria-expanded="false">
+                        <li class="nav-item dropdown mx-lg-3 my-lg-0 my-3">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownRegister" role="button"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="fas fa-user-plus mr-1"></i>{% trans "Đăng ký" %}
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdownRegister">
-                                <a class="dropdown-item" href="{% url 'doctor-register' %}"><i class="fas fa-user-md mr-2"></i>{% trans "Bác sĩ" %}</a>
-                                <a class="dropdown-item" href="{% url 'patient-register' %}"><i class="fas fa-user-injured mr-2"></i>{% trans "Bệnh nhân" %}</a>
+                                <a class="dropdown-item" href="{% url 'doctor-register' %}">
+                                    <i class="fas fa-user-md mr-2"></i>{% trans "Bác sĩ" %}
+                                </a>
+                                <a class="dropdown-item" href="{% url 'patient-register' %}">
+                                    <i class="fas fa-user-injured mr-2"></i>{% trans "Bệnh nhân" %}
+                                </a>
                             </div>
                         </li>
                     </ul>
-                        <a href="{% url 'login' %}" class="login-button ml-lg-5 mt-lg-0 mt-3 mb-lg-0 mb-3">
-                            <i class="fas fa-sign-in-alt mr-2"></i>{% trans "Đăng nhập" %}
-                        </a>
-                        {% endif %}
-                        
-                        <div class="ml-lg-4 mt-lg-0 mt-3">
-                            <form action="{% url 'set_language' %}" method="post" class="form-inline">
-                                {% csrf_token %}
-                                <input name="next" type="hidden" value="{{ request.get_full_path|default:'/' }}">
-                                <select name="language" class="form-control form-control-sm border-0 font-weight-bold shadow-sm" onchange="this.form.submit()" style="background-color: transparent; cursor: pointer;">
-                                    {% get_current_language as LANGUAGE_CODE %}
-                                    <option value="vi" {% if LANGUAGE_CODE == 'vi' %}selected{% endif %}>[VI]</option>
-                                    <option value="en" {% if LANGUAGE_CODE == 'en' %}selected{% endif %}>[EN]</option>
-                                </select>
-                            </form>
-                        </div>
+                    <a href="{% url 'login' %}" class="login-button ml-lg-5 mt-lg-0 mt-3 mb-lg-0 mb-3">
+                        <i class="fas fa-sign-in-alt mr-2"></i>{% trans "Đăng nhập" %}
+                    </a>
+                    {% endif %}
+
+                    <div class="ml-lg-4 mt-lg-0 mt-3">
+                        <form action="{% url 'set_language' %}" method="post" class="form-inline">
+                            {% csrf_token %}
+                            <input name="next" type="hidden" value="{{ request.get_full_path|default:'/' }}">
+                            <select name="language"
+                                class="form-control form-control-sm border-0 font-weight-bold shadow-sm"
+                                onchange="this.form.submit()" style="background-color: transparent; cursor: pointer;">
+                                {% get_current_language as LANGUAGE_CODE %}
+                                <option value="vi" {% if LANGUAGE_CODE == 'vi' %}selected{% endif %}>VI</option>
+                                <option value="en" {% if LANGUAGE_CODE == 'en' %}selected{% endif %}>EN</option>
+                            </select>
+                        </form>
+                    </div>
                 </div>
             </div>
         </nav>

@@ -278,7 +278,6 @@
     }
 
     function renderNotifications(notifications) {
-        const notiBadge = document.getElementById("header-noti-badge");
         const notiCountHeader = document.getElementById("header-noti-count");
         const notiList = document.getElementById("header-noti-list");
         const notiEmpty = document.getElementById("header-noti-empty");
@@ -304,10 +303,6 @@
         `).join('');
 
         if (notiCountHeader) notiCountHeader.innerText = notifications.length + " Thông báo";
-        if (notiBadge) {
-            notiBadge.innerText = notifications.length;
-            notiBadge.style.display = 'inline-block';
-        }
     }
 
     function setSummary(summary) {

@@ -585,8 +585,8 @@ msgstr ""
 "Triển khai Machine Learning cho Chẩn đoán Ung Thư Vú, Bệnh Tim, Tiểu Đường "
 "và mô hình Học Sâu (Deep Learning) cho Viêm phổi."
 
-msgid "Trung Tâm Y Tế ĐH Công Nghiệp Hà Nội"
-msgstr "Trung Tâm Y Tế ĐH Công Nghiệp Hà Nội"
+msgid "Trung Tâm Y Tế ĐH CNTT và TT Việt Hàn"
+msgstr "Trung Tâm Y Tế ĐH CNTT và TT Việt Hàn"
 
 msgid "Trạng thái"
 msgstr "Trạng thái"

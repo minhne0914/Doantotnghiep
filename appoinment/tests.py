@@ -7,7 +7,7 @@ from django.utils import timezone
 from accounts.models import DoctorProfile, User
 from .consumers import DirectChatConsumer
 from .forms import CreateAppointmentForm
-from .models import Appointment, AppointmentChangeLog, TakeAppointment
+from .models import Appointment, AppointmentChangeLog, DirectMessage, DoctorReview, TakeAppointment
 
 
 class AppointmentFormTests(TestCase):
@@ -154,13 +154,33 @@ class AppointmentFlowTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         booking = TakeAppointment.objects.get(appointment=self.appointment, user=self.patient)
-        self.assertEqual(booking.status, TakeAppointment.STATUS_CONFIRMED)
+        self.assertEqual(booking.status, TakeAppointment.STATUS_PENDING)
         self.assertTrue(
             AppointmentChangeLog.objects.filter(
                 booking=booking,
                 action=AppointmentChangeLog.ACTION_BOOKED,
             ).exists()
         )
+
+    def test_doctor_can_confirm_pending_booking(self):
+        booking = TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Patient One',
+            phone_number='0123456789',
+            message='Need consultation',
+            date=self.appointment.date,
+            time=timezone.datetime.strptime('10:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_PENDING,
+        )
+        self.client.force_login(self.doctor)
+
+        response = self.client.post(reverse('doctor-confirm-booking', args=[booking.pk]))
+
+        self.assertEqual(response.status_code, 302)
+        booking.refresh_from_db()
+        self.assertEqual(booking.status, TakeAppointment.STATUS_CONFIRMED)
+        self.assertEqual(booking.notification_version, 2)
 
     def test_patient_cannot_book_same_slot_twice(self):
         TakeAppointment.objects.create(
@@ -244,6 +264,50 @@ class AppointmentFlowTests(TestCase):
             ).exists()
         )
 
+    def test_patient_reschedule_defaults_to_new_slot_start_when_old_time_is_submitted(self):
+        self.client.force_login(self.patient)
+        booking = TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Patient One',
+            phone_number='0123456789',
+            message='Old note',
+            date=self.appointment.date,
+            time=timezone.datetime.strptime('10:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_CONFIRMED,
+        )
+        target_date = timezone.localdate() + timedelta(days=2)
+        new_appointment = Appointment.objects.create(
+            user=self.doctor,
+            full_name='Dr. Morning',
+            location='Clinic',
+            qualification_name='MD',
+            institute_name='Demo Institute',
+            hospital_name='Demo Hospital',
+            department='Cardiology',
+            date=target_date,
+            start_time=timezone.datetime.strptime('08:00', '%H:%M').time(),
+            end_time=timezone.datetime.strptime('09:00', '%H:%M').time(),
+        )
+
+        response = self.client.post(
+            reverse('patient-reschedule-appointment', args=[booking.pk]),
+            {
+                'appointment': new_appointment.pk,
+                'time': '10:00',
+                'reason': 'Change plan',
+                'message': 'Please move me to the morning slot',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        booking.refresh_from_db()
+        self.assertEqual(booking.appointment_id, new_appointment.id)
+        self.assertEqual(
+            booking.time,
+            timezone.datetime.strptime('08:00', '%H:%M').time(),
+        )
+
     def test_patient_can_cancel_future_booking(self):
         self.client.force_login(self.patient)
         booking = TakeAppointment.objects.create(
@@ -272,6 +336,167 @@ class AppointmentFlowTests(TestCase):
                 reason='Không còn sắp xếp được thời gian',
             ).exists()
         )
+
+    def test_patient_appointments_are_sorted_by_useful_date_order(self):
+        self.client.force_login(self.patient)
+        active_today = TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Patient One',
+            phone_number='0123456789',
+            message='Active appointment today',
+            date=timezone.localdate(),
+            time=timezone.datetime.strptime('09:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_ARRIVED,
+        )
+        soon_booking = TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Patient One',
+            phone_number='0123456789',
+            message='Soon appointment',
+            date=timezone.localdate() + timedelta(days=1),
+            time=timezone.datetime.strptime('09:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_CONFIRMED,
+        )
+        later_booking = TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Patient One',
+            phone_number='0123456789',
+            message='Later appointment',
+            date=timezone.localdate() + timedelta(days=5),
+            time=timezone.datetime.strptime('09:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_CONFIRMED,
+        )
+        recent_history = TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Patient One',
+            phone_number='0123456789',
+            message='Recent history',
+            date=timezone.localdate() - timedelta(days=1),
+            time=timezone.datetime.strptime('09:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_COMPLETED,
+        )
+        older_history = TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Patient One',
+            phone_number='0123456789',
+            message='Older history',
+            date=timezone.localdate() - timedelta(days=10),
+            time=timezone.datetime.strptime('09:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_CANCELLED,
+        )
+
+        response = self.client.get(reverse('patient-my-appointments'))
+
+        self.assertEqual(response.status_code, 200)
+        ordered_ids = [booking.id for booking in response.context['appointments']]
+        self.assertEqual(
+            ordered_ids[:5],
+            [
+                active_today.id,
+                soon_booking.id,
+                later_booking.id,
+                recent_history.id,
+                older_history.id,
+            ],
+        )
+
+    def test_patient_review_uses_patient_layout_and_returns_to_my_appointments(self):
+        self.client.force_login(self.patient)
+        booking = TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Patient One',
+            phone_number='0123456789',
+            message='Completed consultation',
+            date=timezone.localdate() - timedelta(days=1),
+            time=timezone.datetime.strptime('11:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_COMPLETED,
+        )
+
+        response = self.client.get(reverse('submit-doctor-review', args=[booking.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse('patient-my-appointments'))
+        self.assertNotContains(response, 'content-wrapper')
+
+        response = self.client.post(
+            reverse('submit-doctor-review', args=[booking.pk]),
+            {
+                'rating': 5,
+                'comment': 'Doctor was professional and helpful.',
+            },
+        )
+
+        self.assertRedirects(response, reverse('patient-my-appointments'))
+        self.assertTrue(
+            DoctorReview.objects.filter(
+                booking=booking,
+                patient=self.patient,
+                doctor=self.doctor,
+            ).exists()
+        )
+
+    def test_patient_chat_room_only_shows_current_booking_messages(self):
+        self.client.force_login(self.patient)
+        booking = TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Patient One',
+            phone_number='0123456789',
+            message='Need consultation',
+            date=self.appointment.date,
+            time=timezone.datetime.strptime('10:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_CONFIRMED,
+        )
+        other_booking = TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Patient One',
+            phone_number='0123456789',
+            message='Need another consultation',
+            date=self.appointment.date,
+            time=timezone.datetime.strptime('11:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_CONFIRMED,
+        )
+        DirectMessage.objects.create(
+            booking=booking,
+            sender=self.patient,
+            content='Message for this booking',
+        )
+        DirectMessage.objects.create(
+            booking=other_booking,
+            sender=self.patient,
+            content='Message for another booking',
+        )
+
+        response = self.client.get(reverse('chat-room', args=[booking.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Message for this booking')
+        self.assertNotContains(response, 'Message for another booking')
+
+    def test_completed_booking_chat_is_read_only(self):
+        self.client.force_login(self.patient)
+        booking = TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Patient One',
+            phone_number='0123456789',
+            message='Completed consultation',
+            date=timezone.localdate() - timedelta(days=1),
+            time=timezone.datetime.strptime('11:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_COMPLETED,
+        )
+
+        response = self.client.get(reverse('chat-room', args=[booking.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'id="chat-input"')
 
     def test_patient_cannot_cancel_inside_deadline(self):
         self.client.force_login(self.patient)

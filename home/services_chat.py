@@ -97,6 +97,52 @@ def _normalize(text):
     return (text, no_accent)
 
 
+def _contains_any(text, phrases):
+    return any(phrase in text for phrase in phrases)
+
+
+def _extract_booking_date_filter(user_message):
+    """Return an exact date when the user asks about today/tomorrow bookings."""
+    _, msg_no_accent = _normalize(user_message)
+    today = timezone.localdate()
+    if _contains_any(msg_no_accent, ('hom nay', 'toi nay', 'today')):
+        return today
+    if _contains_any(msg_no_accent, ('ngay mai', 'tomorrow')):
+        return today + timedelta(days=1)
+    return None
+
+
+def _looks_like_user_booking_question(user_message):
+    """Detect questions about the current user's own appointment calendar."""
+    _, msg_no_accent = _normalize(user_message)
+    booking_terms = (
+        'lich kham', 'lich hen', 'cuoc hen', 'dat lich', 'lich cua',
+        'appointment', 'booking',
+    )
+    personal_terms = (
+        'toi', 'minh', 'cua toi', 'cua minh', 'my ', 'i have', 'do i',
+    )
+    exact_date_terms = ('hom nay', 'toi nay', 'ngay mai', 'today', 'tomorrow')
+    question_terms = (' co ', 'khong', 'chua', 'da dat')
+    available_slot_terms = (
+        'bac si nao', 'doctor', 'slot', 'con trong', 'trong tuan',
+        'ranh', 'free', 'available',
+    )
+
+    if not _contains_any(msg_no_accent, booking_terms):
+        return False
+    if _contains_any(msg_no_accent, personal_terms):
+        return True
+    if (
+        _contains_any(msg_no_accent, exact_date_terms)
+        and _contains_any(f' {msg_no_accent} ', question_terms)
+    ):
+        return True
+    if _contains_any(msg_no_accent, available_slot_terms):
+        return False
+    return False
+
+
 def detect_intents(user_message):
     """Trả về set intent đang active dựa trên keyword."""
     msg_lower, msg_no_accent = _normalize(user_message)
@@ -108,6 +154,8 @@ def detect_intents(user_message):
             if kw_lower in msg_lower or kw_no_accent in msg_no_accent:
                 intents.add(intent)
                 break
+    if _looks_like_user_booking_question(user_message):
+        intents.add('my_bookings')
     return intents
 
 
@@ -278,21 +326,27 @@ def get_user_medical_history(user, top_k=MAX_HISTORY_IN_CONTEXT):
     )
 
 
-def get_user_bookings(user, top_k=MAX_BOOKINGS_IN_CONTEXT):
+def get_user_bookings(user, top_k=MAX_BOOKINGS_IN_CONTEXT, target_date=None):
     """Lấy booking active của user."""
     from appoinment.models import TakeAppointment
 
     if not user or not user.is_authenticated:
         return []
     today = timezone.localdate()
-    return list(
-        TakeAppointment.objects.filter(
-            user=user, date__gte=today,
-            status__in=TakeAppointment.ACTIVE_STATUSES,
-        )
-        .select_related('appointment')
-        .order_by('date', 'time')[:top_k]
+    filters = {
+        'user': user,
+        'status__in': TakeAppointment.ACTIVE_STATUSES,
+    }
+    if target_date:
+        filters['date'] = target_date
+    else:
+        filters['date__gte'] = today
+    queryset = (
+        TakeAppointment.objects.filter(**filters)
+        .select_related('appointment', 'appointment__user')
+        .order_by('date', 'time')
     )
+    return list(queryset[:top_k])
 
 
 def get_recent_chat_messages(user, exclude_message_id=None, top_k=MAX_CHAT_MESSAGES_IN_CONTEXT):
@@ -372,6 +426,8 @@ def build_rag_context(user, user_message, current_message_id=None):
     Trả về string đã format, có thể empty nếu không tìm thấy info nào.
     """
     intents = detect_intents(user_message)
+    is_personal_booking_question = _looks_like_user_booking_question(user_message)
+    booking_date_filter = _extract_booking_date_filter(user_message)
     blocks = []
 
     # 0. Bộ nhớ hội thoại gần đây - giúp trả lời các câu hỏi nối tiếp như
@@ -402,7 +458,7 @@ def build_rag_context(user, user_message, current_message_id=None):
         blocks.append('\n'.join(lines))
 
     # 3. Lịch khám trống
-    if 'appointment' in intents:
+    if 'appointment' in intents and not is_personal_booking_question:
         slots = search_available_slots(user_message)
         lines = ['## Lịch khám trống trong 7 ngày tới:']
         if slots:
@@ -423,7 +479,7 @@ def build_rag_context(user, user_message, current_message_id=None):
 
     # 5. Booking của user
     if 'my_bookings' in intents:
-        bookings = get_user_bookings(user)
+        bookings = get_user_bookings(user, target_date=booking_date_filter)
         lines = ['## Lịch khám bạn đã đặt (sắp tới):']
         if bookings:
             lines.extend(_format_booking(b) for b in bookings)
@@ -443,3 +499,189 @@ def build_rag_context(user, user_message, current_message_id=None):
         return ''
 
     return '\n\n'.join(blocks)
+
+
+def _action(label, url, tone='primary'):
+    return {'label': label, 'url': url, 'tone': tone}
+
+
+def _format_doctor_card(doctor):
+    profile = getattr(doctor, 'doctor_profile', None)
+    specialty = (profile.specialization if profile else None) or 'chua cap nhat'
+    rating = getattr(doctor, 'avg_rating', None)
+    review_count = getattr(doctor, 'review_count', 0) or 0
+    rating_text = f' - danh gia {rating:.1f}/5 ({review_count} luot)' if rating else ''
+    return (
+        f"BS. {doctor.first_name} {doctor.last_name} - {specialty}"
+        f"{rating_text}."
+    )
+
+
+def _format_booking_card(booking):
+    appointment = booking.appointment
+    return (
+        f"{booking.date.strftime('%d/%m/%Y')} luc {booking.time.strftime('%H:%M')} "
+        f"voi BS. {appointment.user.first_name} {appointment.user.last_name} "
+        f"({appointment.department}) - trang thai: {booking.get_status_display()}."
+    )
+
+
+def _format_slot_card(slot):
+    return (
+        f"{slot.date.strftime('%d/%m/%Y')} {slot.start_time.strftime('%H:%M')}-"
+        f"{slot.end_time.strftime('%H:%M')} voi BS. {slot.user.first_name} "
+        f"{slot.user.last_name} ({slot.department}) tai {slot.hospital_name}."
+    )
+
+
+def build_local_chat_response(user, user_message):
+    """Return a deterministic DB-backed chatbot response.
+
+    This lets Medic AI keep working during demos even when the external AI key is
+    missing or the provider is temporarily unavailable.
+    """
+    intents = detect_intents(user_message)
+    is_personal_booking_question = _looks_like_user_booking_question(user_message)
+    booking_date_filter = _extract_booking_date_filter(user_message)
+    today = timezone.localdate()
+    actions = []
+
+    if 'emergency' in intents:
+        return {
+            'reply': (
+                'Toi thay cau hoi cua ban co dau hieu khan cap. Neu ban dang kho tho, '
+                'dau nguc du doi, ngat, co giat, chay mau nhieu hoac dau hieu dot quy, '
+                'hay goi 115 hoac den co so y te gan nhat ngay. Medic AI chi ho tro '
+                'tham khao, khong thay the cap cuu.'
+            ),
+            'actions': [
+                _action('Xem danh sach bac si', '/appoinment/doctor/', 'danger'),
+            ],
+            'source': 'local_emergency',
+        }
+
+    if 'my_bookings' in intents:
+        bookings = get_user_bookings(user, top_k=5, target_date=booking_date_filter)
+        actions.append(_action('Mo lich hen cua toi', '/appoinment/patient/my-appointments/', 'primary'))
+        if bookings:
+            if booking_date_filter == today:
+                lines = ['Hom nay ban co lich kham:']
+            elif booking_date_filter:
+                lines = [f'Ngay {booking_date_filter.strftime("%d/%m/%Y")} ban co lich kham:']
+            else:
+                lines = ['Day la cac lich hen sap toi cua ban:']
+            lines.extend(f'- {_format_booking_card(booking)}' for booking in bookings)
+            return {
+                'reply': '\n'.join(lines),
+                'actions': actions,
+                'source': 'local_bookings',
+            }
+        if booking_date_filter == today:
+            empty_reply = (
+                'Hom nay ban khong co lich kham nao dang hoat dong. '
+                'Neu can kham, ban co the xem danh sach bac si va dat lich moi.'
+            )
+        elif booking_date_filter:
+            empty_reply = (
+                f'Ngay {booking_date_filter.strftime("%d/%m/%Y")} ban khong co lich kham nao dang hoat dong. '
+                'Neu can kham, ban co the xem danh sach bac si va dat lich moi.'
+            )
+        else:
+            empty_reply = (
+                'Hien tai ban chua co lich hen sap toi dang hoat dong. '
+                'Ban co the vao danh sach bac si de chon chuyen khoa va dat lich moi.'
+            )
+        return {
+            'reply': empty_reply,
+            'actions': [
+                _action('Tim bac si', '/appoinment/doctor/', 'primary'),
+                *actions,
+            ],
+            'source': 'local_bookings',
+        }
+
+    if 'appointment' in intents and not is_personal_booking_question:
+        slots = search_available_slots(user_message, top_k=5)
+        if slots:
+            lines = ['Toi tim thay mot so khung kham con trong trong 7 ngay toi:']
+            lines.extend(f'- {_format_slot_card(slot)}' for slot in slots)
+            actions.extend([
+                _action('Xem tat ca bac si', '/appoinment/doctor/', 'primary'),
+                _action('Lich hen cua toi', '/appoinment/patient/my-appointments/', 'secondary'),
+            ])
+            first_slot = slots[0]
+            actions.insert(0, _action('Dat lich goi y dau tien', f'/appoinment/patient-take-appointment/{first_slot.id}/', 'success'))
+            return {
+                'reply': '\n'.join(lines),
+                'actions': actions,
+                'source': 'local_slots',
+            }
+        return {
+            'reply': (
+                'Toi chua tim thay khung kham trong phu hop trong 7 ngay toi. '
+                'Ban thu doi ngay, doi chuyen khoa, hoac xem toan bo danh sach bac si.'
+            ),
+            'actions': [_action('Xem doi ngu bac si', '/appoinment/doctor/', 'primary')],
+            'source': 'local_slots',
+        }
+
+    if 'doctor' in intents:
+        doctors = search_doctors(user_message, top_k=5)
+        if doctors:
+            lines = ['Toi tim thay cac bac si phu hop trong he thong:']
+            lines.extend(f'- {_format_doctor_card(doctor)}' for doctor in doctors)
+            actions.extend([
+                _action('Xem danh sach bac si', '/appoinment/doctor/', 'primary'),
+                _action('Xem bac si dau tien', f'/appoinment/doctor/{doctors[0].id}/profile/', 'success'),
+            ])
+            return {
+                'reply': '\n'.join(lines),
+                'actions': actions,
+                'source': 'local_doctors',
+            }
+        return {
+            'reply': 'Toi chua tim thay bac si phu hop voi cau hoi nay trong database.',
+            'actions': [_action('Xem tat ca bac si', '/appoinment/doctor/', 'primary')],
+            'source': 'local_doctors',
+        }
+
+    if 'my_history' in intents or 'screening' in intents:
+        history = get_user_medical_history(user, top_k=5)
+        actions.append(_action('Mo lich su AI', '/history/', 'primary'))
+        if history:
+            lines = ['Day la cac ket qua sang loc AI gan day cua ban:']
+            lines.extend(
+                f"- {item.created_at.strftime('%d/%m/%Y')}: {item.disease_type} -> {item.prediction_result}"
+                for item in history
+            )
+            lines.append('Luu y: ket qua AI chi co tinh tham khao, ban nen gap bac si de duoc ket luan chinh xac.')
+            return {
+                'reply': '\n'.join(lines),
+                'actions': actions,
+                'source': 'local_history',
+            }
+        return {
+            'reply': (
+                'Ban chua co lich su sang loc AI trong he thong. '
+                'Ban co the thu cac cong cu sang loc tren website, sau do Medic AI se doc lai ket qua cho ban.'
+            ),
+            'actions': [
+                _action('Sang loc da bang AI', '/skin_cancer/', 'primary'),
+                _action('Lich su AI', '/history/', 'secondary'),
+            ],
+            'source': 'local_history',
+        }
+
+    return {
+        'reply': (
+            'Toi la Medic AI. Ban co the hoi toi ve bac si, chuyen khoa, lich kham con trong, '
+            'lich hen cua ban, hoac ket qua sang loc AI. Neu ban mo ta trieu chung, toi se chi '
+            'dua ra thong tin tham khao va khuyen ban gap bac si khi can.'
+        ),
+        'actions': [
+            _action('Tim bac si', '/appoinment/doctor/', 'primary'),
+            _action('Lich hen cua toi', '/appoinment/patient/my-appointments/', 'secondary'),
+            _action('Lich su AI', '/history/', 'secondary'),
+        ],
+        'source': 'local_general',
+    }
