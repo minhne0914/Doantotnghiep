@@ -52,6 +52,12 @@ class VitalSignForm(forms.ModelForm):
 
 
 class PrescriptionItemForm(forms.ModelForm):
+    order = forms.IntegerField(
+        required=False,
+        min_value=0,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Tự động'}),
+    )
+
     class Meta:
         model = PrescriptionItem
         fields = ['medicine_name', 'dosage', 'frequency', 'duration', 'instructions', 'order']
@@ -69,8 +75,10 @@ class PrescriptionItemForm(forms.ModelForm):
             'frequency': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tần suất dùng'}),
             'duration': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Thời gian dùng'}),
             'instructions': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Hướng dẫn sử dụng'}),
-            'order': forms.NumberInput(attrs={'class': 'form-control'}),
         }
+
+    def clean_order(self):
+        return self.cleaned_data.get('order') or 0
 
 
 PrescriptionFormSet = inlineformset_factory(

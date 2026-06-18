@@ -45,6 +45,33 @@ class RegistrationFormTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(User.objects.get(email='patient@example.com').role, 'patient')
 
+    def test_public_cannot_register_doctor_account(self):
+        response = self.client.get(reverse('doctor-register'))
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_staff_doctor_register_route_redirects_to_admin_user_add(self):
+        admin = User.objects.create_superuser(
+            email='admin-create-doctor@example.com',
+            password='StrongPass123',
+        )
+        self.client.force_login(admin)
+
+        response = self.client.get(reverse('doctor-register'))
+
+        self.assertRedirects(
+            response,
+            reverse('admin:accounts_user_add'),
+            fetch_redirect_response=False,
+        )
+
+    def test_public_navbar_only_exposes_patient_registration(self):
+        response = self.client.get('/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse('patient-register'))
+        self.assertNotContains(response, reverse('doctor-register'))
+
     def test_login_rejects_external_next_redirect(self):
         User.objects.create_user(
             email='login@example.com',

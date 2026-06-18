@@ -451,9 +451,6 @@
             buttons.push(`<a class="btn btn-sm btn-outline-success" href="${escapeHtml(appointment.emr_url)}">View EMR</a>`);
         }
         buttons.push(`<a class="btn btn-sm btn-outline-info" href="${escapeHtml(appointment.summary_url)}">Patient summary</a>`);
-        if ((appointment.status === 'pending' || appointment.status === 'confirmed') && !appointment.has_emr) {
-            buttons.push(`<a class="btn btn-sm btn-outline-success" href="${escapeHtml(appointment.emr_url)}">Create EMR</a>`);
-        }
         return `<div class="appointment-actions">${buttons.join('')}</div>`;
     }
 

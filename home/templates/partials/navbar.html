@@ -150,9 +150,11 @@
                                 <i class="fas fa-user-plus mr-1"></i>{% trans "Đăng ký" %}
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdownRegister">
+                                {% if request.user.is_staff %}
                                 <a class="dropdown-item" href="{% url 'doctor-register' %}">
                                     <i class="fas fa-user-md mr-2"></i>{% trans "Bác sĩ" %}
                                 </a>
+                                {% endif %}
                                 <a class="dropdown-item" href="{% url 'patient-register' %}">
                                     <i class="fas fa-user-injured mr-2"></i>{% trans "Bệnh nhân" %}
                                 </a>

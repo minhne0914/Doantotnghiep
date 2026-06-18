@@ -99,6 +99,21 @@ def status_badge(status):
     return mapping.get(status, ('secondary', status))
 
 
+def booking_is_emr_ready(booking):
+    """Return True when a doctor can safely create or edit an EMR for this booking."""
+    if booking.status in (TakeAppointment.STATUS_CANCELLED, TakeAppointment.STATUS_PENDING):
+        return False
+    if booking.status in (TakeAppointment.STATUS_ARRIVED, TakeAppointment.STATUS_COMPLETED):
+        return True
+    if not booking.date or not booking.time:
+        return False
+    appointment_dt = timezone.make_aware(
+        datetime.datetime.combine(booking.date, booking.time),
+        timezone.get_current_timezone(),
+    )
+    return appointment_dt <= timezone.localtime()
+
+
 # =============================================================================
 # Change log
 # =============================================================================

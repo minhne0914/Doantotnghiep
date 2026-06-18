@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import DoctorProfile, User
+from notifications.models import RealtimeNotification
 from .consumers import DirectChatConsumer
 from .forms import CreateAppointmentForm
 from .models import Appointment, AppointmentChangeLog, DirectMessage, DoctorReview, TakeAppointment
@@ -212,6 +213,177 @@ class AppointmentFlowTests(TestCase):
         self.assertEqual(booking.status, TakeAppointment.STATUS_CONFIRMED)
         self.assertEqual(booking.notification_version, 2)
 
+    def test_doctor_create_schedule_redirects_to_created_date(self):
+        self.client.force_login(self.doctor)
+        target_date = timezone.localdate() + timedelta(days=4)
+
+        response = self.client.post(
+            reverse('doctor-appointment-create'),
+            {
+                'date': target_date.isoformat(),
+                'start_time': '08:00',
+                'end_time': '12:00',
+                'hospital_name': 'Demo Clinic',
+                'location': 'Room 101',
+            },
+        )
+
+        created = Appointment.objects.get(user=self.doctor, date=target_date)
+        self.assertRedirects(
+            response,
+            f'{reverse("doctor-appointment")}?date={target_date.isoformat()}&created={created.pk}',
+            fetch_redirect_response=False,
+        )
+
+    def test_doctor_can_create_schedule_with_ajax_modal(self):
+        self.client.force_login(self.doctor)
+        target_date = timezone.localdate() + timedelta(days=5)
+
+        response = self.client.post(
+            reverse('doctor-appointment-create'),
+            {
+                'date': target_date.isoformat(),
+                'start_time': '13:00',
+                'end_time': '17:00',
+                'hospital_name': 'Modal Clinic',
+                'location': 'Room 202',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload['ok'])
+        self.assertEqual(payload['appointment']['date'], target_date.isoformat())
+        self.assertEqual(payload['appointment']['start_time'], '13:00')
+        self.assertTrue(
+            Appointment.objects.filter(
+                user=self.doctor,
+                date=target_date,
+                hospital_name='Modal Clinic',
+            ).exists()
+        )
+
+    def test_doctor_cannot_create_overlapping_working_schedule(self):
+        self.client.force_login(self.doctor)
+
+        response = self.client.post(
+            reverse('doctor-appointment-create'),
+            {
+                'date': self.appointment.date.isoformat(),
+                'start_time': '10:00',
+                'end_time': '12:00',
+                'hospital_name': 'Overlap Clinic',
+                'location': 'Room 303',
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        payload = response.json()
+        self.assertFalse(payload['ok'])
+        self.assertIn('start_time', payload['errors'])
+        self.assertFalse(
+            Appointment.objects.filter(
+                user=self.doctor,
+                hospital_name='Overlap Clinic',
+            ).exists()
+        )
+
+    def test_doctor_can_cancel_working_schedule_with_ajax(self):
+        booking = TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Patient One',
+            phone_number='0123456789',
+            message='Need consultation',
+            date=self.appointment.date,
+            time=timezone.datetime.strptime('10:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_CONFIRMED,
+        )
+        self.client.force_login(self.doctor)
+
+        response = self.client.post(
+            reverse('delete-appointment', args=[self.appointment.pk]),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload['ok'])
+        self.assertEqual(payload['cancelled_bookings'], 1)
+        self.appointment.refresh_from_db()
+        booking.refresh_from_db()
+        self.assertFalse(self.appointment.is_active)
+        self.assertEqual(booking.status, TakeAppointment.STATUS_CANCELLED)
+
+    def test_doctor_can_cancel_patient_booking_with_ajax(self):
+        booking = TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Patient One',
+            phone_number='0123456789',
+            message='Need consultation',
+            date=self.appointment.date,
+            time=timezone.datetime.strptime('10:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_CONFIRMED,
+        )
+        self.client.force_login(self.doctor)
+
+        response = self.client.post(
+            reverse('delete-patient', args=[booking.pk]),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload['ok'])
+        self.assertEqual(payload['booking_id'], booking.pk)
+        booking.refresh_from_db()
+        self.assertEqual(booking.status, TakeAppointment.STATUS_CANCELLED)
+        self.assertTrue(
+            AppointmentChangeLog.objects.filter(
+                booking=booking,
+                action=AppointmentChangeLog.ACTION_CANCELLED,
+                changed_by=self.doctor,
+            ).exists()
+        )
+
+    def test_doctor_calendar_events_include_working_schedule_highlight(self):
+        booking = TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Patient One',
+            phone_number='0123456789',
+            message='Need consultation',
+            date=self.appointment.date,
+            time=timezone.datetime.strptime('10:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_CONFIRMED,
+        )
+        self.client.force_login(self.doctor)
+
+        response = self.client.get(
+            reverse('doctor-calendar-events'),
+            {
+                'start': self.appointment.date.isoformat(),
+                'end': (self.appointment.date + timedelta(days=1)).isoformat(),
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        events = response.json()
+        shift_bg = next(item for item in events if item['id'] == f'shift_{self.appointment.pk}')
+        shift_label = next(item for item in events if item['id'] == f'shift_label_{self.appointment.pk}')
+        self.assertEqual(shift_bg['display'], 'background')
+        self.assertIn('doctor-shift-bg', shift_bg['classNames'])
+        self.assertEqual(shift_label['extendedProps']['event_type'], 'doctor_shift')
+        self.assertIn('Working hours', shift_label['title'])
+        booking_event = next(item for item in events if item['id'] == f'booking_{booking.pk}')
+        self.assertEqual(booking_event['title'], 'Patient One')
+        self.assertIn('patient-booking-event', booking_event['classNames'])
+        self.assertEqual(booking_event['extendedProps']['event_type'], 'patient_booking')
+        self.assertEqual(booking_event['extendedProps']['patient_name'], 'Patient One')
+
     def test_patient_cannot_book_same_slot_twice(self):
         TakeAppointment.objects.create(
             user=self.patient,
@@ -367,6 +539,46 @@ class AppointmentFlowTests(TestCase):
                 reason='Không còn sắp xếp được thời gian',
             ).exists()
         )
+
+    def test_doctor_cancel_keeps_patient_history_and_notifies_patient(self):
+        booking = TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Patient One',
+            phone_number='0123456789',
+            message='Need consultation',
+            date=self.appointment.date,
+            time=timezone.datetime.strptime('11:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_CONFIRMED,
+        )
+        self.client.force_login(self.doctor)
+
+        response = self.client.post(reverse('delete-patient', args=[booking.pk]))
+
+        self.assertRedirects(response, reverse('patient-list'))
+        booking.refresh_from_db()
+        self.assertEqual(booking.status, TakeAppointment.STATUS_CANCELLED)
+        self.assertTrue(
+            AppointmentChangeLog.objects.filter(
+                booking=booking,
+                action=AppointmentChangeLog.ACTION_CANCELLED,
+                changed_by=self.doctor,
+            ).exists()
+        )
+        self.assertTrue(
+            RealtimeNotification.objects.filter(
+                user=self.patient,
+                title='Bác sĩ đã hủy lịch khám',
+                category='appointment',
+                payload__booking_id=booking.id,
+                payload__status=TakeAppointment.STATUS_CANCELLED,
+            ).exists()
+        )
+
+        self.client.force_login(self.patient)
+        patient_response = self.client.get(reverse('patient-my-appointments'))
+        visible_ids = [item.id for item in patient_response.context['appointments']]
+        self.assertIn(booking.id, visible_ids)
 
     def test_patient_appointments_are_sorted_by_useful_date_order(self):
         self.client.force_login(self.patient)

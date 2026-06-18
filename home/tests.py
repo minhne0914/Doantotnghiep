@@ -377,23 +377,23 @@ class ChatEndpointTests(TestCase):
             status=TakeAppointment.STATUS_CONFIRMED,
         )
 
-        message = 'hom nay co lich kham khong?'
+        message = 'Hôm nay tôi có lịch khám không?'
         self.assertIn('my_bookings', detect_intents(message))
 
         payload = build_local_chat_response(self.user, message)
 
         self.assertEqual(payload['source'], 'local_bookings')
-        self.assertIn('Hom nay ban co lich kham', payload['reply'])
+        self.assertIn('Hôm nay bạn có lịch khám', payload['reply'])
         self.assertIn('BS. Minh Hoang', payload['reply'])
         self.assertNotIn('khung kham con trong', payload['reply'])
 
     def test_chatbot_says_no_booking_for_empty_today_schedule(self):
-        message = 'hom nay co lich kham khong?'
+        message = 'Hôm nay tôi có lịch khám không?'
 
         payload = build_local_chat_response(self.user, message)
 
         self.assertEqual(payload['source'], 'local_bookings')
-        self.assertIn('Hom nay ban khong co lich kham', payload['reply'])
+        self.assertIn('Hôm nay bạn không có lịch khám', payload['reply'])
 
     def test_chatbot_returns_doctor_schedule_for_doctor_user(self):
         from appoinment.models import Appointment, TakeAppointment
@@ -434,21 +434,22 @@ class ChatEndpointTests(TestCase):
             status=TakeAppointment.STATUS_CONFIRMED,
         )
 
-        payload = build_local_chat_response(doctor, 'Do I have appointments today?')
+        payload = build_local_chat_response(doctor, 'Hôm nay tôi có lịch khám không?')
 
         self.assertEqual(payload['source'], 'local_doctor_schedule')
-        self.assertIn('Today you have these active appointments', payload['reply'])
+        self.assertIn('Hôm nay bác sĩ có các lịch khám', payload['reply'])
         self.assertIn('Patient One', payload['reply'])
-        self.assertTrue(any(action['label'] == 'Open first patient chat' for action in payload['actions']))
+        self.assertTrue(any(action['label'] == 'Mở chat bệnh nhân đầu tiên' for action in payload['actions']))
 
     def test_chatbot_emergency_warning_uses_local_response(self):
         payload = build_local_chat_response(
             self.user,
-            'I have chest pain and shortness of breath',
+            'Tôi bị đau ngực và khó thở',
         )
 
         self.assertEqual(payload['source'], 'local_emergency')
         self.assertIn('115', payload['reply'])
+        self.assertIn('khẩn cấp', payload['reply'])
         self.assertTrue(payload['actions'])
 
     def test_chat_history_endpoint_returns_messages(self):

@@ -121,6 +121,16 @@
         color: #b91c1c;
         font-size: 0.94rem;
     }
+    .appointment-cancelled-ui {
+        margin-bottom: 14px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: #f1f5f9;
+        border: 1px solid #dbe4ee;
+        color: #475569;
+        font-size: 0.94rem;
+        font-weight: 600;
+    }
     .appointment-actions-ui {
         display: flex;
         flex-wrap: wrap;
@@ -219,7 +229,11 @@
                 </div>
             </div>
 
-            {% if booking.modify_reason and not booking.can_modify %}
+            {% if booking.status == 'cancelled' %}
+            <div class="appointment-cancelled-ui">
+                <i class="fas fa-info-circle mr-2"></i>Lịch khám này đã bị hủy nhưng vẫn được giữ lại để bạn theo dõi lịch sử.
+            </div>
+            {% elif booking.modify_reason and not booking.can_modify %}
             <div class="appointment-warning-ui">
                 <i class="fas fa-exclamation-triangle mr-2"></i>{{ booking.modify_reason }}
             </div>

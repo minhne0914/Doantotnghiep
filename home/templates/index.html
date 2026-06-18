@@ -39,7 +39,34 @@
   .umc-hero h1 { font-size:48px; font-weight:800; line-height:1.15; margin-bottom:22px; }
   .umc-hero h1 span { color: var(--umc-cyan); }
   .umc-hero p { font-size:17px; opacity:0.92; line-height:1.7; margin-bottom:30px; max-width:600px; }
+  .umc-hero-content > h1,
+  .umc-hero-content > p,
+  .umc-hero .col-lg-5 > i { display:none !important; }
   .umc-hero-btns { display:flex; gap:14px; flex-wrap:wrap; }
+  .umc-hero-visual {
+    position: relative;
+    z-index: 2;
+    max-width: 500px;
+    margin-left: auto;
+  }
+  .umc-hero-visual::before {
+    content: '';
+    position: absolute;
+    inset: 28px -10px -18px 24px;
+    border-radius: 28px;
+    background: rgba(22, 163, 196, 0.2);
+  }
+  .umc-hero-visual img {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 0.86;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 26px;
+    border: 1px solid rgba(255,255,255,0.22);
+    box-shadow: 0 26px 70px rgba(0,0,0,0.24);
+    display: block;
+  }
   .btn-orange {
     background: var(--umc-orange); color:#fff;
     padding:13px 28px; border-radius:8px; font-weight:700;
@@ -193,6 +220,7 @@
 
   @media (max-width: 992px) {
     .umc-hero h1 { font-size:36px; }
+    .umc-hero p { max-width:100%; }
     .hero-stats-grid { grid-template-columns:repeat(2,1fr); }
     .hero-stat { border-right:none; border-bottom:1px solid var(--umc-border); }
     .umc-title { font-size:26px; }
@@ -222,6 +250,10 @@
     <div class="container">
       <div class="row align-items-center">
         <div class="col-lg-7 umc-hero-content">
+          <div class="umc-hero-copy">
+            <h1>{% trans "Cùng trợ lực AI" %}<br><span>{% trans "đánh bay mọi bệnh tật" %}</span></h1>
+            <p>{% trans "Kiểm tra nguy cơ các bệnh phổ biến chỉ trong vài phút, đặt lịch khám dễ dàng, trò chuyện trực tiếp với bác sĩ và lưu trữ bệnh án an toàn — tất cả ngay trên hệ thống." %}</p>
+          </div>
           <div class="umc-hero-eyebrow"><i class="fas fa-heartbeat"></i> {% trans "Phòng khám AI thông minh" %}</div>
           <h1>{% trans "Y tế chuẩn mực" %} <span>{% trans "trợ lực AI" %}</span><br>{% trans "vì sức khỏe của bạn" %}</h1>
           <p>{% trans "Medic là phòng khám điện tử ứng dụng AI cho 6 bệnh phổ biến: tiểu đường, tim mạch, ung thư vú, thận, viêm phổi, ung thư da. Đặt lịch online, chat với bác sĩ, quản lý bệnh án điện tử an toàn." %}</p>
@@ -231,6 +263,9 @@
           </div>
         </div>
         <div class="col-lg-5 d-none d-lg-block text-center">
+          <div class="umc-hero-visual">
+            <img src="{% static 'images/hero-ai-doctor.png' %}" alt="{% trans 'Bác sĩ AI Medic' %}">
+          </div>
           <i class="fas fa-user-md" style="font-size:200px; opacity:0.25; color:#fff;"></i>
         </div>
       </div>

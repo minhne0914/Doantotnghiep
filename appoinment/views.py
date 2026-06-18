@@ -36,6 +36,7 @@ from .services import (
     SLOT_GAP_SECONDS,
     booking_can_be_modified,
     booking_datetime,
+    booking_is_emr_ready,
     has_slot_conflict,
     status_badge,
 )
@@ -68,8 +69,24 @@ class AppointmentCreateView(CreateView):
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
+    def _overlapping_shift_exists(self, form):
+        return Appointment.objects.filter(
+            user=self.request.user,
+            is_active=True,
+            date=form.cleaned_data.get('date'),
+            start_time__lt=form.cleaned_data.get('end_time'),
+            end_time__gt=form.cleaned_data.get('start_time'),
+        ).exists()
+
     def form_valid(self, form):
         user = self.request.user
+        if self._overlapping_shift_exists(form):
+            form.add_error(
+                'start_time',
+                'Khung giờ này đang chồng với một ca làm việc đã có. Vui lòng chọn giờ khác.',
+            )
+            return self.form_invalid(form)
+
         form.instance.user = user
         form.instance.full_name = f'{user.first_name} {user.last_name}'
         form.instance.image = user.image
@@ -83,7 +100,31 @@ class AppointmentCreateView(CreateView):
         form.instance.department = (profile.specialization if profile else None) or _('Chưa cập nhật')
         form.instance.qualification_name = (profile.qualifications if profile else None) or _('Chưa cập nhật')
         form.instance.institute_name = form.instance.hospital_name
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'ok': True,
+                'appointment': {
+                    'id': self.object.pk,
+                    'date': self.object.date.isoformat(),
+                    'start_time': self.object.start_time.strftime('%H:%M'),
+                    'end_time': self.object.end_time.strftime('%H:%M'),
+                    'hospital_name': self.object.hospital_name,
+                    'location': self.object.location,
+                },
+            })
+        return response
+
+    def form_invalid(self, form):
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'ok': False,
+                'errors': form.errors.get_json_data(),
+            }, status=400)
+        return super().form_invalid(form)
+
+    def get_success_url(self):
+        return f'{reverse_lazy("doctor-appointment")}?date={self.object.date.isoformat()}&created={self.object.pk}'
 
 
 class AppointmentListView(ListView):
@@ -108,6 +149,9 @@ class AppointmentListView(ListView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         context['user_image'] = user.image.url if user.image else None
+        requested_date = self.request.GET.get('date')
+        context['calendar_initial_date'] = requested_date or timezone.localdate().isoformat()
+        context['created_schedule_id'] = self.request.GET.get('created', '')
         return context
 
 
@@ -130,12 +174,24 @@ class AppointmentDeleteView(DeleteView):
         context['user_image'] = self.object.user.image.url if self.object.user.image else None
         return context
 
-    def delete(self, request, *args, **kwargs):
+    def _cancel_and_redirect(self, request):
         self.object = self.get_object()
-        BookingService.cancel_all_for_appointment(
+        cancelled_bookings = BookingService.cancel_all_for_appointment(
             appointment=self.object, changed_by=request.user
         )
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'ok': True,
+                'appointment_id': self.object.pk,
+                'cancelled_bookings': len(cancelled_bookings),
+            })
         return redirect(self.success_url)
+
+    def post(self, request, *args, **kwargs):
+        return self._cancel_and_redirect(request)
+
+    def delete(self, request, *args, **kwargs):
+        return self._cancel_and_redirect(request)
 
 
 # =============================================================================
@@ -591,6 +647,7 @@ class PatientListView(ListView):
             patient.histories = MedicalHistory.objects.filter(
                 user=patient.user
             ).order_by('-created_at')
+            patient.emr_ready = booking_is_emr_ready(patient)
         return context
 
     def get_queryset(self):
@@ -633,14 +690,28 @@ class PatientDeleteView(DeleteView):
             ],
         ).select_related('appointment', 'appointment__user')
 
-    def delete(self, request, *args, **kwargs):
+    def _cancel_and_redirect(self, request):
         self.object = self.get_object()
-        BookingService.cancel_by_doctor(
+        booking, error_message = BookingService.cancel_by_doctor(
             booking=self.object,
             reason='Bác sĩ hủy lịch khám.',
             changed_by=request.user,
         )
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            if error_message:
+                return JsonResponse({'ok': False, 'error': error_message}, status=400)
+            return JsonResponse({
+                'ok': True,
+                'booking_id': booking.id,
+                'status': booking.status,
+            })
         return redirect(self.success_url)
+
+    def post(self, request, *args, **kwargs):
+        return self._cancel_and_redirect(request)
+
+    def delete(self, request, *args, **kwargs):
+        return self._cancel_and_redirect(request)
 
 
 
@@ -897,12 +968,45 @@ class DoctorCalendarEventsAPI(View):
             date__lte=end_date,
         )
         for shift in doctor_shifts:
+            shift_label_end_time = (
+                datetime.datetime.combine(shift.date, shift.start_time)
+                + datetime.timedelta(minutes=20)
+            ).time()
+            shift_start = f'{shift.date.isoformat()}T{shift.start_time.isoformat()}'
+            shift_end = f'{shift.date.isoformat()}T{shift.end_time.isoformat()}'
+            shift_label_end = f'{shift.date.isoformat()}T{shift_label_end_time.isoformat()}'
+            shift_time = f'{shift.start_time.strftime("%H:%M")} - {shift.end_time.strftime("%H:%M")}'
             events.append({
                 'id': f'shift_{shift.id}',
-                'start': f'{shift.date.isoformat()}T{shift.start_time.isoformat()}',
-                'end': f'{shift.date.isoformat()}T{shift.end_time.isoformat()}',
+                'start': shift_start,
+                'end': shift_end,
                 'display': 'background',
-                'backgroundColor': '#e2e8f0',
+                'backgroundColor': '#ecfeff',
+                'classNames': ['doctor-shift-bg'],
+                'extendedProps': {
+                    'event_type': 'doctor_shift_bg',
+                    'shift_id': shift.id,
+                    'shift_time': shift_time,
+                },
+            })
+            events.append({
+                'id': f'shift_label_{shift.id}',
+                'title': f'Working hours {shift_time}',
+                'start': shift_start,
+                'end': shift_label_end,
+                'backgroundColor': '#dff8f7',
+                'borderColor': '#99e8e4',
+                'textColor': '#0f4f5c',
+                'classNames': ['doctor-shift-label'],
+                'extendedProps': {
+                    'event_type': 'doctor_shift',
+                    'shift_id': shift.id,
+                    'doctor_name': shift.full_name,
+                    'hospital_name': shift.hospital_name,
+                    'location': shift.location,
+                    'department': shift.department,
+                    'shift_time': shift_time,
+                },
             })
 
         # 2. Booking events
@@ -925,18 +1029,22 @@ class DoctorCalendarEventsAPI(View):
             end_dt = start_dt + datetime.timedelta(minutes=30)
             title_prefix = '[Đã Hủy] ' if booking.status == TakeAppointment.STATUS_CANCELLED else ''
             _, status_label = status_badge(booking.status)
+            account_name = f'{booking.user.first_name} {booking.user.last_name}'.strip()
+            patient_name = booking.full_name or account_name or booking.user.email
 
             events.append({
                 'id': f'booking_{booking.id}',
-                'title': f'{title_prefix}{booking.user.first_name} {booking.user.last_name}',
+                'title': f'{title_prefix}{patient_name}',
                 'start': start_dt.isoformat(),
                 'end': end_dt.isoformat(),
                 'backgroundColor': color_map.get(booking.status, '#3788d8'),
-                'borderColor': 'transparent',
+                'borderColor': color_map.get(booking.status, '#3788d8'),
                 'textColor': '#fff',
+                'classNames': ['patient-booking-event', f'booking-status-{booking.status}'],
                 'extendedProps': {
+                    'event_type': 'patient_booking',
                     'booking_id': booking.id,
-                    'patient_name': f'{booking.user.first_name} {booking.user.last_name}',
+                    'patient_name': patient_name,
                     'phone': booking.phone_number or 'Chưa cập nhật',
                     'message': booking.message or 'Không có',
                     'status': status_label,

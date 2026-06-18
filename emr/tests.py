@@ -98,6 +98,62 @@ class EMRFlowTests(TestCase):
         self.assertEqual(booking.status, TakeAppointment.STATUS_COMPLETED)
         self.assertTrue(EMRRecord.objects.filter(appointment=booking).exists())
 
+    def test_doctor_html_form_allows_blank_prescription_order(self):
+        booking = TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Patient EMR',
+            phone_number='0123456789',
+            message='Arrived booking',
+            date=self.appointment.date,
+            time=timezone.datetime.strptime('10:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_ARRIVED,
+        )
+        self.client.force_login(self.doctor)
+
+        response = self.client.post(
+            reverse('doctor-emr-form', args=[booking.pk]),
+            {
+                'symptoms': 'Cough and fever',
+                'diagnosis': 'Upper respiratory infection',
+                'clinical_notes': 'Stable condition',
+                'follow_up_plan': 'Recheck after 3 days',
+                'weight_kg': '55',
+                'height_cm': '165',
+                'blood_pressure_systolic': '120',
+                'blood_pressure_diastolic': '80',
+                'heart_rate': '78',
+                'temperature_c': '37.2',
+                'prescriptions-TOTAL_FORMS': '3',
+                'prescriptions-INITIAL_FORMS': '0',
+                'prescriptions-MIN_NUM_FORMS': '0',
+                'prescriptions-MAX_NUM_FORMS': '1000',
+                'prescriptions-0-medicine_name': 'Paracetamol',
+                'prescriptions-0-dosage': '500mg',
+                'prescriptions-0-frequency': '2 times/day',
+                'prescriptions-0-duration': '3 days',
+                'prescriptions-0-instructions': 'After meals',
+                'prescriptions-0-order': '',
+                'prescriptions-1-medicine_name': '',
+                'prescriptions-1-dosage': '',
+                'prescriptions-1-frequency': '',
+                'prescriptions-1-duration': '',
+                'prescriptions-1-instructions': '',
+                'prescriptions-1-order': '',
+                'prescriptions-2-medicine_name': '',
+                'prescriptions-2-dosage': '',
+                'prescriptions-2-frequency': '',
+                'prescriptions-2-duration': '',
+                'prescriptions-2-instructions': '',
+                'prescriptions-2-order': '',
+            },
+        )
+
+        self.assertRedirects(response, reverse('doctor-emr-form', args=[booking.pk]))
+        record = EMRRecord.objects.get(appointment=booking)
+        self.assertEqual(record.prescriptions.count(), 1)
+        self.assertEqual(record.prescriptions.first().order, 0)
+
     def test_create_emr_rejects_invalid_vital_sign_payload(self):
         booking = TakeAppointment.objects.create(
             user=self.patient,

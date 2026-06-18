@@ -558,10 +558,10 @@ def _action(label, url, tone='primary'):
 
 def _format_doctor_card(doctor):
     profile = getattr(doctor, 'doctor_profile', None)
-    specialty = (profile.specialization if profile else None) or 'chua cap nhat'
+    specialty = (profile.specialization if profile else None) or 'chưa cập nhật'
     rating = getattr(doctor, 'avg_rating', None)
     review_count = getattr(doctor, 'review_count', 0) or 0
-    rating_text = f' - danh gia {rating:.1f}/5 ({review_count} luot)' if rating else ''
+    rating_text = f' - đánh giá {rating:.1f}/5 ({review_count} lượt)' if rating else ''
     return (
         f"BS. {doctor.first_name} {doctor.last_name} - {specialty}"
         f"{rating_text}."
@@ -571,27 +571,27 @@ def _format_doctor_card(doctor):
 def _format_booking_card(booking):
     appointment = booking.appointment
     return (
-        f"{booking.date.strftime('%d/%m/%Y')} luc {booking.time.strftime('%H:%M')} "
-        f"voi BS. {appointment.user.first_name} {appointment.user.last_name} "
-        f"({appointment.department}) - trang thai: {booking.get_status_display()}."
+        f"{booking.date.strftime('%d/%m/%Y')} lúc {booking.time.strftime('%H:%M')} "
+        f"với BS. {appointment.user.first_name} {appointment.user.last_name} "
+        f"({appointment.department}) - trạng thái: {booking.get_status_display()}."
     )
 
 
 def _format_doctor_booking_card(booking):
     appointment = booking.appointment
-    note = f" - note: {booking.message}" if booking.message else ""
+    note = f" - ghi chú: {booking.message}" if booking.message else ""
     return (
-        f"{booking.date.strftime('%d/%m/%Y')} at {booking.time.strftime('%H:%M')} - "
+        f"{booking.date.strftime('%d/%m/%Y')} lúc {booking.time.strftime('%H:%M')} - "
         f"{booking.full_name} ({booking.phone_number}) "
-        f"for {appointment.department}; status: {booking.get_status_display()}{note}."
+        f"khám {appointment.department}; trạng thái: {booking.get_status_display()}{note}."
     )
 
 
 def _format_slot_card(slot):
     return (
         f"{slot.date.strftime('%d/%m/%Y')} {slot.start_time.strftime('%H:%M')}-"
-        f"{slot.end_time.strftime('%H:%M')} voi BS. {slot.user.first_name} "
-        f"{slot.user.last_name} ({slot.department}) tai {slot.hospital_name}."
+        f"{slot.end_time.strftime('%H:%M')} với BS. {slot.user.first_name} "
+        f"{slot.user.last_name} ({slot.department}) tại {slot.hospital_name}."
     )
 
 
@@ -613,19 +613,19 @@ def build_local_chat_response(user, user_message):
         target_date = booking_date_filter or today
         bookings = get_doctor_bookings(user, top_k=10, target_date=target_date)
         actions.extend([
-            _action('Open doctor dashboard', '/account/doctor/dashboard/', 'primary'),
-            _action('Open appointment calendar', '/appoinment/doctor/appointment/', 'secondary'),
+            _action('Mở dashboard bác sĩ', '/account/doctor/dashboard/', 'primary'),
+            _action('Mở lịch khám', '/appoinment/doctor/appointment/', 'secondary'),
         ])
         if bookings:
             if target_date == today:
-                lines = ['Today you have these active appointments:']
+                lines = ['Hôm nay bác sĩ có các lịch khám đang hoạt động:']
             else:
-                lines = [f'Appointments on {target_date.strftime("%d/%m/%Y")}:']
+                lines = [f'Các lịch khám ngày {target_date.strftime("%d/%m/%Y")}:']
             lines.extend(f'- {_format_doctor_booking_card(booking)}' for booking in bookings)
             first_booking = bookings[0]
             actions.insert(
                 0,
-                _action('Open first patient chat', f'/appoinment/doctor/inbox/{first_booking.id}/', 'success'),
+                _action('Mở chat bệnh nhân đầu tiên', f'/appoinment/doctor/inbox/{first_booking.id}/', 'success'),
             )
             return {
                 'reply': '\n'.join(lines),
@@ -633,9 +633,9 @@ def build_local_chat_response(user, user_message):
                 'source': 'local_doctor_schedule',
             }
         empty = (
-            'You do not have active appointments today.'
+            'Hôm nay bác sĩ chưa có lịch khám đang hoạt động.'
             if target_date == today
-            else f'You do not have active appointments on {target_date.strftime("%d/%m/%Y")}.'
+            else f'Bác sĩ chưa có lịch khám đang hoạt động vào ngày {target_date.strftime("%d/%m/%Y")}.'
         )
         return {
             'reply': empty,
@@ -646,27 +646,27 @@ def build_local_chat_response(user, user_message):
     if 'emergency' in intents:
         return {
             'reply': (
-                'Toi thay cau hoi cua ban co dau hieu khan cap. Neu ban dang kho tho, '
-                'dau nguc du doi, ngat, co giat, chay mau nhieu hoac dau hieu dot quy, '
-                'hay goi 115 hoac den co so y te gan nhat ngay. Medic AI chi ho tro '
-                'tham khao, khong thay the cap cuu.'
+                'Tôi thấy nội dung của bạn có dấu hiệu khẩn cấp. Nếu bạn đang khó thở, '
+                'đau ngực dữ dội, ngất, co giật, chảy máu nhiều hoặc có dấu hiệu đột quỵ, '
+                'hãy gọi 115 hoặc đến cơ sở y tế gần nhất ngay. Medic AI chỉ hỗ trợ tham khảo, '
+                'không thay thế cấp cứu.'
             ),
             'actions': [
-                _action('Xem danh sach bac si', '/appoinment/doctor/', 'danger'),
+                _action('Xem danh sách bác sĩ', '/appoinment/doctor/', 'danger'),
             ],
             'source': 'local_emergency',
         }
 
     if 'my_bookings' in intents:
         bookings = get_user_bookings(user, top_k=5, target_date=booking_date_filter)
-        actions.append(_action('Mo lich hen cua toi', '/appoinment/patient/my-appointments/', 'primary'))
+        actions.append(_action('Mở lịch hẹn của tôi', '/appoinment/patient/my-appointments/', 'primary'))
         if bookings:
             if booking_date_filter == today:
-                lines = ['Hom nay ban co lich kham:']
+                lines = ['Hôm nay bạn có lịch khám:']
             elif booking_date_filter:
-                lines = [f'Ngay {booking_date_filter.strftime("%d/%m/%Y")} ban co lich kham:']
+                lines = [f'Ngày {booking_date_filter.strftime("%d/%m/%Y")} bạn có lịch khám:']
             else:
-                lines = ['Day la cac lich hen sap toi cua ban:']
+                lines = ['Đây là các lịch hẹn sắp tới của bạn:']
             lines.extend(f'- {_format_booking_card(booking)}' for booking in bookings)
             return {
                 'reply': '\n'.join(lines),
@@ -675,23 +675,23 @@ def build_local_chat_response(user, user_message):
             }
         if booking_date_filter == today:
             empty_reply = (
-                'Hom nay ban khong co lich kham nao dang hoat dong. '
-                'Neu can kham, ban co the xem danh sach bac si va dat lich moi.'
+                'Hôm nay bạn không có lịch khám nào đang hoạt động. '
+                'Nếu cần khám, bạn có thể xem danh sách bác sĩ và đặt lịch mới.'
             )
         elif booking_date_filter:
             empty_reply = (
-                f'Ngay {booking_date_filter.strftime("%d/%m/%Y")} ban khong co lich kham nao dang hoat dong. '
-                'Neu can kham, ban co the xem danh sach bac si va dat lich moi.'
+                f'Ngày {booking_date_filter.strftime("%d/%m/%Y")} bạn không có lịch khám nào đang hoạt động. '
+                'Nếu cần khám, bạn có thể xem danh sách bác sĩ và đặt lịch mới.'
             )
         else:
             empty_reply = (
-                'Hien tai ban chua co lich hen sap toi dang hoat dong. '
-                'Ban co the vao danh sach bac si de chon chuyen khoa va dat lich moi.'
+                'Hiện tại bạn chưa có lịch hẹn sắp tới đang hoạt động. '
+                'Bạn có thể vào danh sách bác sĩ để chọn chuyên khoa và đặt lịch mới.'
             )
         return {
             'reply': empty_reply,
             'actions': [
-                _action('Tim bac si', '/appoinment/doctor/', 'primary'),
+                _action('Tìm bác sĩ', '/appoinment/doctor/', 'primary'),
                 *actions,
             ],
             'source': 'local_bookings',
@@ -700,14 +700,14 @@ def build_local_chat_response(user, user_message):
     if 'appointment' in intents and not is_personal_booking_question:
         slots = search_available_slots(user_message, top_k=5)
         if slots:
-            lines = ['Toi tim thay mot so khung kham con trong trong 7 ngay toi:']
+            lines = ['Tôi tìm thấy một số khung khám còn trống trong 7 ngày tới:']
             lines.extend(f'- {_format_slot_card(slot)}' for slot in slots)
             actions.extend([
-                _action('Xem tat ca bac si', '/appoinment/doctor/', 'primary'),
-                _action('Lich hen cua toi', '/appoinment/patient/my-appointments/', 'secondary'),
+                _action('Xem tất cả bác sĩ', '/appoinment/doctor/', 'primary'),
+                _action('Lịch hẹn của tôi', '/appoinment/patient/my-appointments/', 'secondary'),
             ])
             first_slot = slots[0]
-            actions.insert(0, _action('Dat lich goi y dau tien', f'/appoinment/patient-take-appointment/{first_slot.id}/', 'success'))
+            actions.insert(0, _action('Đặt lịch gợi ý đầu tiên', f'/appoinment/patient-take-appointment/{first_slot.id}/', 'success'))
             return {
                 'reply': '\n'.join(lines),
                 'actions': actions,
@@ -715,21 +715,21 @@ def build_local_chat_response(user, user_message):
             }
         return {
             'reply': (
-                'Toi chua tim thay khung kham trong phu hop trong 7 ngay toi. '
-                'Ban thu doi ngay, doi chuyen khoa, hoac xem toan bo danh sach bac si.'
+                'Tôi chưa tìm thấy khung khám trống phù hợp trong 7 ngày tới. '
+                'Bạn thử đổi ngày, đổi chuyên khoa hoặc xem toàn bộ danh sách bác sĩ.'
             ),
-            'actions': [_action('Xem doi ngu bac si', '/appoinment/doctor/', 'primary')],
+            'actions': [_action('Xem đội ngũ bác sĩ', '/appoinment/doctor/', 'primary')],
             'source': 'local_slots',
         }
 
     if 'doctor' in intents:
         doctors = search_doctors(user_message, top_k=5)
         if doctors:
-            lines = ['Toi tim thay cac bac si phu hop trong he thong:']
+            lines = ['Tôi tìm thấy các bác sĩ phù hợp trong hệ thống:']
             lines.extend(f'- {_format_doctor_card(doctor)}' for doctor in doctors)
             actions.extend([
-                _action('Xem danh sach bac si', '/appoinment/doctor/', 'primary'),
-                _action('Xem bac si dau tien', f'/appoinment/doctor/{doctors[0].id}/profile/', 'success'),
+                _action('Xem danh sách bác sĩ', '/appoinment/doctor/', 'primary'),
+                _action('Xem bác sĩ đầu tiên', f'/appoinment/doctor/{doctors[0].id}/profile/', 'success'),
             ])
             return {
                 'reply': '\n'.join(lines),
@@ -737,21 +737,21 @@ def build_local_chat_response(user, user_message):
                 'source': 'local_doctors',
             }
         return {
-            'reply': 'Toi chua tim thay bac si phu hop voi cau hoi nay trong database.',
-            'actions': [_action('Xem tat ca bac si', '/appoinment/doctor/', 'primary')],
+            'reply': 'Tôi chưa tìm thấy bác sĩ phù hợp với câu hỏi này trong database.',
+            'actions': [_action('Xem tất cả bác sĩ', '/appoinment/doctor/', 'primary')],
             'source': 'local_doctors',
         }
 
     if 'my_history' in intents or 'screening' in intents:
         history = get_user_medical_history(user, top_k=5)
-        actions.append(_action('Mo lich su AI', '/history/', 'primary'))
+        actions.append(_action('Mở lịch sử AI', '/history/', 'primary'))
         if history:
-            lines = ['Day la cac ket qua sang loc AI gan day cua ban:']
+            lines = ['Đây là các kết quả sàng lọc AI gần đây của bạn:']
             lines.extend(
                 f"- {item.created_at.strftime('%d/%m/%Y')}: {item.disease_type} -> {item.prediction_result}"
                 for item in history
             )
-            lines.append('Luu y: ket qua AI chi co tinh tham khao, ban nen gap bac si de duoc ket luan chinh xac.')
+            lines.append('Lưu ý: kết quả AI chỉ có tính tham khảo, bạn nên gặp bác sĩ để được kết luận chính xác.')
             return {
                 'reply': '\n'.join(lines),
                 'actions': actions,
@@ -759,26 +759,26 @@ def build_local_chat_response(user, user_message):
             }
         return {
             'reply': (
-                'Ban chua co lich su sang loc AI trong he thong. '
-                'Ban co the thu cac cong cu sang loc tren website, sau do Medic AI se doc lai ket qua cho ban.'
+                'Bạn chưa có lịch sử sàng lọc AI trong hệ thống. '
+                'Bạn có thể thử các công cụ sàng lọc trên website, sau đó Medic AI sẽ đọc lại kết quả cho bạn.'
             ),
             'actions': [
-                _action('Sang loc da bang AI', '/skin_cancer/', 'primary'),
-                _action('Lich su AI', '/history/', 'secondary'),
+                _action('Sàng lọc da bằng AI', '/skin_cancer/', 'primary'),
+                _action('Lịch sử AI', '/history/', 'secondary'),
             ],
             'source': 'local_history',
         }
 
     return {
         'reply': (
-            'Toi la Medic AI. Ban co the hoi toi ve bac si, chuyen khoa, lich kham con trong, '
-            'lich hen cua ban, hoac ket qua sang loc AI. Neu ban mo ta trieu chung, toi se chi '
-            'dua ra thong tin tham khao va khuyen ban gap bac si khi can.'
+            'Tôi là Medic AI. Bạn có thể hỏi tôi về bác sĩ, chuyên khoa, lịch khám còn trống, '
+            'lịch hẹn của bạn hoặc kết quả sàng lọc AI. Nếu bạn mô tả triệu chứng, tôi sẽ chỉ '
+            'đưa ra thông tin tham khảo và khuyên bạn gặp bác sĩ khi cần.'
         ),
         'actions': [
-            _action('Tim bac si', '/appoinment/doctor/', 'primary'),
-            _action('Lich hen cua toi', '/appoinment/patient/my-appointments/', 'secondary'),
-            _action('Lich su AI', '/history/', 'secondary'),
+            _action('Tìm bác sĩ', '/appoinment/doctor/', 'primary'),
+            _action('Lịch hẹn của tôi', '/appoinment/patient/my-appointments/', 'secondary'),
+            _action('Lịch sử AI', '/history/', 'secondary'),
         ],
         'source': 'local_general',
     }

@@ -10,7 +10,6 @@ Thay đổi chính:
 import json
 import logging
 from decimal import Decimal, InvalidOperation
-from datetime import datetime
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
@@ -18,7 +17,6 @@ from django.db import transaction
 from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
-from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic import ListView
@@ -26,6 +24,7 @@ from django.views.generic import ListView
 from accounts.decorators import user_is_doctor
 from accounts.models import UserRole
 from appoinment.models import TakeAppointment
+from appoinment.services import booking_is_emr_ready as service_booking_is_emr_ready
 
 from .forms import EMRRecordForm, PrescriptionFormSet, VitalSignForm
 from .models import EMRRecord, PrescriptionItem, VitalSign
@@ -119,17 +118,7 @@ def patient_owns_record(user, record):
 
 def booking_is_emr_ready(booking):
     """Booking phải là 'arrived'/'completed', hoặc đã đến giờ khám."""
-    if booking.status in (TakeAppointment.STATUS_CANCELLED, TakeAppointment.STATUS_PENDING):
-        return False
-    if booking.status in (TakeAppointment.STATUS_ARRIVED, TakeAppointment.STATUS_COMPLETED):
-        return True
-    if not booking.date or not booking.time:
-        return False
-    appointment_dt = timezone.make_aware(
-        datetime.combine(booking.date, booking.time),
-        timezone.get_current_timezone(),
-    )
-    return appointment_dt <= timezone.localtime()
+    return service_booking_is_emr_ready(booking)
 
 
 def _apply_vital_sign(record, data):

@@ -51,8 +51,198 @@
             if (parts.length === 2) return parts.pop().split(';').shift();
             return '';
         }
+
+        function scheduleFormHtml(dateStr) {
+            return `
+                <form id="schedule-modal-form" class="schedule-modal-form">
+                    <div class="schedule-field schedule-field-full">
+                        <label for="schedule-date">Ngày khám</label>
+                        <input id="schedule-date" name="date" type="date" class="form-control" value="${dateStr || ''}" required>
+                    </div>
+                    <div class="schedule-grid">
+                        <div class="schedule-field">
+                            <label for="schedule-start">Giờ bắt đầu</label>
+                            <input id="schedule-start" name="start_time" type="time" class="form-control" required>
+                        </div>
+                        <div class="schedule-field">
+                            <label for="schedule-end">Giờ kết thúc</label>
+                            <input id="schedule-end" name="end_time" type="time" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="schedule-grid">
+                        <div class="schedule-field">
+                            <label for="schedule-hospital">Tên Bệnh viện / Cơ sở y tế</label>
+                            <input id="schedule-hospital" name="hospital_name" type="text" class="form-control" placeholder="VD: Phòng khám Đa khoa Quốc tế" required>
+                        </div>
+                        <div class="schedule-field">
+                            <label for="schedule-location">Địa chỉ khám</label>
+                            <input id="schedule-location" name="location" type="text" class="form-control" placeholder="VD: 123 Đường Điện Biên Phủ, Quận 1" required>
+                        </div>
+                    </div>
+                    <div class="schedule-note">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Hồ sơ tĩnh (Tên, Ảnh, Cơ quan...) sẽ được tự động đổ từ <strong>Profile của bạn</strong> vào lịch khám này.
+                    </div>
+                    <div id="schedule-modal-errors" class="schedule-errors d-none"></div>
+                </form>
+            `;
+        }
+
+        function formatScheduleErrors(errors) {
+            if (!errors) return 'Không thể tạo lịch khám. Vui lòng kiểm tra lại thông tin.';
+            return Object.keys(errors).map((field) => {
+                const messages = errors[field].map((item) => item.message).join(', ');
+                return `<div><strong>${field}</strong>: ${messages}</div>`;
+            }).join('');
+        }
+
+        async function openScheduleModal(dateStr) {
+            const result = await Swal.fire({
+                title: 'Thông tin lịch khám',
+                html: scheduleFormHtml(dateStr),
+                width: 860,
+                showCancelButton: true,
+                confirmButtonText: 'Mở ca khám mới',
+                cancelButtonText: 'Đóng',
+                confirmButtonColor: '#0f8aa3',
+                cancelButtonColor: '#94a3b8',
+                customClass: {
+                    popup: 'schedule-modal-popup',
+                    title: 'schedule-modal-title',
+                    htmlContainer: 'schedule-modal-html',
+                    confirmButton: 'schedule-modal-confirm'
+                },
+                focusConfirm: false,
+                preConfirm: async () => {
+                    const form = document.getElementById('schedule-modal-form');
+                    const errorsBox = document.getElementById('schedule-modal-errors');
+                    const formData = new FormData(form);
+                    errorsBox.classList.add('d-none');
+                    errorsBox.innerHTML = '';
+                    try {
+                        const response = await fetch("{% url 'doctor-appointment-create' %}", {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': getCookie('csrftoken'),
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: formData
+                        });
+                        const payload = await response.json();
+                        if (!response.ok || !payload.ok) {
+                            errorsBox.innerHTML = formatScheduleErrors(payload.errors);
+                            errorsBox.classList.remove('d-none');
+                            Swal.showValidationMessage('Vui lòng kiểm tra lại thông tin lịch khám.');
+                            return false;
+                        }
+                        return payload.appointment;
+                    } catch (error) {
+                        Swal.showValidationMessage('Không thể tạo lịch khám lúc này.');
+                        return false;
+                    }
+                }
+            });
+
+            if (result.isConfirmed && result.value) {
+                calendar.gotoDate(result.value.date);
+                await calendar.refetchEvents();
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Đã tạo ca làm việc',
+                    text: `${result.value.start_time} - ${result.value.end_time}`,
+                    timer: 2600,
+                    showConfirmButton: false
+                });
+            }
+        }
+
+        async function cancelWorkingSchedule(shiftId) {
+            const confirm = await Swal.fire({
+                icon: 'warning',
+                title: 'Hủy ca làm việc?',
+                text: 'Ca này sẽ không còn cho bệnh nhân đặt. Nếu đã có lịch đặt, bệnh nhân sẽ được thông báo hủy.',
+                showCancelButton: true,
+                confirmButtonText: 'Hủy ca làm việc',
+                cancelButtonText: 'Đóng',
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#94a3b8'
+            });
+            if (!confirm.isConfirmed) return;
+
+            try {
+                const response = await fetch(`/appoinment/${shiftId}/view/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const payload = await response.json();
+                if (!response.ok || !payload.ok) {
+                    throw new Error(payload.error || 'Không thể hủy ca làm việc.');
+                }
+                await calendar.refetchEvents();
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Đã hủy ca làm việc',
+                    text: payload.cancelled_bookings ? `Đã hủy ${payload.cancelled_bookings} lịch đặt trong ca.` : 'Ca làm việc đã được gỡ khỏi lịch.',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            } catch (error) {
+                Swal.fire('Không thể hủy ca', error.message, 'error');
+            }
+        }
+
+        async function cancelPatientAppointment(bookingId) {
+            const confirm = await Swal.fire({
+                icon: 'warning',
+                title: 'Hủy lịch hẹn?',
+                text: 'Bệnh nhân sẽ nhận thông báo hủy lịch. Lịch này vẫn được giữ trong lịch sử với trạng thái đã hủy.',
+                showCancelButton: true,
+                confirmButtonText: 'Hủy lịch hẹn',
+                cancelButtonText: 'Đóng',
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#94a3b8'
+            });
+            if (!confirm.isConfirmed) return;
+
+            try {
+                const response = await fetch(`/appoinment/${bookingId}/patient/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                let payload = {};
+                try {
+                    payload = await response.json();
+                } catch (_) {}
+                if (!response.ok || (payload.ok === false)) {
+                    throw new Error(payload.error || 'Không thể hủy lịch hẹn.');
+                }
+                await calendar.refetchEvents();
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Đã hủy lịch hẹn',
+                    timer: 2600,
+                    showConfirmButton: false
+                });
+            } catch (error) {
+                Swal.fire('Không thể hủy lịch hẹn', error.message, 'error');
+            }
+        }
+
         var calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'timeGridWeek',
+            initialDate: '{{ calendar_initial_date }}',
             headerToolbar: {
                 left: 'prev,next today myCustomButton',
                 center: 'title',
@@ -62,7 +252,8 @@
                 myCustomButton: {
                     text: '+ Add schedule',
                     click: function () {
-                        window.location.href = "{% url 'doctor-appointment-create' %}";
+                        const current = calendar.getDate().toISOString().split('T')[0];
+                        openScheduleModal(current);
                     }
                 }
             },
@@ -73,6 +264,30 @@
             expandRows: true,
             nowIndicator: true,
             events: '{% url "doctor-calendar-events" %}',
+            eventDidMount: function (info) {
+                const createdId = '{{ created_schedule_id }}';
+                if (createdId && info.event.id === `shift_label_${createdId}`) {
+                    info.el.classList.add('doctor-shift-created');
+                }
+            },
+            eventContent: function (info) {
+                if (info.event.extendedProps.event_type === 'doctor_shift') {
+                    return {
+                        html: `<span class="doctor-shift-chip">Working hours<br>${info.event.extendedProps.shift_time}</span>`
+                    };
+                }
+                if (info.event.extendedProps.event_type === 'patient_booking') {
+                    const props = info.event.extendedProps;
+                    return {
+                        html: `
+                            <span class="patient-booking-content">
+                                <strong>${props.patient_name || info.event.title}</strong>
+                                <small>${props.status || ''}</small>
+                            </span>
+                        `
+                    };
+                }
+            },
             eventClick: function (info) {
                 // Ignore background availability blocks.
                 if (info.event.display === 'background') {
@@ -83,6 +298,34 @@
                 var startDate = info.event.start;
                 var endDate = info.event.end;
 
+                if (props.event_type === 'doctor_shift') {
+                    Swal.fire({
+                        title: 'Working schedule',
+                        html: `
+                            <div style="text-align:left; padding:10px;">
+                                <p style="font-size:1.05rem;"><strong>${props.shift_time}</strong></p>
+                                <p><i class="fas fa-calendar-day mr-2 text-muted"></i>${startDate.toLocaleDateString('en-US')}</p>
+                                <p><i class="fas fa-hospital mr-2 text-muted"></i>${props.hospital_name || 'Clinic not updated'}</p>
+                                <p><i class="fas fa-map-marker-alt mr-2 text-muted"></i>${props.location || 'Location not updated'}</p>
+                                <p><i class="fas fa-stethoscope mr-2 text-muted"></i>${props.department || 'Specialty not updated'}</p>
+                                <hr/>
+                                <button type="button" class="btn btn-danger w-100" id="cancel-shift-btn">
+                                    <i class="fas fa-calendar-times mr-2"></i>Cancel working schedule
+                                </button>
+                            </div>
+                        `,
+                        confirmButtonText: 'Close',
+                        confirmButtonColor: '#0f766e',
+                        didOpen: () => {
+                            const cancelBtn = document.getElementById('cancel-shift-btn');
+                            if (cancelBtn) {
+                                cancelBtn.addEventListener('click', () => cancelWorkingSchedule(props.shift_id));
+                            }
+                        }
+                    });
+                    return;
+                }
+
                 var timeStr = startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) +
                     ' - ' +
                     endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -90,6 +333,11 @@
                 const confirmButton = props.raw_status === 'pending'
                     ? `<button type="button" class="btn btn-success w-100 mb-2" id="confirm-booking-btn">
                             <i class="fas fa-check-circle mr-2"></i>Confirm appointment
+                       </button>`
+                    : '';
+                const cancelButton = props.raw_status !== 'cancelled' && props.raw_status !== 'completed'
+                    ? `<button type="button" class="btn btn-danger w-100 mb-2" id="cancel-booking-btn">
+                            <i class="fas fa-calendar-times mr-2"></i>Cancel appointment
                        </button>`
                     : '';
 
@@ -106,6 +354,7 @@
                             <hr/>
                             <div class="mt-3">
                                 ${confirmButton}
+                                ${cancelButton}
                                 <a href="/appoinment/doctor/inbox/${props.booking_id}/" class="btn btn-info w-100"><i class="fas fa-comments mr-2"></i>Open chat</a>
                             </div>
                         </div>
@@ -116,7 +365,15 @@
                     didOpen: () => {
                         const confirmBtn = document.getElementById('confirm-booking-btn');
                         if (!confirmBtn) {
+                            const cancelBtnOnly = document.getElementById('cancel-booking-btn');
+                            if (cancelBtnOnly) {
+                                cancelBtnOnly.addEventListener('click', () => cancelPatientAppointment(props.booking_id));
+                            }
                             return;
+                        }
+                        const cancelBtn = document.getElementById('cancel-booking-btn');
+                        if (cancelBtn) {
+                            cancelBtn.addEventListener('click', () => cancelPatientAppointment(props.booking_id));
                         }
                         confirmBtn.addEventListener('click', async () => {
                             confirmBtn.disabled = true;
@@ -149,23 +406,21 @@
             },
             dateClick: function (info) {
                 const dateStr = info.dateStr.split('T')[0];
-                Swal.fire({
-                    title: 'Add a working schedule?',
-                    text: `Date ${new Date(dateStr).toLocaleDateString('en-US')}`,
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#0f766e',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Create schedule',
-                    cancelButtonText: 'Cancel'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = `{% url 'doctor-appointment-create' %}?date=${dateStr}`;
-                    }
-                });
+                openScheduleModal(dateStr);
             }
         });
         calendar.render();
+        if ('{{ created_schedule_id }}') {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Working schedule created',
+                text: 'The calendar is showing the date you just added.',
+                timer: 2600,
+                showConfirmButton: false
+            });
+        }
     });
 </script>
 
@@ -193,8 +448,92 @@
     }
 
     .fc-bg-event {
-        opacity: 0.6 !important;
+        opacity: 0.45 !important;
         cursor: pointer;
+    }
+
+    .fc-bg-event.doctor-shift-bg {
+        background: linear-gradient(135deg, rgba(204, 251, 241, 0.55), rgba(224, 242, 254, 0.45)) !important;
+        opacity: 1 !important;
+        border-left: 4px solid rgba(20, 184, 166, 0.35);
+    }
+
+    .doctor-shift-label {
+        border-radius: 8px !important;
+        box-shadow: 0 6px 16px rgba(15, 118, 110, 0.10) !important;
+        font-weight: 700;
+        opacity: 0.95;
+        min-height: 24px !important;
+        max-height: 34px !important;
+        overflow: hidden !important;
+    }
+
+    .doctor-shift-label .fc-event-main {
+        padding: 2px 6px;
+        line-height: 1.25;
+    }
+
+    .doctor-shift-label .fc-event-time {
+        display: none;
+    }
+
+    .doctor-shift-chip {
+        display: block;
+        white-space: normal;
+        font-size: 0.78rem;
+        line-height: 1.2;
+    }
+
+    .patient-booking-event {
+        min-height: 28px !important;
+        border-radius: 8px !important;
+        box-shadow: 0 5px 14px rgba(15, 23, 42, 0.14) !important;
+        overflow: hidden !important;
+    }
+
+    .patient-booking-event .fc-event-main {
+        color: #fff !important;
+        padding: 3px 7px !important;
+        min-width: 0;
+    }
+
+    .patient-booking-content {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        min-width: 0;
+        color: #fff;
+        line-height: 1.16;
+        text-shadow: 0 1px 1px rgba(15, 23, 42, 0.22);
+    }
+
+    .patient-booking-content strong,
+    .patient-booking-content small {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .patient-booking-content strong {
+        font-size: 0.78rem;
+        font-weight: 800;
+    }
+
+    .patient-booking-content small {
+        font-size: 0.68rem;
+        font-weight: 700;
+        opacity: 0.95;
+    }
+
+    .doctor-shift-created {
+        outline: 3px solid rgba(16, 185, 129, 0.38);
+        animation: schedulePulse 1.6s ease-in-out 3;
+    }
+
+    @keyframes schedulePulse {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-2px); }
     }
 
     .fc-button-primary {
@@ -211,6 +550,90 @@
         font-weight: bold;
         background-color: #10b981 !important;
         border-color: #10b981 !important;
+    }
+
+    .schedule-modal-popup {
+        border-radius: 22px !important;
+        padding: 22px 28px 28px !important;
+        box-shadow: 0 24px 70px rgba(15, 23, 42, 0.18) !important;
+    }
+
+    .schedule-modal-title {
+        text-align: left !important;
+        color: #051635 !important;
+        font-size: 1.65rem !important;
+        padding: 0 0 8px !important;
+    }
+
+    .schedule-modal-html {
+        margin: 0 !important;
+        text-align: left !important;
+    }
+
+    .schedule-modal-form {
+        display: grid;
+        gap: 22px;
+    }
+
+    .schedule-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 22px 36px;
+    }
+
+    .schedule-field label {
+        display: block;
+        color: #071733;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .schedule-field .form-control {
+        height: 58px;
+        border-radius: 12px;
+        border: 1px solid #dbe5f0;
+        color: #1e293b;
+        padding: 0 20px;
+        font-size: 1rem;
+        box-shadow: none;
+    }
+
+    .schedule-field .form-control:focus {
+        border-color: #22a6b3;
+        box-shadow: 0 0 0 4px rgba(34, 166, 179, 0.12);
+    }
+
+    .schedule-note {
+        border-radius: 14px;
+        background: #e4f8fb;
+        border: 1px solid #bcecf3;
+        color: #075c69;
+        padding: 18px 20px;
+        line-height: 1.55;
+    }
+
+    .schedule-errors {
+        border-radius: 12px;
+        background: #fef2f2;
+        color: #991b1b;
+        padding: 12px 14px;
+        border: 1px solid #fecaca;
+    }
+
+    .schedule-modal-confirm {
+        min-width: 220px;
+        border-radius: 12px !important;
+        font-weight: 700 !important;
+    }
+
+    @media (max-width: 767.98px) {
+        .schedule-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        .schedule-modal-popup {
+            padding: 18px !important;
+        }
     }
 </style>
 {% endblock %}
