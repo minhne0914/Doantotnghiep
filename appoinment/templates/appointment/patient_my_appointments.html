@@ -44,6 +44,65 @@
         padding: 11px 18px;
         font-weight: 600;
     }
+    .appointment-filter-ui {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 22px;
+        padding: 16px;
+        border: 1px solid #e5edf6;
+        border-radius: 18px;
+        background: #ffffff;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+    }
+    .appointment-search-ui {
+        flex: 1 1 320px;
+        position: relative;
+    }
+    .appointment-search-ui i {
+        position: absolute;
+        top: 50%;
+        left: 15px;
+        transform: translateY(-50%);
+        color: #7b8da1;
+    }
+    .appointment-search-ui input {
+        width: 100%;
+        height: 46px;
+        border: 1px solid #dbe5ef;
+        border-radius: 999px;
+        padding: 0 16px 0 42px;
+        color: #17324d;
+        outline: none;
+    }
+    .appointment-search-ui input:focus,
+    .appointment-filter-ui select:focus {
+        border-color: #0f8da3;
+        box-shadow: 0 0 0 3px rgba(15, 141, 163, 0.12);
+    }
+    .appointment-filter-ui select {
+        height: 46px;
+        min-width: 170px;
+        border: 1px solid #dbe5ef;
+        border-radius: 999px;
+        padding: 0 16px;
+        background: #f8fbfe;
+        color: #17324d;
+        font-weight: 600;
+        outline: none;
+    }
+    .appointment-filter-ui .btn {
+        height: 46px;
+        border-radius: 999px;
+        padding: 0 18px;
+        font-weight: 700;
+    }
+    .appointment-filter-meta {
+        width: 100%;
+        color: #6b7c8f;
+        font-size: 0.92rem;
+    }
     .appointment-list-ui {
         display: grid;
         gap: 18px;
@@ -182,6 +241,10 @@
         .appointment-topbar {
             flex-direction: column;
         }
+        .appointment-filter-ui .btn,
+        .appointment-filter-ui select {
+            width: 100%;
+        }
     }
 </style>
 
@@ -201,6 +264,34 @@
             </div>
         </div>
     </div>
+
+    <form method="get" class="appointment-filter-ui">
+        <div class="appointment-search-ui">
+            <i class="fas fa-search"></i>
+            <input
+                type="text"
+                name="q"
+                value="{{ search_query }}"
+                placeholder="Tìm theo bác sĩ, chuyên khoa, bệnh viện, ngày khám..."
+            >
+        </div>
+        <select name="status">
+            {% for value, label in status_filter_options %}
+            <option value="{{ value }}" {% if value == status_filter %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-filter mr-2"></i>Lọc lịch
+        </button>
+        {% if search_query or status_filter != 'all' %}
+        <a href="{% url 'patient-my-appointments' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-undo mr-2"></i>Xóa lọc
+        </a>
+        {% endif %}
+        <div class="appointment-filter-meta">
+            Ưu tiên hiển thị lịch mới đặt/chờ xác nhận ở phía trên để bạn kiểm tra nhanh sau khi đặt lịch.
+        </div>
+    </form>
 
     {% if appointments %}
     <div class="appointment-list-ui">
@@ -231,9 +322,9 @@
 
             {% if booking.status == 'cancelled' %}
             <div class="appointment-cancelled-ui">
-                <i class="fas fa-info-circle mr-2"></i>Lịch khám này đã bị hủy nhưng vẫn được giữ lại để bạn theo dõi lịch sử.
+                <i class="fas fa-info-circle mr-2"></i>Lịch khám này đã bị hủy.
             </div>
-            {% elif booking.modify_reason and not booking.can_modify %}
+            {% elif booking.modify_reason and not booking.can_modify and booking.status != 'completed' %}
             <div class="appointment-warning-ui">
                 <i class="fas fa-exclamation-triangle mr-2"></i>{{ booking.modify_reason }}
             </div>

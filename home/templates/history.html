@@ -72,6 +72,33 @@
     .chat-pagination .btn {
         min-width: 110px;
     }
+    .chart-wrap {
+        position: relative;
+        min-height: 250px;
+    }
+    .chart-wrap canvas {
+        width: 100% !important;
+        height: 250px !important;
+    }
+    .chart-empty {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        min-height: 250px;
+        border: 1px dashed #cbd5e1;
+        border-radius: 16px;
+        background: #f8fafc;
+        color: #64748b;
+        text-align: center;
+        padding: 18px;
+        font-weight: 600;
+    }
+    .chart-wrap.is-empty canvas {
+        display: none;
+    }
+    .chart-wrap.is-empty .chart-empty {
+        display: flex;
+    }
 </style>
 {% endblock %}
 
@@ -100,7 +127,10 @@
                     <div class="history-title">
                         <h5>Biểu đồ đường huyết</h5>
                     </div>
-                    <canvas id="diabetesChart"></canvas>
+                    <div class="chart-wrap" id="diabetesChartWrap">
+                        <canvas id="diabetesChart"></canvas>
+                        <div class="chart-empty">Chưa có dữ liệu đường huyết hợp lệ để vẽ biểu đồ.</div>
+                    </div>
                 </div>
             </div>
             <div class="col-lg-6">
@@ -108,7 +138,10 @@
                     <div class="history-title">
                         <h5>Biểu đồ huyết áp lúc nghỉ</h5>
                     </div>
-                    <canvas id="heartChart"></canvas>
+                    <div class="chart-wrap" id="heartChartWrap">
+                        <canvas id="heartChart"></canvas>
+                        <div class="chart-empty">Chưa có dữ liệu huyết áp hợp lệ để vẽ biểu đồ.</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -246,6 +279,8 @@
                 scales: { y: { beginAtZero: false } }
             }
         });
+    } else {
+        document.getElementById('diabetesChartWrap').classList.add('is-empty');
     }
 
     const heartData = JSON.parse('{{ blood_pressure_data_json|escapejs }}');
@@ -269,6 +304,8 @@
                 scales: { y: { beginAtZero: false } }
             }
         });
+    } else {
+        document.getElementById('heartChartWrap').classList.add('is-empty');
     }
 </script>
 {% endblock %}

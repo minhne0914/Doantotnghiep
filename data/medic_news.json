@@ -54,6 +54,24 @@
       "date": "28/03/2026",
       "image_url": "https://images.unsplash.com/photo-1559757175-0eb30cd8c063?w=600&h=400&fit=crop",
       "link": "/heart/"
+    },
+    {
+      "id": "emr-secure-records",
+      "title": "B\u1ec7nh \u00e1n \u0111i\u1ec7n t\u1eed gi\u00fap theo d\u00f5i s\u1ee9c kh\u1ecfe li\u00ean t\u1ee5c",
+      "excerpt": "Medic l\u01b0u tr\u1eef l\u1ecbch s\u1eed kh\u00e1m, ch\u1ec9 s\u1ed1 sinh t\u1ed3n, \u0111\u01a1n thu\u1ed1c v\u00e0 k\u1ebft qu\u1ea3 s\u00e0ng l\u1ecdc AI trong m\u1ed9t h\u1ed3 s\u01a1 th\u1ed1ng nh\u1ea5t, gi\u00fap b\u1ec7nh nh\u00e2n v\u00e0 b\u00e1c s\u0129 theo d\u00f5i ti\u1ebfn tri\u1ec3n \u0111i\u1ec1u tr\u1ecb r\u00f5 r\u00e0ng h\u01a1n.",
+      "category": "Tin s\u1ea3n ph\u1ea9m",
+      "date": "22/03/2026",
+      "image_url": "https://images.unsplash.com/photo-1584982751601-97dcc096659c?w=600&h=400&fit=crop",
+      "link": "/emr/patient/timeline/"
+    },
+    {
+      "id": "smart-booking-guide",
+      "title": "\u0110\u1eb7t l\u1ecbch kh\u00e1m th\u00f4ng minh: ch\u1ecdn \u0111\u00fang chuy\u00ean khoa ngay t\u1eeb \u0111\u1ea7u",
+      "excerpt": "T\u1eeb tri\u1ec7u ch\u1ee9ng ban \u0111\u1ea7u v\u00e0 k\u1ebft qu\u1ea3 s\u00e0ng l\u1ecdc, Medic g\u1ee3i \u00fd chuy\u00ean khoa ph\u00f9 h\u1ee3p, hi\u1ec3n th\u1ecb l\u1ecbch tr\u1ed1ng c\u1ee7a b\u00e1c s\u0129 v\u00e0 h\u1ed7 tr\u1ee3 b\u1ec7nh nh\u00e2n qu\u1ea3n l\u00fd l\u1ecbch h\u1eb9n d\u1ec5 d\u00e0ng h\u01a1n.",
+      "category": "H\u01b0\u1edbng d\u1eabn s\u1eed d\u1ee5ng",
+      "date": "16/03/2026",
+      "image_url": "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&h=400&fit=crop",
+      "link": "/appoinment/doctor/"
     }
   ]
 }

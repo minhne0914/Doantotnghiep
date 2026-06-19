@@ -802,13 +802,27 @@ def history_view(request):
 
     diabetes_data = []
     blood_pressure_data = []
+
+    def get_numeric_input(input_data, keys):
+        input_data = input_data or {}
+        for key in keys:
+            value = input_data.get(key)
+            if value in (None, ''):
+                continue
+            try:
+                number = float(value)
+            except (TypeError, ValueError):
+                continue
+            if number > 0:
+                return number
+        return None
+
     for item in MedicalHistory.objects.filter(
-        user=request.user, disease_type='Diabetes'
+        user=request.user, disease_type__in=['Diabetes', 'Diabetes Disease']
     ).order_by('created_at'):
-        try:
-            glucose = float((item.input_data or {}).get('glucose', 0))
-        except (TypeError, ValueError):
-            glucose = 0
+        glucose = get_numeric_input(item.input_data, ['glucose', 'Glucose', 'blood_glucose'])
+        if glucose is None:
+            continue
         diabetes_data.append({
             'date': item.created_at.strftime('%d/%m'),
             'glucose': glucose,
@@ -818,10 +832,9 @@ def history_view(request):
     for item in MedicalHistory.objects.filter(
         user=request.user, disease_type='Heart Disease'
     ).order_by('created_at'):
-        try:
-            bp = float((item.input_data or {}).get('trestbps', 0))
-        except (TypeError, ValueError):
-            bp = 0
+        bp = get_numeric_input(item.input_data, ['trestbps', 'bloodpressure', 'blood_pressure'])
+        if bp is None:
+            continue
         blood_pressure_data.append({
             'date': item.created_at.strftime('%d/%m'),
             'bloodpressure': bp,

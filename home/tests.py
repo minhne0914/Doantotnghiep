@@ -13,6 +13,7 @@ from django.utils import timezone
 from PIL import Image
 
 from .models import ChatMessage, MedicalHistory
+from .services_news import load_latest_reviews
 from .services_chat import build_local_chat_response, build_rag_context, detect_intents
 
 
@@ -197,6 +198,20 @@ class HistoryEndpointTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Positive', status_code=200)
 
+    def test_history_chart_includes_diabetes_disease_seed_data(self):
+        self.client.force_login(self.user)
+        MedicalHistory.objects.create(
+            user=self.user,
+            disease_type='Diabetes Disease',
+            prediction_result='Can theo doi them',
+            input_data={'glucose': 148},
+        )
+
+        response = self.client.get(reverse('history'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('"glucose": 148.0', response.context['diabetes_data_json'])
+
     def test_export_health_history_returns_csv(self):
         self.client.force_login(self.user)
         MedicalHistory.objects.create(
@@ -211,6 +226,15 @@ class HistoryEndpointTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'text/csv; charset=utf-8-sig')
         self.assertIn('Heart Disease', response.content.decode('utf-8-sig'))
+
+
+class HomeContentTests(TestCase):
+    def test_latest_reviews_fills_homepage_to_requested_limit(self):
+        reviews = load_latest_reviews(limit=8)
+
+        self.assertEqual(len(reviews), 8)
+        self.assertTrue(all(hasattr(review, 'patient') for review in reviews))
+        self.assertTrue(all(hasattr(review, 'doctor') for review in reviews))
 
 
 class ChatEndpointTests(TestCase):

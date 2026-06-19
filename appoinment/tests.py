@@ -648,6 +648,84 @@ class AppointmentFlowTests(TestCase):
             ],
         )
 
+    def test_patient_recent_pending_booking_is_easy_to_find_first(self):
+        self.client.force_login(self.patient)
+        confirmed_booking = TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Patient One',
+            phone_number='0123456789',
+            message='Confirmed appointment',
+            date=timezone.localdate() + timedelta(days=1),
+            time=timezone.datetime.strptime('09:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_CONFIRMED,
+            created_at=timezone.now() - timedelta(days=2),
+        )
+        pending_booking = TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Patient One',
+            phone_number='0123456789',
+            message='Fresh pending appointment',
+            date=timezone.localdate() + timedelta(days=14),
+            time=timezone.datetime.strptime('11:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_PENDING,
+            created_at=timezone.now(),
+        )
+
+        response = self.client.get(reverse('patient-my-appointments'))
+
+        self.assertEqual(response.status_code, 200)
+        ordered_ids = [booking.id for booking in response.context['appointments']]
+        self.assertEqual(ordered_ids[:2], [pending_booking.id, confirmed_booking.id])
+
+    def test_patient_can_filter_new_pending_appointments(self):
+        self.client.force_login(self.patient)
+        pending_booking = TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Patient One',
+            phone_number='0123456789',
+            message='Fresh pending appointment',
+            date=timezone.localdate() + timedelta(days=14),
+            time=timezone.datetime.strptime('11:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_PENDING,
+        )
+        TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Patient One',
+            phone_number='0123456789',
+            message='Confirmed appointment',
+            date=timezone.localdate() + timedelta(days=1),
+            time=timezone.datetime.strptime('09:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_CONFIRMED,
+        )
+
+        response = self.client.get(reverse('patient-my-appointments'), {'status': 'new'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([booking.id for booking in response.context['appointments']], [pending_booking.id])
+        self.assertEqual(response.context['status_filter'], 'new')
+
+    def test_completed_patient_appointment_hides_modify_warning(self):
+        self.client.force_login(self.patient)
+        TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Patient One',
+            phone_number='0123456789',
+            message='Completed consultation',
+            date=timezone.localdate() - timedelta(days=1),
+            time=timezone.datetime.strptime('11:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_COMPLETED,
+        )
+
+        response = self.client.get(reverse('patient-my-appointments'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, '<div class="appointment-warning-ui">', html=True)
+
     def test_patient_review_uses_patient_layout_and_returns_to_my_appointments(self):
         self.client.force_login(self.patient)
         booking = TakeAppointment.objects.create(
@@ -807,3 +885,45 @@ class AppointmentFlowTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'Hidden Patient')
+
+    def test_doctor_patient_list_includes_past_completed_and_future_bookings(self):
+        past_booking = TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name='Past Completed Patient',
+            phone_number='0123456789',
+            message='Completed visit',
+            date=timezone.localdate() - timedelta(days=30),
+            time=timezone.datetime.strptime('09:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_COMPLETED,
+        )
+        upcoming_booking = TakeAppointment.objects.create(
+            user=self.other_patient,
+            appointment=self.appointment,
+            full_name='Upcoming Patient',
+            phone_number='0987654321',
+            message='Upcoming visit',
+            date=timezone.localdate() + timedelta(days=7),
+            time=timezone.datetime.strptime('10:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_CONFIRMED,
+        )
+        TakeAppointment.objects.create(
+            user=self.other_patient,
+            appointment=self.appointment,
+            full_name='Cancelled Patient',
+            phone_number='0987654321',
+            message='Cancelled visit',
+            date=timezone.localdate() + timedelta(days=8),
+            time=timezone.datetime.strptime('11:00', '%H:%M').time(),
+            status=TakeAppointment.STATUS_CANCELLED,
+        )
+        self.client.force_login(self.doctor)
+
+        response = self.client.get(reverse('patient-list'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, past_booking.full_name)
+        self.assertContains(response, upcoming_booking.full_name)
+        self.assertNotContains(response, 'Cancelled Patient')
+        self.assertContains(response, 'Đã hoàn thành')
+        self.assertContains(response, 'Đã xác nhận')

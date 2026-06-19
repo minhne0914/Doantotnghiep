@@ -480,17 +480,57 @@ class PatientOwnAppointmentListView(_PatientRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['change_deadline_hours'] = APPOINTMENT_CHANGE_DEADLINE_HOURS
+        context['search_query'] = self.request.GET.get('q', '').strip()
+        context['status_filter'] = self.request.GET.get('status', 'all').strip() or 'all'
+        context['status_filter_options'] = [
+            ('all', _('Tất cả')),
+            ('new', _('Mới đặt')),
+            ('upcoming', _('Sắp tới')),
+            (TakeAppointment.STATUS_PENDING, _('Chờ xác nhận')),
+            (TakeAppointment.STATUS_CONFIRMED, _('Đã xác nhận')),
+            ('history', _('Lịch sử')),
+        ]
         return context
 
     def get_queryset(self):
-        appointments = list(
+        today = timezone.localdate()
+        search_query = self.request.GET.get('q', '').strip()
+        status_filter = self.request.GET.get('status', 'all').strip() or 'all'
+
+        queryset = (
             self.model.objects.filter(user=self.request.user)
             .select_related('appointment', 'appointment__user')
             .prefetch_related('change_logs')
         )
 
+        if search_query:
+            queryset = queryset.filter(
+                Q(appointment__user__first_name__icontains=search_query)
+                | Q(appointment__user__last_name__icontains=search_query)
+                | Q(appointment__hospital_name__icontains=search_query)
+                | Q(appointment__department__icontains=search_query)
+                | Q(message__icontains=search_query)
+                | Q(date__icontains=search_query)
+            )
+
+        if status_filter == 'new':
+            queryset = queryset.filter(status=TakeAppointment.STATUS_PENDING)
+        elif status_filter == 'upcoming':
+            queryset = queryset.filter(status__in=TakeAppointment.ACTIVE_STATUSES, date__gte=today)
+        elif status_filter == 'history':
+            queryset = queryset.filter(
+                Q(status__in=[TakeAppointment.STATUS_CANCELLED, TakeAppointment.STATUS_COMPLETED])
+                | Q(date__lt=today)
+            )
+        elif status_filter in dict(TakeAppointment.STATUS_CHOICES):
+            queryset = queryset.filter(status=status_filter)
+
+        appointments = list(queryset)
+
         def appointment_sort_key(booking):
             appointment_dt = booking_datetime(booking)
+            if booking.status == TakeAppointment.STATUS_PENDING:
+                return (0, -booking.created_at.timestamp(), appointment_dt.timestamp(), booking.id)
             if booking.status in TakeAppointment.ACTIVE_STATUSES:
                 return (0, appointment_dt.timestamp(), booking.id)
             return (1, -appointment_dt.timestamp(), -booking.id)
@@ -648,6 +688,7 @@ class PatientListView(ListView):
                 user=patient.user
             ).order_by('-created_at')
             patient.emr_ready = booking_is_emr_ready(patient)
+            patient.badge_class, patient.badge_label = status_badge(patient.status)
         return context
 
     def get_queryset(self):
@@ -658,15 +699,20 @@ class PatientListView(ListView):
                     TakeAppointment.STATUS_PENDING,
                     TakeAppointment.STATUS_CONFIRMED,
                     TakeAppointment.STATUS_ARRIVED,
+                    TakeAppointment.STATUS_COMPLETED,
                 ],
-                date__gte=timezone.localdate(),
             )
             .select_related('user', 'appointment')
-            .order_by('date', 'time')
+            .order_by('-date', '-time')
         )
         search = self.request.GET.get('search', '').strip()
         if search:
-            queryset = queryset.filter(full_name__icontains=search)
+            queryset = queryset.filter(
+                Q(full_name__icontains=search)
+                | Q(user__first_name__icontains=search)
+                | Q(user__last_name__icontains=search)
+                | Q(user__email__icontains=search)
+            )
         return queryset
 
 

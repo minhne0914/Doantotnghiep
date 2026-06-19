@@ -1284,3 +1284,11 @@ msgstr "The image analysis system is temporarily unavailable. Please try again l
 
 msgid "Vui lòng tải lên một ảnh tổn thương da hợp lệ."
 msgstr "Please upload a valid skin lesion image."
+msgid "Cùng trợ lực AI"
+msgstr "AI-powered support"
+
+msgid "đánh bay mọi bệnh tật"
+msgstr "to fight every illness"
+
+msgid "Kiểm tra nguy cơ các bệnh phổ biến chỉ trong vài phút, đặt lịch khám dễ dàng, trò chuyện trực tiếp với bác sĩ và lưu trữ bệnh án an toàn — tất cả ngay trên hệ thống."
+msgstr "Check your risk for common conditions in just a few minutes, book appointments easily, chat directly with doctors, and store medical records securely — all in one system."
