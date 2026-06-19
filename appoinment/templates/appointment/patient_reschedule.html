@@ -150,7 +150,13 @@
 
             {% if form.errors %}
             <div class="alert alert-danger">
-                Vui lòng kiểm tra lại lựa chọn. Nếu có người vừa chọn slot này trước bạn, hãy chọn ca hoặc giờ khác.
+                {% if form.non_field_errors %}
+                    {% for error in form.non_field_errors %}
+                        <p class="mb-0">{{ error }}</p>
+                    {% endfor %}
+                {% else %}
+                    Vui lòng kiểm tra lại thông tin nhập dưới đây và sửa các lỗi trước khi gửi lại.
+                {% endif %}
             </div>
             {% endif %}
 
@@ -159,18 +165,38 @@
                 <div class="form-group">
                     {{ form.appointment.label_tag }}
                     {{ form.appointment }}
+                    {% if form.appointment.errors %}
+                        <small class="text-danger font-weight-bold d-block mt-1">
+                            {% for error in form.appointment.errors %}{{ error }}{% endfor %}
+                        </small>
+                    {% endif %}
                 </div>
                 <div class="form-group">
                     {{ form.time.label_tag }}
                     {{ form.time }}
+                    {% if form.time.errors %}
+                        <small class="text-danger font-weight-bold d-block mt-1">
+                            {% for error in form.time.errors %}{{ error }}{% endfor %}
+                        </small>
+                    {% endif %}
                 </div>
                 <div class="form-group">
                     {{ form.reason.label_tag }}
                     {{ form.reason }}
+                    {% if form.reason.errors %}
+                        <small class="text-danger font-weight-bold d-block mt-1">
+                            {% for error in form.reason.errors %}{{ error }}{% endfor %}
+                        </small>
+                    {% endif %}
                 </div>
                 <div class="form-group">
                     {{ form.message.label_tag }}
                     {{ form.message }}
+                    {% if form.message.errors %}
+                        <small class="text-danger font-weight-bold d-block mt-1">
+                            {% for error in form.message.errors %}{{ error }}{% endfor %}
+                        </small>
+                    {% endif %}
                 </div>
                 <div class="reschedule-actions">
                     <button type="submit" class="btn btn-primary">

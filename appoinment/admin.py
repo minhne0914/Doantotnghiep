@@ -1,7 +1,13 @@
 """Admin cho appoinment app: lịch khám, booking, review, chat, audit log."""
 
 from django.contrib import admin
+from django import forms
+from django.http import JsonResponse
+from django.urls import path
+from django.utils import timezone
 from django.utils.html import format_html
+
+from accounts.models import User, UserRole
 
 from .models import (
     Appointment,
@@ -18,6 +24,27 @@ from .models import (
 
 @admin.register(Appointment)
 class AppointmentAdmin(admin.ModelAdmin):
+    class AppointmentAdminForm(forms.ModelForm):
+        class Meta:
+            model = Appointment
+            fields = '__all__'
+            widgets = {
+                'date': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+                'start_time': forms.TimeInput(attrs={'type': 'time'}, format='%H:%M'),
+                'end_time': forms.TimeInput(attrs={'type': 'time'}, format='%H:%M'),
+            }
+            labels = {
+                'user': 'Bác sĩ',
+                'date': 'Ngày khám',
+                'start_time': 'Giờ bắt đầu',
+                'end_time': 'Giờ kết thúc',
+                'hospital_name': 'Cơ sở khám',
+                'location': 'Địa chỉ khám',
+                'is_active': 'Cho phép bệnh nhân đặt lịch',
+            }
+
+    form = AppointmentAdminForm
+    change_form_template = 'admin/appoinment/appointment/change_form.html'
     list_display = (
         'id', 'doctor_name', 'department_label', 'date', 'time_range',
         'hospital_name', 'is_active_badge',
@@ -30,13 +57,70 @@ class AppointmentAdmin(admin.ModelAdmin):
     ordering = ('-date', '-start_time')
 
     fieldsets = (
-        ('Bác sĩ', {'fields': ('user', 'full_name', 'qualification_name', 'image')}),
-        ('Chuyên khoa & cơ sở', {'fields': ('department', 'institute_name', 'hospital_name', 'location')}),
-        ('Thời gian', {'fields': ('date', ('start_time', 'end_time'))}),
-        ('Trạng thái', {'fields': ('is_active',)}),
+        ('Thong tin lich kham', {
+            'fields': (
+                'user',
+                'date',
+                ('start_time', 'end_time'),
+                'hospital_name',
+                'location',
+                'is_active',
+            ),
+        }),
     )
 
     actions = ['activate_slots', 'deactivate_slots']
+
+    def get_fieldsets(self, request, obj=None):
+        return (
+            ('Thong tin lich kham', {
+                'fields': (
+                    'user',
+                    'date',
+                    ('start_time', 'end_time'),
+                    'hospital_name',
+                    'location',
+                    'is_active',
+                ),
+            }),
+        )
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'user':
+            kwargs['queryset'] = (
+                db_field.remote_field.model.objects
+                .filter(role=UserRole.DOCTOR)
+                .order_by('first_name', 'last_name', 'email')
+            )
+            formfield = super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+            def doctor_label(user):
+                return f'BS. {user.full_name} — {user.email}'
+
+            formfield.label_from_instance = doctor_label
+            return formfield
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+        doctor = obj.user
+        profile = getattr(doctor, 'doctor_profile', None)
+
+        obj.full_name = doctor.full_name
+        obj.image = doctor.image
+        obj.department = getattr(profile, 'specialization', None) or obj.department or 'Cardiology'
+        obj.qualification_name = (
+            getattr(profile, 'qualifications', None)
+            or obj.qualification_name
+            or 'Doctor'
+        )[:100]
+        obj.institute_name = (
+            getattr(profile, 'biography', None)
+            or getattr(profile, 'experience', None)
+            or obj.institute_name
+            or 'Medic'
+        )[:100]
+
+        super().save_model(request, obj, form, change)
 
     def doctor_name(self, obj):
         return obj.full_name or obj.user.email
@@ -77,8 +161,136 @@ class AppointmentAdmin(admin.ModelAdmin):
 # TakeAppointment (booking của bệnh nhân)
 # =============================================================================
 
+class TakeAppointmentSlotSelect(forms.Select):
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex, attrs)
+        instance = getattr(value, 'instance', None)
+        if instance is not None:
+            option['attrs']['data-doctor'] = str(instance.user_id)
+            option['attrs']['data-date'] = instance.date.isoformat()
+            option['attrs']['data-start'] = instance.start_time.strftime('%H:%M')
+            option['attrs']['data-end'] = instance.end_time.strftime('%H:%M')
+            option['attrs']['data-place'] = instance.hospital_name
+        return option
+
+
 @admin.register(TakeAppointment)
 class TakeAppointmentAdmin(admin.ModelAdmin):
+    SLOT_STEP_MINUTES = 30
+
+    class TakeAppointmentAdminForm(forms.ModelForm):
+        doctor = forms.ModelChoiceField(
+            queryset=User.objects.none(),
+            required=True,
+            label='Bac si',
+        )
+
+        class Meta:
+            model = TakeAppointment
+            fields = (
+                'user',
+                'doctor',
+                'appointment',
+                'message',
+                'date',
+                'time',
+                'status',
+                'cancelled_at',
+                'notification_version',
+            )
+            widgets = {
+                'date': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+                'time': forms.TimeInput(attrs={'type': 'time'}, format='%H:%M'),
+                'appointment': TakeAppointmentSlotSelect,
+            }
+            labels = {
+                'user': 'Bệnh nhân',
+                'appointment': 'Lịch bác sĩ',
+                'full_name': 'Tên bệnh nhân',
+                'phone_number': 'Số điện thoại',
+                'message': 'Ghi chú',
+                'date': 'Ngày khám',
+                'time': 'Giờ khám',
+                'status': 'Trạng thái',
+                'cancelled_at': 'Thời điểm hủy',
+                'notification_version': 'Phiên bản thông báo',
+            }
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            user_model = self.fields['user'].queryset.model
+            open_appointments = (
+                Appointment.objects
+                .filter(is_active=True, date__gte=timezone.localdate())
+                .select_related('user')
+                .order_by('date', 'start_time')
+            )
+            doctor_ids_with_slots = open_appointments.values_list('user_id', flat=True).distinct()
+            self.fields['doctor'].queryset = (
+                user_model.objects
+                .filter(role=UserRole.DOCTOR, id__in=doctor_ids_with_slots)
+                .order_by('first_name', 'last_name', 'email')
+            )
+            self.fields['doctor'].label_from_instance = (
+                lambda user: f'BS. {user.full_name} - {user.email}'
+            )
+            self.fields['appointment'].queryset = open_appointments
+            self.fields['appointment'].help_text = (
+                'Chon bac si truoc de chi hien cac ca lam viec cua bac si do.'
+            )
+            self.fields['date'].required = False
+            self.fields['time'].required = False
+
+            appointment = self.instance.appointment if self.instance and self.instance.pk else None
+            if appointment:
+                self.fields['appointment'].queryset = (
+                    Appointment.objects.filter(pk=appointment.pk)
+                    | self.fields['appointment'].queryset
+                ).distinct()
+                self.fields['doctor'].initial = appointment.user_id
+                self.fields['date'].initial = appointment.date
+                self.fields['time'].initial = appointment.start_time
+
+        def clean(self):
+            cleaned_data = super().clean()
+            doctor = cleaned_data.get('doctor')
+            appointment = cleaned_data.get('appointment')
+            selected_time = cleaned_data.get('time')
+
+            if doctor and appointment and appointment.user_id != doctor.id:
+                self.add_error('appointment', 'Khung gio nay khong thuoc bac si da chon.')
+
+            if appointment:
+                cleaned_data['date'] = appointment.date
+                if not selected_time:
+                    selected_time = appointment.start_time
+                    cleaned_data['time'] = selected_time
+
+            if appointment and selected_time:
+                if not (appointment.start_time <= selected_time < appointment.end_time):
+                    self.add_error(
+                        'time',
+                        'Gio kham phai nam trong khung gio lam viec cua bac si.',
+                    )
+
+                duplicate_queryset = TakeAppointment.objects.filter(
+                    appointment=appointment,
+                    date=appointment.date,
+                    time=selected_time,
+                    status__in=TakeAppointment.ACTIVE_STATUSES,
+                )
+                if self.instance and self.instance.pk:
+                    duplicate_queryset = duplicate_queryset.exclude(pk=self.instance.pk)
+                if duplicate_queryset.exists():
+                    self.add_error(
+                        'time',
+                        'Khung gio nay da co benh nhan dat. Vui long chon gio khac.',
+                    )
+
+            return cleaned_data
+
+    form = TakeAppointmentAdminForm
+    change_form_template = 'admin/appoinment/takeappointment/change_form.html'
     list_display = (
         'id', 'patient_name', 'doctor_name', 'date', 'time',
         'status_badge', 'phone_number', 'has_emr',
@@ -94,10 +306,18 @@ class TakeAppointmentAdmin(admin.ModelAdmin):
     ordering = ('-date', '-time')
 
     fieldsets = (
-        ('Liên kết', {'fields': ('user', 'appointment')}),
-        ('Bệnh nhân', {'fields': ('full_name', 'phone_number', 'message')}),
-        ('Thời gian', {'fields': (('date', 'time'),)}),
-        ('Trạng thái', {'fields': ('status', 'cancelled_at', 'notification_version')}),
+        ('Thông tin đặt lịch', {
+            'fields': (
+                'user',
+                'doctor',
+                'appointment',
+                'message',
+                ('date', 'time'),
+                'status',
+                'cancelled_at',
+                'notification_version',
+            ),
+        }),
     )
 
     readonly_fields = ('notification_version', 'cancelled_at', 'created_at')
@@ -105,6 +325,125 @@ class TakeAppointmentAdmin(admin.ModelAdmin):
     actions = [
         'mark_confirmed', 'mark_arrived', 'mark_completed', 'mark_cancelled',
     ]
+
+    def get_fieldsets(self, request, obj=None):
+        return self.fieldsets
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                'doctor-slots/',
+                self.admin_site.admin_view(self.doctor_slots_view),
+                name='appoinment_takeappointment_doctor_slots',
+            ),
+        ]
+        return custom_urls + urls
+
+    def doctor_slots_view(self, request):
+        doctor_id = request.GET.get('doctor')
+        if not doctor_id:
+            return JsonResponse({'slots': []})
+
+        today = timezone.localdate()
+        end_date = today + timezone.timedelta(days=14)
+        appointments = (
+            Appointment.objects
+            .filter(
+                user_id=doctor_id,
+                is_active=True,
+                date__gte=today,
+                date__lte=end_date,
+            )
+            .select_related('user')
+            .order_by('date', 'start_time')
+        )
+        active_bookings = (
+            TakeAppointment.objects
+            .filter(
+                appointment_id__in=appointments.values_list('id', flat=True),
+                status__in=TakeAppointment.ACTIVE_STATUSES,
+            )
+            .values_list('appointment_id', 'time')
+        )
+        booked_times_by_appointment = {}
+        for appointment_id, booked_time in active_bookings:
+            booked_times_by_appointment.setdefault(appointment_id, set()).add(booked_time)
+
+        slots = []
+        for appointment in appointments:
+            current_dt = timezone.datetime.combine(appointment.date, appointment.start_time)
+            end_dt = timezone.datetime.combine(appointment.date, appointment.end_time)
+            booked_times = booked_times_by_appointment.get(appointment.id, set())
+
+            while current_dt < end_dt:
+                current_time = current_dt.time().replace(second=0, microsecond=0)
+                if current_time not in booked_times:
+                    slots.append({
+                        'id': appointment.id,
+                        'doctor_id': appointment.user_id,
+                        'date': appointment.date.isoformat(),
+                        'date_label': appointment.date.strftime('%d/%m/%Y'),
+                        'time': current_time.strftime('%H:%M'),
+                        'end': appointment.end_time.strftime('%H:%M'),
+                        'place': appointment.hospital_name,
+                        'location': appointment.location,
+                        'label': (
+                            f'{appointment.date:%d/%m/%Y} {current_time:%H:%M} - '
+                            f'{appointment.hospital_name}'
+                        ),
+                    })
+                current_dt += timezone.timedelta(minutes=self.SLOT_STEP_MINUTES)
+
+        return JsonResponse({'slots': slots})
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'user':
+            kwargs['queryset'] = (
+                db_field.remote_field.model.objects
+                .filter(role=UserRole.PATIENT)
+                .order_by('first_name', 'last_name', 'email')
+            )
+            formfield = super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+            def patient_label(user):
+                return f'{user.full_name or user.email} — {user.email}'
+
+            formfield.label_from_instance = patient_label
+            return formfield
+
+        if db_field.name == 'appointment':
+            kwargs['queryset'] = (
+                Appointment.objects
+                .select_related('user')
+                .order_by('-date', '-start_time')
+            )
+            formfield = super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+            def appointment_label(appointment):
+                return (
+                    f'BS. {appointment.full_name or appointment.user.email} — '
+                    f'{appointment.date:%d/%m/%Y} '
+                    f'{appointment.start_time:%H:%M}-{appointment.end_time:%H:%M} — '
+                    f'{appointment.hospital_name}'
+                )
+
+            formfield.label_from_instance = appointment_label
+            return formfield
+
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+        patient = obj.user
+        appointment = obj.appointment
+
+        obj.full_name = patient.full_name
+        obj.phone_number = patient.phone_number or ''
+        obj.date = appointment.date
+        if not obj.time:
+            obj.time = appointment.start_time
+
+        super().save_model(request, obj, form, change)
 
     def patient_name(self, obj):
         return obj.full_name

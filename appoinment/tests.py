@@ -1,11 +1,13 @@
 from datetime import timedelta
 
+from django.contrib import admin
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import DoctorProfile, User
 from notifications.models import RealtimeNotification
+from .admin import AppointmentAdmin, TakeAppointmentAdmin
 from .consumers import DirectChatConsumer
 from .forms import CreateAppointmentForm
 from .models import Appointment, AppointmentChangeLog, DirectMessage, DoctorReview, TakeAppointment
@@ -22,6 +24,216 @@ class AppointmentFormTests(TestCase):
         })
 
         self.assertTrue(form.is_valid(), form.errors)
+
+
+class AppointmentAdminTests(TestCase):
+    def setUp(self):
+        self.model_admin = AppointmentAdmin(Appointment, admin.site)
+        self.take_model_admin = TakeAppointmentAdmin(TakeAppointment, admin.site)
+        self.doctor = User.objects.create_user(
+            email='admin-doctor@example.com',
+            password='secret123',
+            first_name='Hoang',
+            last_name='Minh',
+            role='doctor',
+        )
+        DoctorProfile.objects.create(
+            user=self.doctor,
+            specialization='Heart Disease',
+            qualifications='Specialist Level I',
+            biography='Medic hospital doctor',
+        )
+        self.patient = User.objects.create_user(
+            email='admin-patient@example.com',
+            password='secret123',
+            role='patient',
+        )
+        self.admin_user = User.objects.create_superuser(
+            email='appointment-admin@example.com',
+            password='secret123',
+        )
+        self.appointment = Appointment.objects.create(
+            user=self.doctor,
+            full_name='Hoang Minh',
+            department='Heart Disease',
+            qualification_name='Specialist Level I',
+            institute_name='Medic hospital doctor',
+            hospital_name='Medic Clinic',
+            location='Room 101',
+            date=timezone.localdate() + timedelta(days=1),
+            start_time=timezone.datetime.strptime('08:00', '%H:%M').time(),
+            end_time=timezone.datetime.strptime('11:00', '%H:%M').time(),
+        )
+        self.no_slot_doctor = User.objects.create_user(
+            email='no-admin-slot-doctor@example.com',
+            password='secret123',
+            first_name='No',
+            last_name='Slot',
+            role='doctor',
+        )
+
+    def test_appointment_admin_user_field_only_lists_doctors(self):
+        user_field = Appointment._meta.get_field('user')
+
+        form_field = self.model_admin.formfield_for_foreignkey(user_field, None)
+
+        self.assertIn(self.doctor, form_field.queryset)
+        self.assertNotIn(self.patient, form_field.queryset)
+        self.assertEqual(
+            form_field.label_from_instance(self.doctor),
+            'BS. Hoang Minh — admin-doctor@example.com',
+        )
+
+    def test_appointment_admin_auto_fills_doctor_profile_fields_on_save(self):
+        appointment = Appointment(
+            user=self.doctor,
+            hospital_name='Medic Clinic',
+            location='Room 101',
+            date=timezone.localdate() + timedelta(days=1),
+            start_time=timezone.datetime.strptime('08:00', '%H:%M').time(),
+            end_time=timezone.datetime.strptime('11:00', '%H:%M').time(),
+        )
+
+        self.model_admin.save_model(None, appointment, None, False)
+
+        appointment.refresh_from_db()
+        self.assertEqual(appointment.full_name, 'Hoang Minh')
+        self.assertEqual(appointment.department, 'Heart Disease')
+        self.assertEqual(appointment.qualification_name, 'Specialist Level I')
+        self.assertEqual(appointment.institute_name, 'Medic hospital doctor')
+
+    def test_appointment_admin_add_form_has_streamlined_actions_and_time_inputs(self):
+        self.client.force_login(self.admin_user)
+
+        response = self.client.get(reverse('admin:appoinment_appointment_add'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Quay l&#7841;i')
+        self.assertContains(response, 'L&#432;u v&#224; ti&#7871;p t&#7909;c')
+        self.assertContains(response, 'type="time"')
+        self.assertContains(response, 'Thong tin lich kham')
+        self.assertContains(response, '.submit-row')
+        self.assertContains(response, '#jazzy-actions')
+        self.assertContains(response, 'display: none')
+        self.assertNotContains(response, 'Thoi gian kham')
+        self.assertNotContains(response, 'Co so kham')
+        self.assertNotContains(
+            response,
+            'Chi hien thi tai khoan bac si. Ten, anh, chuyen khoa va bang cap',
+        )
+
+    def test_take_appointment_admin_user_field_only_lists_patients(self):
+        user_field = TakeAppointment._meta.get_field('user')
+
+        form_field = self.take_model_admin.formfield_for_foreignkey(user_field, None)
+
+        self.assertIn(self.patient, form_field.queryset)
+        self.assertNotIn(self.doctor, form_field.queryset)
+        self.assertEqual(
+            form_field.label_from_instance(self.patient),
+            'admin-patient@example.com — admin-patient@example.com',
+        )
+
+    def test_take_appointment_admin_appointment_field_has_readable_labels(self):
+        appointment_field = TakeAppointment._meta.get_field('appointment')
+
+        form_field = self.take_model_admin.formfield_for_foreignkey(appointment_field, None)
+
+        self.assertIn(self.appointment, form_field.queryset)
+        label = form_field.label_from_instance(self.appointment)
+        self.assertIn('BS. Hoang Minh', label)
+        self.assertIn(self.appointment.date.strftime('%d/%m/%Y'), label)
+        self.assertIn('08:00-11:00', label)
+        self.assertIn('Medic Clinic', label)
+
+    def test_take_appointment_admin_add_form_has_streamlined_actions_and_time_input(self):
+        self.client.force_login(self.admin_user)
+
+        response = self.client.get(reverse('admin:appoinment_takeappointment_add'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Quay l&#7841;i')
+        self.assertContains(response, 'L&#432;u v&#224; ti&#7871;p t&#7909;c')
+        self.assertContains(response, 'type="time"')
+        self.assertContains(response, 'Thông tin đặt lịch')
+        self.assertContains(response, 'id="id_doctor"')
+        self.assertContains(response, f'data-doctor="{self.doctor.pk}"')
+        self.assertContains(response, '#jazzy-actions')
+        self.assertContains(response, 'display: none')
+        self.assertNotContains(response, 'id="id_full_name"')
+        self.assertNotContains(response, 'id="id_phone_number"')
+        self.assertContains(response, 'data-slots-url=')
+        self.assertContains(response, 'fetch(`${slotsUrl}?doctor=')
+        self.assertContains(response, "window.addEventListener('load'")
+        self.assertContains(response, "select2('destroy')")
+        self.assertNotContains(response, 'no-admin-slot-doctor@example.com')
+        self.assertNotContains(response, 'Liên kết')
+        self.assertNotContains(response, 'Thời gian')
+
+    def test_take_appointment_admin_doctor_slots_endpoint_returns_open_times(self):
+        self.client.force_login(self.admin_user)
+        TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name=self.patient.full_name,
+            phone_number='',
+            message='Existing booking',
+            date=self.appointment.date,
+            time=timezone.datetime.strptime('08:30', '%H:%M').time(),
+            status=TakeAppointment.STATUS_CONFIRMED,
+        )
+
+        response = self.client.get(
+            reverse('admin:appoinment_takeappointment_doctor_slots'),
+            {'doctor': self.doctor.pk},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        slots = response.json()['slots']
+        slot_times = [slot['time'] for slot in slots]
+        self.assertIn('08:00', slot_times)
+        self.assertNotIn('08:30', slot_times)
+        self.assertIn('10:30', slot_times)
+
+    def test_take_appointment_admin_save_auto_fills_patient_and_slot_fields(self):
+        booking = TakeAppointment(
+            user=self.patient,
+            appointment=self.appointment,
+            message='Admin booking',
+            status=TakeAppointment.STATUS_PENDING,
+        )
+
+        self.take_model_admin.save_model(None, booking, None, False)
+
+        booking.refresh_from_db()
+        self.assertEqual(booking.full_name, self.patient.full_name)
+        self.assertEqual(booking.phone_number, self.patient.phone_number or '')
+        self.assertEqual(booking.date, self.appointment.date)
+        self.assertEqual(booking.time, self.appointment.start_time)
+
+    def test_take_appointment_admin_form_rejects_duplicate_active_time(self):
+        TakeAppointment.objects.create(
+            user=self.patient,
+            appointment=self.appointment,
+            full_name=self.patient.full_name,
+            phone_number='',
+            message='Existing booking',
+            date=self.appointment.date,
+            time=timezone.datetime.strptime('08:30', '%H:%M').time(),
+            status=TakeAppointment.STATUS_CONFIRMED,
+        )
+
+        form = self.take_model_admin.form(data={
+            'user': self.patient.pk,
+            'doctor': self.doctor.pk,
+            'appointment': self.appointment.pk,
+            'message': 'Duplicate booking',
+            'time': '08:30',
+            'status': TakeAppointment.STATUS_PENDING,
+        })
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('time', form.errors)
 
 
 class DirectChatConsumerTests(TestCase):

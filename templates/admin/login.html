@@ -16,7 +16,10 @@
     body.medic-admin-login .main-header,
     body.medic-admin-login .main-sidebar,
     body.medic-admin-login .content-header,
-    body.medic-admin-login .main-footer {
+    body.medic-admin-login .main-footer,
+    body.medic-admin-login .messagelist,
+    body.medic-admin-login .alert-success,
+    body.medic-admin-login .alert-dismissible {
         display: none !important;
     }
 
@@ -157,6 +160,8 @@
     }
 </style>
 {% endblock %}
+
+{% block messages %}{% endblock %}
 
 {% block content %}
 <div class="medic-login-shell">

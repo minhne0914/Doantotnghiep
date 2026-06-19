@@ -1,0 +1,263 @@
+{% extends "admin/change_form.html" %}
+{% load admin_urls %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .medic-take-appointment-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        justify-content: flex-end;
+        margin: 18px 0 0;
+        padding: 14px 16px;
+        border: 1px solid #dbe5ef;
+        border-radius: 14px;
+        background: #ffffff;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+    }
+
+    .medic-take-appointment-actions .button,
+    .medic-take-appointment-actions button {
+        min-height: 40px;
+        border-radius: 10px;
+        padding: 0 16px;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none !important;
+    }
+
+    .medic-take-appointment-actions .medic-back {
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        color: #334155 !important;
+    }
+
+    .medic-take-appointment-actions .medic-continue {
+        border: 0;
+        background: #0891b2;
+        color: #ffffff;
+        cursor: pointer;
+    }
+
+    .medic-take-appointment-actions .medic-continue:hover {
+        background: #0e7490;
+    }
+
+    .submit-row,
+    #jazzy-actions {
+        display: none !important;
+    }
+
+    .app-appoinment.model-takeappointment.change-form #content-main > form > .row > .col-lg-9 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    fieldset.module {
+        border-radius: 14px;
+        overflow: hidden;
+    }
+
+    .aligned .form-row input[type="time"],
+    .aligned .form-row input[type="date"],
+    .form-row.field-time input,
+    .form-row.field-date input {
+        min-height: 38px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        padding: 6px 10px;
+        font-size: 14px;
+    }
+
+    .form-row.field-message textarea {
+        min-height: 96px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+
+    .form-row.field-date input {
+        background: #f8fafc;
+    }
+
+    .medic-slot-hint {
+        margin-top: 8px;
+        color: #475569;
+        font-size: 13px;
+        font-weight: 700;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{{ block.super }}
+<div class="medic-take-appointment-actions">
+    <a class="button medic-back" href="{% url opts|admin_urlname:'changelist' %}">
+        Quay l&#7841;i
+    </a>
+    <button class="medic-continue" type="submit" name="_continue" form="{{ opts.model_name }}_form">
+        L&#432;u v&#224; ti&#7871;p t&#7909;c
+    </button>
+</div>
+<script data-slots-url="{% url 'admin:appoinment_takeappointment_doctor_slots' %}">
+window.addEventListener('load', function () {
+    const scriptTag = document.currentScript || document.querySelector('script[data-slots-url]');
+    const slotsUrl = scriptTag ? scriptTag.dataset.slotsUrl : '';
+    const doctorSelect = document.getElementById('id_doctor');
+    const slotSelect = document.getElementById('id_appointment');
+    const dateInput = document.getElementById('id_date');
+    const timeInput = document.getElementById('id_time');
+
+    if (!doctorSelect || !slotSelect) {
+        return;
+    }
+
+    const $ = (window.django && window.django.jQuery) || window.jQuery;
+
+    const hint = document.createElement('div');
+    hint.className = 'medic-slot-hint';
+    slotSelect.closest('.form-group')?.appendChild(hint);
+
+    function hasSelect2(element) {
+        return !!($ && $.fn && $.fn.select2 && $(element).data('select2'));
+    }
+
+    function destroySelect2(element) {
+        if (hasSelect2(element)) {
+            $(element).select2('destroy');
+        }
+    }
+
+    function initSelect2(element) {
+        if ($ && $.fn && $.fn.select2) {
+            $(element).select2();
+            $(element).trigger('change.select2');
+        }
+    }
+
+    function getDoctorId() {
+        if (doctorSelect.value) {
+            return doctorSelect.value;
+        }
+        if ($) {
+            return $(doctorSelect).val() || '';
+        }
+        const selectedOption = doctorSelect.options[doctorSelect.selectedIndex];
+        return selectedOption ? selectedOption.value : '';
+    }
+
+    function updateSlotHint(option) {
+        if (!option || !option.value) {
+            hint.textContent = 'Chon bac si de xem lich trong trong 14 ngay toi.';
+            return;
+        }
+        const date = option.dataset.date || '';
+        const start = option.dataset.start || '';
+        const end = option.dataset.end || '';
+        const place = option.dataset.place || '';
+        hint.textContent = `Ca lam viec: ${date} | ${start} - ${end}${place ? ' | ' + place : ''}`;
+    }
+
+    function syncDateTimeFromSlot() {
+        const option = slotSelect.options[slotSelect.selectedIndex];
+        if (!option || !option.value) {
+            updateSlotHint(null);
+            return;
+        }
+        if (dateInput && option.dataset.date) {
+            dateInput.value = option.dataset.date;
+        }
+        if (timeInput && option.dataset.start && !timeInput.value) {
+            timeInput.value = option.dataset.start;
+        }
+        if (timeInput && option.dataset.start) {
+            timeInput.value = option.dataset.start;
+        }
+        updateSlotHint(option);
+    }
+
+    function setLoadingState(message) {
+        destroySelect2(slotSelect);
+        slotSelect.innerHTML = '';
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = '---------';
+        slotSelect.appendChild(placeholder);
+        slotSelect.value = '';
+        if (dateInput) {
+            dateInput.value = '';
+        }
+        if (timeInput) {
+            timeInput.value = '';
+        }
+        hint.textContent = message;
+        initSelect2(slotSelect);
+    }
+
+    async function filterSlotsByDoctor() {
+        const doctorId = getDoctorId();
+        if (!doctorId) {
+            setLoadingState('Chon bac si de xem lich trong trong 14 ngay toi.');
+            return;
+        }
+
+        setLoadingState('Dang tai lich trong cua bac si...');
+
+        let payload;
+        try {
+            const response = await fetch(`${slotsUrl}?doctor=${encodeURIComponent(doctorId)}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            payload = await response.json();
+        } catch (error) {
+            setLoadingState('Khong tai duoc lich trong. Hay tai lai trang va thu lai.');
+            return;
+        }
+
+        destroySelect2(slotSelect);
+        slotSelect.innerHTML = '';
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = '---------';
+        slotSelect.appendChild(placeholder);
+
+        const slots = payload && Array.isArray(payload.slots) ? payload.slots : [];
+        slots.forEach(function (slot) {
+            const option = document.createElement('option');
+            option.value = slot.id;
+            option.textContent = slot.label;
+            option.dataset.doctor = slot.doctor_id;
+            option.dataset.date = slot.date;
+            option.dataset.start = slot.time;
+            option.dataset.end = slot.end;
+            option.dataset.place = slot.place || '';
+            option.dataset.location = slot.location || '';
+            slotSelect.appendChild(option);
+        });
+
+        if (!slots.length) {
+            slotSelect.value = '';
+            hint.textContent = 'Bac si nay khong con lich trong trong 14 ngay toi.';
+        } else {
+            hint.textContent = `Co ${slots.length} lich trong trong 14 ngay toi. Hay chon mot lich.`;
+        }
+
+        initSelect2(slotSelect);
+    }
+
+    doctorSelect.addEventListener('change', filterSlotsByDoctor);
+    slotSelect.addEventListener('change', syncDateTimeFromSlot);
+    if ($) {
+        $(doctorSelect).on('change select2:select', filterSlotsByDoctor);
+    }
+    window.setTimeout(filterSlotsByDoctor, 250);
+});
+</script>
+{% endblock %}

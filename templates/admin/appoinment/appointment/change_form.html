@@ -1,0 +1,92 @@
+{% extends "admin/change_form.html" %}
+{% load admin_urls %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .medic-appointment-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        justify-content: flex-end;
+        margin: 18px 0 0;
+        padding: 14px 16px;
+        border: 1px solid #dbe5ef;
+        border-radius: 14px;
+        background: #ffffff;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+    }
+
+    .medic-appointment-actions .button,
+    .medic-appointment-actions button {
+        min-height: 40px;
+        border-radius: 10px;
+        padding: 0 16px;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none !important;
+    }
+
+    .medic-appointment-actions .medic-back {
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        color: #334155 !important;
+    }
+
+    .medic-appointment-actions .medic-continue {
+        border: 0;
+        background: #0891b2;
+        color: #ffffff;
+        cursor: pointer;
+    }
+
+    .medic-appointment-actions .medic-continue:hover {
+        background: #0e7490;
+    }
+
+    .submit-row {
+        display: none !important;
+    }
+
+    #jazzy-actions {
+        display: none !important;
+    }
+
+    .app-appoinment.model-appointment.change-form #content-main > form > .row > .col-lg-9 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    fieldset.module {
+        border-radius: 14px;
+        overflow: hidden;
+    }
+
+    .aligned .form-row input[type="time"],
+    .aligned .form-row input[type="date"],
+    .form-row.field-start_time input,
+    .form-row.field-end_time input,
+    .form-row.field-date input {
+        min-height: 38px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        padding: 6px 10px;
+        font-size: 14px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{{ block.super }}
+<div class="medic-appointment-actions">
+    <a class="button medic-back" href="{% url opts|admin_urlname:'changelist' %}">
+        Quay l&#7841;i
+    </a>
+    <button class="medic-continue" type="submit" name="_continue" form="{{ opts.model_name }}_form">
+        L&#432;u v&#224; ti&#7871;p t&#7909;c
+    </button>
+</div>
+{% endblock %}
