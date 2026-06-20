@@ -303,7 +303,7 @@ class BookingService:
                 return None, {'appointment': 'Lịch mới không còn khả dụng.'}
             if new_slot.date == timezone.localdate() and new_time <= timezone.localtime().time():
                 return None, {'time': 'Giờ mới phải lớn hơn thời điểm hiện tại.'}
-            if not (new_slot.start_time <= new_time <= new_slot.end_time):
+            if not (new_slot.start_time <= new_time < new_slot.end_time):
                 return None, {'time': 'Giờ mới phải nằm trong khung khám của bác sĩ.'}
 
             if has_slot_conflict(new_slot, new_slot.date, new_time, exclude_booking_id=locked_booking.pk):

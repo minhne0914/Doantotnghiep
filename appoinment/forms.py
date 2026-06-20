@@ -118,7 +118,7 @@ class RescheduleAppointmentForm(forms.Form):
                 self.current_booking
                 and appointment.pk != self.current_booking.appointment_id
                 and selected_time == self.current_booking.time
-                and not (appointment.start_time <= selected_time <= appointment.end_time)
+                and not (appointment.start_time <= selected_time < appointment.end_time)
             ):
                 selected_time = appointment.start_time
                 cleaned_data['time'] = selected_time
@@ -131,7 +131,7 @@ class RescheduleAppointmentForm(forms.Form):
                 self.add_error('appointment', 'Chỉ có thể đổi sang lịch khám trong tương lai.')
             if appointment.date == timezone.localdate() and selected_time <= timezone.localtime().time():
                 self.add_error('time', 'Giờ mới phải lớn hơn thời điểm hiện tại.')
-            if not (appointment.start_time <= selected_time <= appointment.end_time):
+            if not (appointment.start_time <= selected_time < appointment.end_time):
                 self.add_error('time', 'Giờ mới phải nằm trong khung khám của bác sĩ.')
         return cleaned_data
 

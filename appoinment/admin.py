@@ -1,5 +1,7 @@
 """Admin cho appoinment app: lịch khám, booking, review, chat, audit log."""
 
+import datetime
+
 from django.contrib import admin
 from django import forms
 from django.http import JsonResponse
@@ -24,7 +26,7 @@ from .models import (
 
 @admin.register(Appointment)
 class AppointmentAdmin(admin.ModelAdmin):
-    class AppointmentAdminForm(forms.ModelForm):
+    class BaseAppointmentAdminForm(forms.ModelForm):
         class Meta:
             model = Appointment
             fields = '__all__'
@@ -42,6 +44,41 @@ class AppointmentAdmin(admin.ModelAdmin):
                 'location': 'Địa chỉ khám',
                 'is_active': 'Cho phép bệnh nhân đặt lịch',
             }
+
+    class AppointmentAdminForm(BaseAppointmentAdminForm):
+        def clean(self):
+            cleaned_data = super().clean()
+            doctor = cleaned_data.get('user')
+            date = cleaned_data.get('date')
+            start_time = cleaned_data.get('start_time')
+            end_time = cleaned_data.get('end_time')
+
+            if start_time and end_time and end_time <= start_time:
+                self.add_error('end_time', 'Giờ kết thúc phải sau giờ bắt đầu.')
+                return cleaned_data
+
+            if (
+                cleaned_data.get('is_active', True)
+                and doctor
+                and date
+                and start_time
+                and end_time
+            ):
+                overlapping_shifts = Appointment.objects.filter(
+                    user=doctor,
+                    is_active=True,
+                    date=date,
+                    start_time__lt=end_time,
+                    end_time__gt=start_time,
+                )
+                if self.instance.pk:
+                    overlapping_shifts = overlapping_shifts.exclude(pk=self.instance.pk)
+                if overlapping_shifts.exists():
+                    self.add_error(
+                        'start_time',
+                        'Khung giờ này đang chồng với một ca làm việc đã có của bác sĩ.',
+                    )
+            return cleaned_data
 
     form = AppointmentAdminForm
     change_form_template = 'admin/appoinment/appointment/change_form.html'
@@ -179,6 +216,8 @@ class TakeAppointmentAdmin(admin.ModelAdmin):
     SLOT_STEP_MINUTES = 30
 
     class TakeAppointmentAdminForm(forms.ModelForm):
+        SLOT_STEP_MINUTES = 30
+
         doctor = forms.ModelChoiceField(
             queryset=User.objects.none(),
             required=True,
@@ -273,18 +312,25 @@ class TakeAppointmentAdmin(admin.ModelAdmin):
                         'Gio kham phai nam trong khung gio lam viec cua bac si.',
                     )
 
-                duplicate_queryset = TakeAppointment.objects.filter(
+                active_bookings = TakeAppointment.objects.filter(
                     appointment=appointment,
                     date=appointment.date,
-                    time=selected_time,
                     status__in=TakeAppointment.ACTIVE_STATUSES,
                 )
                 if self.instance and self.instance.pk:
-                    duplicate_queryset = duplicate_queryset.exclude(pk=self.instance.pk)
-                if duplicate_queryset.exists():
+                    active_bookings = active_bookings.exclude(pk=self.instance.pk)
+                selected_datetime = datetime.datetime.combine(appointment.date, selected_time)
+                has_conflict = any(
+                    abs((
+                        datetime.datetime.combine(existing.date, existing.time)
+                        - selected_datetime
+                    ).total_seconds()) < self.SLOT_STEP_MINUTES * 60
+                    for existing in active_bookings.only('date', 'time')
+                )
+                if has_conflict:
                     self.add_error(
                         'time',
-                        'Khung gio nay da co benh nhan dat. Vui long chon gio khac.',
+                        'Khung giờ này đã có bệnh nhân đặt hoặc quá sát với ca khác. Vui lòng chọn giờ khác.',
                     )
 
             return cleaned_data

@@ -446,7 +446,7 @@ class TakeAppointmentView(_PatientRequiredMixin, CreateView):
         if appointment.date == timezone.localdate() and selected_time <= timezone.localtime().time():
             form.add_error('time', 'Giờ khám phải lớn hơn thời điểm hiện tại.')
             return self.form_invalid(form)
-        if not (appointment.start_time <= selected_time <= appointment.end_time):
+        if not (appointment.start_time <= selected_time < appointment.end_time):
             form.add_error('time', 'Giờ đã chọn nằm ngoài khung khám của bác sĩ.')
             return self.form_invalid(form)
 

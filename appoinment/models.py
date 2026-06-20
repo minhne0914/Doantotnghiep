@@ -38,6 +38,12 @@ class Appointment(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(end_time__gt=models.F('start_time')),
+                name='appointment_end_time_after_start_time',
+            ),
+        ]
         indexes = [
             models.Index(fields=['user', 'date']),
             models.Index(fields=['is_active', 'date']),

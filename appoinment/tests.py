@@ -1,7 +1,9 @@
 from datetime import timedelta
 
 from django.contrib import admin
+from django.db import IntegrityError
 from django.test import TestCase
+from django.test.client import RequestFactory
 from django.urls import reverse
 from django.utils import timezone
 
@@ -24,6 +26,27 @@ class AppointmentFormTests(TestCase):
         })
 
         self.assertTrue(form.is_valid(), form.errors)
+
+    def test_database_rejects_shift_with_invalid_time_range(self):
+        doctor = User.objects.create_user(
+            email='constraint-doctor@example.com',
+            password='secret123',
+            role='doctor',
+        )
+
+        with self.assertRaises(IntegrityError):
+            Appointment.objects.create(
+                user=doctor,
+                full_name='Dr. Constraint',
+                location='Clinic',
+                qualification_name='MD',
+                institute_name='Demo Institute',
+                hospital_name='Demo Hospital',
+                department='Cardiology',
+                date=timezone.localdate() + timedelta(days=1),
+                start_time=timezone.datetime.strptime('17:00', '%H:%M').time(),
+                end_time=timezone.datetime.strptime('09:00', '%H:%M').time(),
+            )
 
 
 class AppointmentAdminTests(TestCase):
@@ -121,6 +144,34 @@ class AppointmentAdminTests(TestCase):
             response,
             'Chi hien thi tai khoan bac si. Ten, anh, chuyen khoa va bang cap',
         )
+
+    def test_appointment_admin_rejects_overlapping_or_invalid_shift(self):
+        request = RequestFactory().get('/admin/appoinment/appointment/add/')
+        request.user = self.admin_user
+        form_class = self.model_admin.get_form(request)
+        base_data = {
+            'user': self.doctor.pk,
+            'date': self.appointment.date.isoformat(),
+            'hospital_name': 'Medic Clinic',
+            'location': 'Room 102',
+            'is_active': 'on',
+        }
+
+        invalid_range_form = form_class({
+            **base_data,
+            'start_time': '17:00',
+            'end_time': '09:00',
+        })
+        self.assertFalse(invalid_range_form.is_valid())
+        self.assertIn('end_time', invalid_range_form.errors)
+
+        overlapping_form = form_class({
+            **base_data,
+            'start_time': '10:00',
+            'end_time': '12:00',
+        })
+        self.assertFalse(overlapping_form.is_valid())
+        self.assertIn('start_time', overlapping_form.errors)
 
     def test_take_appointment_admin_user_field_only_lists_patients(self):
         user_field = TakeAppointment._meta.get_field('user')
@@ -402,6 +453,29 @@ class AppointmentFlowTests(TestCase):
             AppointmentChangeLog.objects.filter(
                 booking=booking,
                 action=AppointmentChangeLog.ACTION_BOOKED,
+            ).exists()
+        )
+
+    def test_patient_cannot_book_at_shift_end_time(self):
+        self.client.force_login(self.patient)
+
+        response = self.client.post(
+            reverse('take-appointment', args=[self.appointment.pk]),
+            {
+                'appointment': self.appointment.pk,
+                'full_name': 'Patient One',
+                'phone_number': '0123456789',
+                'message': 'Need consultation',
+                'time': '17:00',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Giờ đã chọn nằm ngoài khung khám của bác sĩ.')
+        self.assertFalse(
+            TakeAppointment.objects.filter(
+                appointment=self.appointment,
+                user=self.patient,
             ).exists()
         )
 
