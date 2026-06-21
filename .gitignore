@@ -25,7 +25,14 @@ local_settings.py
 # db.sqlite3
 db.sqlite3-journal
 staticfiles/
-static/admin/
+static/admin/*
+!static/admin/css/
+static/admin/css/*
+!static/admin/css/medic_admin.css
+!static/admin/css/medic_admin_shell.css
+!static/admin/js/
+static/admin/js/*
+!static/admin/js/medic_admin.js
 static/jazzmin/
 /static/assets/build/
 /static/assets/docs/
