@@ -86,9 +86,9 @@ def schedule_booking_notifications(booking):
         queue_email(
             booking,
             booking.appointment.user,
-            'doctor_new_booking',
-            'Có bệnh nhân mới đặt lịch',
-            'emails/doctor_new_booking.html',
+            'booking_confirmed',
+            'Bạn đã xác nhận lịch khám',
+            'emails/booking_confirmed_doctor.html',
             context,
         )
 

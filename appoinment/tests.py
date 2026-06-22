@@ -498,6 +498,20 @@ class AppointmentFlowTests(TestCase):
         booking.refresh_from_db()
         self.assertEqual(booking.status, TakeAppointment.STATUS_CONFIRMED)
         self.assertEqual(booking.notification_version, 2)
+        self.assertTrue(
+            RealtimeNotification.objects.filter(
+                user=self.patient,
+                title='Lich kham da duoc xac nhan',
+                payload__booking_id=booking.id,
+            ).exists()
+        )
+        self.assertTrue(
+            RealtimeNotification.objects.filter(
+                user=self.doctor,
+                title='Ban da xac nhan lich kham',
+                payload__booking_id=booking.id,
+            ).exists()
+        )
 
     def test_doctor_create_schedule_redirects_to_created_date(self):
         self.client.force_login(self.doctor)
@@ -632,6 +646,20 @@ class AppointmentFlowTests(TestCase):
                 booking=booking,
                 action=AppointmentChangeLog.ACTION_CANCELLED,
                 changed_by=self.doctor,
+            ).exists()
+        )
+        self.assertTrue(
+            RealtimeNotification.objects.filter(
+                user=self.patient,
+                title='Bác sĩ đã hủy lịch khám',
+                payload__booking_id=booking.id,
+            ).exists()
+        )
+        self.assertTrue(
+            RealtimeNotification.objects.filter(
+                user=self.doctor,
+                title='Bạn đã hủy lịch khám',
+                payload__booking_id=booking.id,
             ).exists()
         )
 

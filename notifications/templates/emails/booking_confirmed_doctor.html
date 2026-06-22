@@ -1,0 +1,11 @@
+{% extends "emails/base_email.html" %}
+{% block content %}
+<h3 style="margin-top:0;">Bạn đã xác nhận lịch khám</h3>
+<p>Lịch khám dưới đây đã được xác nhận thành công. Bệnh nhân cũng đã nhận được thông báo.</p>
+<ul>
+    <li>Bệnh nhân: {{ patient.first_name }} {{ patient.last_name }}</li>
+    <li>Ngày: {{ appointment_info.date }}</li>
+    <li>Giờ: {{ appointment_info.time }}</li>
+    <li>Cơ sở: {{ booking.appointment.hospital_name }} - {{ booking.appointment.location }}</li>
+</ul>
+{% endblock %}

@@ -268,15 +268,15 @@ ALLOWED_XRAY_CONTENT_TYPES = tuple(
 )
 
 # Email / SMTP
-EMAIL_BACKEND = os.getenv(
-    'EMAIL_BACKEND',
+EMAIL_BACKEND = (
     'django.core.mail.backends.locmem.EmailBackend'
     if RUNNING_TESTS
-    else (
+    else os.getenv(
+        'EMAIL_BACKEND',
         'django.core.mail.backends.console.EmailBackend'
         if DEBUG
-        else 'django.core.mail.backends.smtp.EmailBackend'
-    ),
+        else 'django.core.mail.backends.smtp.EmailBackend',
+    )
 )
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.sendgrid.net')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
@@ -288,17 +288,21 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'Medic <noreply@example.com
 # Celery / Redis
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://127.0.0.1:6379/0')
 CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://127.0.0.1:6379/1')
-CELERY_TASK_ALWAYS_EAGER = os.getenv(
+CELERY_TASK_ALWAYS_EAGER = RUNNING_TESTS or os.getenv(
     'CELERY_TASK_ALWAYS_EAGER',
-    'True' if RUNNING_TESTS or not USE_REDIS_SERVICES else 'False',
+    'True' if not USE_REDIS_SERVICES else 'False',
 ).lower() == 'true'
 CELERY_TIMEZONE = TIME_ZONE
 
 # Channels / Redis
-CHANNEL_LAYER_BACKEND = os.getenv(
-    'CHANNEL_LAYER_BACKEND',
-    'inmemory' if RUNNING_TESTS or not USE_REDIS_SERVICES else 'redis',
-).lower()
+CHANNEL_LAYER_BACKEND = (
+    'inmemory'
+    if RUNNING_TESTS
+    else os.getenv(
+        'CHANNEL_LAYER_BACKEND',
+        'inmemory' if not USE_REDIS_SERVICES else 'redis',
+    ).lower()
+)
 CHANNEL_REDIS_URL = os.getenv('CHANNEL_REDIS_URL', 'redis://127.0.0.1:6379/2')
 
 if CHANNEL_LAYER_BACKEND == 'inmemory':

@@ -275,6 +275,15 @@ class BookingService:
             message=f'Lich kham cua ban luc {_fmt_dt(locked.date, locked.time)} da duoc bac si xac nhan.',
             level='success',
         )
+        notify_doctor(
+            locked,
+            title='Ban da xac nhan lich kham',
+            message=(
+                f'Ban da xac nhan lich cua {locked.full_name} luc '
+                f'{_fmt_dt(locked.date, locked.time)}.'
+            ),
+            level='success',
+        )
         return locked, None
 
     # --- Đổi lịch ---
@@ -411,7 +420,11 @@ class BookingService:
                 ),
                 'level': 'danger',
             },
-            doctor_notification=None,
+            doctor_notification={
+                'title': 'Bạn đã hủy lịch khám',
+                'message_tpl': 'Bạn đã hủy lịch khám của {name} lúc {dt}.',
+                'level': 'info',
+            },
         )
 
     @staticmethod
@@ -505,5 +518,19 @@ class BookingService:
                     f'{_fmt_dt(booking.date, booking.time)} đã bị hủy.'
                 ),
                 level='danger',
+            )
+        if active_bookings:
+            _safe_push(
+                appointment.user,
+                title='Bạn đã hủy ca khám',
+                message=(
+                    f'Ca khám {appointment.start_time:%H:%M}-{appointment.end_time:%H:%M} '
+                    f'ngày {appointment.date:%d/%m/%Y} đã được hủy; '
+                    f'{len(active_bookings)} lịch hẹn liên quan đã được thông báo.'
+                ),
+                level='info',
+                category='appointment',
+                link=reverse('doctor-dashboard'),
+                payload={'appointment_id': appointment.id, 'cancelled_bookings': len(active_bookings)},
             )
         return active_bookings
