@@ -434,6 +434,7 @@
     </div>
     {% endif %}
 
+    {% include 'partials/screening_field_guidance.html' %}
     <div class="skin-layout">
       <div>
         <div class="skin-panel">
@@ -533,6 +534,7 @@
           </ul>
           {% endif %}
         </div>
+        {% include 'partials/screening_result_support.html' %}
         {% else %}
         <div class="skin-panel">
           <h4><i class="fas fa-list-check mr-2"></i>{% trans "7 nhóm mô hình phân loại" %}</h4>

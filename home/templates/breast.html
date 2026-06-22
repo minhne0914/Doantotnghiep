@@ -36,6 +36,7 @@
         <p>Kết quả giúp tham khảo bước đầu, không thay thế cho chẩn đoán hình ảnh hay thăm khám chuyên khoa.</p>
       </div>
       <div class="screening-body">
+        {% include 'partials/screening_field_guidance.html' %}
         {% if error %}
         <div class="alert alert-danger" role="alert">
           {{ error }}
@@ -82,6 +83,7 @@
           {% endif %}
         </div>
         {% endif %}
+        {% include 'partials/screening_result_support.html' %}
         <form method="POST" action="{% url 'breast' %}">
           {% csrf_token %}
           <div class="field-card">

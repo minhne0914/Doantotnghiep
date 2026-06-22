@@ -102,7 +102,7 @@ class RegisterDoctorView(CreateView):
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated or not request.user.is_staff:
             raise Http404('Doctor accounts are created by administrators.')
-        return redirect('admin:accounts_user_add')
+        return redirect('admin:accounts_doctoraccount_add')
 
     def form_valid(self, form):
         _create_user_with_password(form)

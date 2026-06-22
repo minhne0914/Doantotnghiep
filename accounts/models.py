@@ -98,6 +98,24 @@ class User(AbstractUser):
         super().save(*args, **kwargs)
 
 
+class PatientAccount(User):
+    """Admin-only proxy that exposes patient accounts as a dedicated list."""
+
+    class Meta:
+        proxy = True
+        verbose_name = 'Bệnh nhân'
+        verbose_name_plural = 'Bệnh nhân'
+
+
+class DoctorAccount(User):
+    """Admin-only proxy that exposes doctor accounts as a dedicated list."""
+
+    class Meta:
+        proxy = True
+        verbose_name = 'Bác sĩ'
+        verbose_name_plural = 'Bác sĩ'
+
+
 class DoctorProfile(models.Model):
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name='doctor_profile'

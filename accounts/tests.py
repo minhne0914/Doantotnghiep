@@ -1,14 +1,24 @@
 from datetime import timedelta
 
+from django.contrib import admin
 from django.contrib.auth.tokens import default_token_generator
 from django.test import TestCase
+from django.test.client import RequestFactory
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils import timezone
 
 from appoinment.models import Appointment, AppointmentChangeLog, TakeAppointment
-from .models import User
+from .admin import (
+    DoctorProfileAdmin,
+    DoctorProfileAdminForm,
+    DoctorProfileInline,
+    DoctorAccountAdmin,
+    PatientAccountAdmin,
+    UserAdmin,
+)
+from .models import DoctorAccount, DoctorProfile, PatientAccount, User, UserRole
 
 
 class AccountUrlTests(TestCase):
@@ -50,7 +60,7 @@ class RegistrationFormTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
-    def test_staff_doctor_register_route_redirects_to_admin_user_add(self):
+    def test_staff_doctor_register_route_redirects_to_admin_doctor_add(self):
         admin = User.objects.create_superuser(
             email='admin-create-doctor@example.com',
             password='StrongPass123',
@@ -61,7 +71,7 @@ class RegistrationFormTests(TestCase):
 
         self.assertRedirects(
             response,
-            reverse('admin:accounts_user_add'),
+            reverse('admin:accounts_doctoraccount_add'),
             fetch_redirect_response=False,
         )
 
@@ -149,6 +159,142 @@ class RegistrationFormTests(TestCase):
         self.assertEqual(response['Location'], reverse('password_reset_complete'))
         user.refresh_from_db()
         self.assertTrue(user.check_password('NewStrongPass123'))
+
+
+class AdminProfileTests(TestCase):
+    def setUp(self):
+        self.user_admin = UserAdmin(User, admin.site)
+        self.doctor_account_admin = DoctorAccountAdmin(DoctorAccount, admin.site)
+        self.patient_account_admin = PatientAccountAdmin(PatientAccount, admin.site)
+        self.profile_admin = DoctorProfileAdmin(DoctorProfile, admin.site)
+        self.request = RequestFactory().get('/admin/accounts/user/')
+        self.staff_user = User.objects.create_superuser(
+            email='staff@example.com', password='StrongPass123'
+        )
+        self.request.user = self.staff_user
+        self.doctor = User.objects.create_user(
+            email='doctor-profile@example.com',
+            password='StrongPass123',
+            role=UserRole.DOCTOR,
+        )
+        self.patient = User.objects.create_user(
+            email='patient-profile@example.com',
+            password='StrongPass123',
+            role=UserRole.PATIENT,
+        )
+
+    def test_doctor_account_shows_professional_profile_inline(self):
+        inlines = self.user_admin.get_inline_instances(self.request, self.doctor)
+
+        self.assertEqual(len(inlines), 1)
+        self.assertIsInstance(inlines[0], DoctorProfileInline)
+
+    def test_patient_account_does_not_show_doctor_profile_inline(self):
+        self.assertEqual(
+            self.user_admin.get_inline_instances(self.request, self.patient), []
+        )
+
+    def test_saving_doctor_account_creates_editable_profile(self):
+        self.user_admin.save_model(self.request, self.doctor, None, True)
+
+        self.assertTrue(DoctorProfile.objects.filter(user=self.doctor).exists())
+
+    def test_doctor_profile_admin_only_offers_doctor_accounts(self):
+        user_field = DoctorProfile._meta.get_field('user')
+        form_field = self.profile_admin.formfield_for_foreignkey(user_field, self.request)
+
+        self.assertIn(self.doctor, form_field.queryset)
+        self.assertNotIn(self.patient, form_field.queryset)
+
+    def test_doctor_profile_form_updates_account_and_professional_details(self):
+        profile = DoctorProfile.objects.create(user=self.doctor)
+        form = DoctorProfileAdminForm(
+            data={
+                'first_name': 'Hoang',
+                'last_name': 'Minh',
+                'email': 'hoang.minh@example.com',
+                'gender': 'male',
+                'phone_number': '0987654321',
+                'specialization': 'Cardiology',
+                'qualifications': 'Specialist Level I',
+                'experience': '8 years',
+                'biography': 'Cardiology doctor',
+            },
+            instance=profile,
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+        form.save()
+        self.doctor.refresh_from_db()
+        profile.refresh_from_db()
+
+        self.assertEqual(self.doctor.full_name, 'Hoang Minh')
+        self.assertEqual(self.doctor.email, 'hoang.minh@example.com')
+        self.assertEqual(profile.specialization, 'Cardiology')
+
+    def test_existing_doctor_profile_displays_linked_account_instead_of_selector(self):
+        profile = DoctorProfile.objects.create(user=self.doctor)
+
+        account_fields = self.profile_admin.get_fieldsets(self.request, profile)[0][1]['fields']
+        account_link = self.profile_admin.doctor_account(profile)
+
+        self.assertIn('doctor_account', account_fields)
+        self.assertNotIn('user', account_fields)
+        self.assertIn(self.doctor.email, account_link)
+
+    def test_existing_doctor_profile_change_page_has_no_tabs_and_renders(self):
+        profile = DoctorProfile.objects.create(user=self.doctor)
+        self.client.force_login(self.staff_user)
+
+        response = self.client.get(
+            reverse('admin:accounts_doctorprofile_change', args=[profile.pk])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'id="jazzy-tabs"')
+        self.assertContains(response, 'id="id_specialization"')
+        self.assertContains(response, self.doctor.email)
+
+    def test_role_specific_account_lists_only_return_their_own_role(self):
+        doctor_accounts = self.doctor_account_admin.get_queryset(self.request)
+        patient_accounts = self.patient_account_admin.get_queryset(self.request)
+
+        self.assertIn(self.doctor, doctor_accounts)
+        self.assertNotIn(self.patient, doctor_accounts)
+        self.assertIn(self.patient, patient_accounts)
+        self.assertNotIn(self.doctor, patient_accounts)
+
+    def test_patient_directory_searches_name_and_email_without_system_filters(self):
+        self.assertEqual(self.patient_account_admin.list_filter, ())
+        self.assertEqual(
+            self.patient_account_admin.search_fields,
+            ('first_name', 'last_name', 'email'),
+        )
+
+    def test_role_specific_admin_assigns_the_expected_role_on_create(self):
+        new_doctor = DoctorAccount(email='created-doctor@example.com')
+        new_patient = PatientAccount(email='created-patient@example.com')
+
+        self.doctor_account_admin.save_model(self.request, new_doctor, None, False)
+        self.patient_account_admin.save_model(self.request, new_patient, None, False)
+
+        new_doctor.refresh_from_db()
+        new_patient.refresh_from_db()
+        self.assertEqual(new_doctor.role, UserRole.DOCTOR)
+        self.assertEqual(new_patient.role, UserRole.PATIENT)
+        self.assertTrue(DoctorProfile.objects.filter(user_id=new_doctor.pk).exists())
+
+    def test_patient_change_page_renders_all_editable_details_without_tabs(self):
+        self.client.force_login(self.staff_user)
+
+        response = self.client.get(
+            reverse('admin:accounts_patientaccount_change', args=[self.patient.pk])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'id="jazzy-tabs"')
+        self.assertContains(response, 'id="id_first_name"')
+        self.assertContains(response, 'id="id_phone_number"')
 
 
 class DoctorDashboardFeedTests(TestCase):

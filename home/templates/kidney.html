@@ -36,6 +36,7 @@
         <p>Công cụ này giúp tham khảo nhanh dựa trên một số chỉ số liên quan đến chức năng thận, không thay thế xét nghiệm chuyên sâu.</p>
       </div>
       <div class="screening-body">
+        {% include 'partials/screening_field_guidance.html' %}
         {% if error %}
         <div class="alert alert-danger" role="alert">
           {{ error }}
@@ -82,6 +83,7 @@
           {% endif %}
         </div>
         {% endif %}
+        {% include 'partials/screening_result_support.html' %}
         <form method="POST" action="{% url 'kidney' %}">
           {% csrf_token %}
           <div class="field-card">

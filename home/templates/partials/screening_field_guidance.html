@@ -1,0 +1,43 @@
+<style>
+  .screening-guidance {
+    margin: 0 0 20px;
+    border: 1px solid #bfdbfe;
+    border-radius: 14px;
+    background: #eff6ff;
+    color: #17324d;
+  }
+  .screening-guidance summary {
+    cursor: pointer;
+    padding: 14px 16px;
+    font-weight: 700;
+    list-style: none;
+  }
+  .screening-guidance summary::-webkit-details-marker { display: none; }
+  .screening-guidance summary i { color: #1677a7; margin-right: 8px; }
+  .screening-guidance-body { padding: 0 16px 16px; }
+  .screening-guidance-intro { margin: 0 0 12px; color: #4b647a; }
+  .screening-guidance-list { margin: 0; padding: 0; list-style: none; }
+  .screening-guidance-list li {
+    padding: 10px 0;
+    border-top: 1px solid #dbeafe;
+    font-size: 0.94rem;
+    line-height: 1.5;
+  }
+  .screening-guidance-list strong { display: block; color: #17324d; }
+</style>
+
+{% if form %}
+<details class="screening-guidance" open>
+  <summary><i class="fas fa-circle-question"></i>Hiểu các chỉ số trước khi sàng lọc</summary>
+  <div class="screening-guidance-body">
+    <p class="screening-guidance-intro">Hãy ưu tiên số liệu từ phiếu xét nghiệm hoặc kết quả đo gần nhất. Nếu chưa có một chỉ số, đừng tự ước lượng.</p>
+    <ul class="screening-guidance-list">
+      {% for field in form %}
+        {% if field.help_text %}
+        <li><strong>{{ field.label|default:field.name }}</strong>{{ field.help_text }}</li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+  </div>
+</details>
+{% endif %}

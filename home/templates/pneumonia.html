@@ -37,6 +37,7 @@
         <p>Kết quả hình ảnh chỉ giúp hỗ trợ tham khảo ban đầu, không thay thế việc đọc phim và khám lâm sàng bởi bác sĩ.</p>
       </div>
       <div class="screening-body">
+        {% include 'partials/screening_field_guidance.html' %}
         {% if error %}
         <div class="result-card">
           <h5>Thông báo hệ thống</h5>
@@ -80,6 +81,7 @@
           {% endif %}
         </div>
         {% endif %}
+        {% include 'partials/screening_result_support.html' %}
         <div class="row">
           <div class="col-lg-5">
             <div class="preview-box">

@@ -427,7 +427,7 @@ JAZZMIN_SETTINGS = {
     "show_sidebar": True,
     "navigation_expanded": False,
     "hide_apps": [],
-    "hide_models": [],
+    "hide_models": ["accounts.User", "accounts.DoctorAccount"],
     "order_with_respect_to": [
         "accounts", "appoinment", "emr", "home", "notifications", "auth",
     ],
@@ -439,6 +439,8 @@ JAZZMIN_SETTINGS = {
         "auth.Group": "fas fa-users",
         "accounts": "fas fa-user-shield",
         "accounts.User": "fas fa-users",
+        "accounts.PatientAccount": "fas fa-user-injured",
+        "accounts.DoctorAccount": "fas fa-user-md",
         "accounts.DoctorProfile": "fas fa-stethoscope",
         "appoinment": "fas fa-calendar-check",
         "appoinment.Appointment": "fas fa-calendar-alt",
@@ -473,6 +475,8 @@ JAZZMIN_SETTINGS = {
     "changeform_format_overrides": {
         "auth.user": "collapsible",
         "accounts.user": "collapsible",
+        "accounts.doctorprofile": "single",
+        "accounts.patientaccount": "single",
     },
 }
 

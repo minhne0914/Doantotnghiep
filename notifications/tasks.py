@@ -36,9 +36,22 @@ def should_skip_notification(booking, log):
     return False, ''
 
 
+def is_notification_scheduled_for_later(log):
+    """Keep ETA notifications from being sent by Celery eager mode.
+
+    Local development uses ``CELERY_TASK_ALWAYS_EAGER=True``.  Celery executes
+    eager tasks immediately and does not honour ``eta``, so reminder emails need
+    this final guard before the mail provider is called.
+    """
+    return log.scheduled_for and log.scheduled_for > timezone.now()
+
+
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={'max_retries': 5})
 def send_notification_email_task(self, log_id, subject, template_name, context, recipient_email):
     log = AppointmentNotificationLog.objects.select_related('appointment').get(id=log_id)
+    if is_notification_scheduled_for_later(log):
+        return
+
     booking = log.appointment
     skip, reason = should_skip_notification(booking, log)
     if skip:
@@ -60,6 +73,9 @@ def send_notification_email_task(self, log_id, subject, template_name, context, 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={'max_retries': 5})
 def send_notification_sms_task(self, log_id, message, phone_number):
     log = AppointmentNotificationLog.objects.select_related('appointment').get(id=log_id)
+    if is_notification_scheduled_for_later(log):
+        return
+
     booking = log.appointment
     skip, reason = should_skip_notification(booking, log)
     if skip:

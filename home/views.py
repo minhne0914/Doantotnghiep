@@ -245,6 +245,7 @@ def skin_cancer_detector(request):
     is_dangerous = None
     error = None
     advices = []
+    form = SkinCancerUploadForm()
     use_english = (get_language() or '').startswith('en')
     display_classes = [
         {**cls, 'label': cls['en'] if use_english else cls['vi']}
@@ -320,6 +321,8 @@ def skin_cancer_detector(request):
         'error': error,
         'advices': advices,
         'classes': display_classes,
+        'form': form,
+        'result_support': build_result_support(is_dangerous) if is_dangerous is not None else None,
     })
 
 
@@ -365,6 +368,40 @@ def validate_uploaded_xray(uploaded_file):
     return ''
 
 
+def build_result_support(needs_follow_up):
+    """Give every screening result a calm, actionable, non-diagnostic next step."""
+    if needs_follow_up:
+        return {
+            'tone': 'follow-up',
+            'message': _(
+                'Bạn không cần tự kết luận ngay. Kết quả này chỉ cho thấy các chỉ số nên được bác sĩ kiểm tra kỹ hơn.'
+            ),
+            'steps': [
+                _('Lưu lại kết quả và đặt lịch khám phù hợp trong thời gian sớm.'),
+                _('Chuẩn bị các xét nghiệm, đơn thuốc hoặc triệu chứng gần đây để trao đổi với bác sĩ.'),
+                _('Theo dõi triệu chứng; không tự mua thuốc hoặc thay đổi thuốc đang dùng chỉ dựa vào kết quả này.'),
+            ],
+            'urgent_signs': _(
+                'Đi khám cấp cứu ngay nếu có đau dữ dội, khó thở, ngất, lú lẫn hoặc triệu chứng nặng lên nhanh.'
+            ),
+        }
+
+    return {
+        'tone': 'reassuring',
+        'message': _(
+            'Kết quả hiện tại chưa ghi nhận tín hiệu nguy cơ nổi bật. Đây là một thông tin tích cực, nhưng không thay thế việc theo dõi sức khỏe thường kỳ.'
+        ),
+        'steps': [
+            _('Duy trì thói quen ăn uống, nghỉ ngơi và vận động phù hợp với sức khỏe của bạn.'),
+            _('Lưu kết quả để so sánh ở lần sàng lọc hoặc khám tiếp theo.'),
+            _('Đi khám nếu có triệu chứng mới, kéo dài hoặc khiến bạn lo lắng, dù kết quả đang ở mức thấp hơn.'),
+        ],
+        'urgent_signs': _(
+            'Nếu có triệu chứng cấp tính hoặc nặng lên nhanh, hãy tìm hỗ trợ y tế ngay thay vì chờ sàng lọc lại.'
+        ),
+    }
+
+
 def render_prediction_page(request, template_name, form, user_data, disease_type, positive_label, negative_label, advice_builder, prediction_name):
     value = ''
     error = ''
@@ -388,7 +425,13 @@ def render_prediction_page(request, template_name, form, user_data, disease_type
             from django.utils.translation import gettext as _
             error = str(_("Loi nhap lieu: ")) + ' | '.join(errors) if errors else str(_('Du lieu khong hop le.'))
 
-    return render(request, template_name, {'context': value, 'error': error, 'advices': advices})
+    return render(request, template_name, {
+        'context': value,
+        'error': error,
+        'advices': advices,
+        'form': form,
+        'result_support': build_result_support(value == positive_label) if value else None,
+    })
 
 
 def index(request):
@@ -691,9 +734,9 @@ def kidney(request):
     value = ''
     error = ''
     advices = []
+    form = KidneyDiseaseForm(request.POST or None)
 
     if request.method == 'POST':
-        form = KidneyDiseaseForm(request.POST)
         if form.is_valid():
             serum_creatinine = form.cleaned_data['serum_creatinine']
             blood_urea = form.cleaned_data['blood_urea']
@@ -732,7 +775,13 @@ def kidney(request):
         else:
             errors = [f"{field}: {', '.join(e)}" for field, e in form.errors.items()]
             error = f"Loi nhap lieu: {' | '.join(errors)}" if errors else 'Du lieu khong hop le.'
-    return render(request, 'kidney.html', {'context': value, 'error': error, 'advices': advices})
+    return render(request, 'kidney.html', {
+        'context': value,
+        'error': error,
+        'advices': advices,
+        'form': form,
+        'result_support': build_result_support(value == 'Elevated') if value else None,
+    })
 
 
 def pneumonia_detector(request):
@@ -740,9 +789,9 @@ def pneumonia_detector(request):
     pneumonia_detected = None
     probability = None
     error = None
+    form = PneumoniaUploadForm(request.POST or None, request.FILES or None)
 
     if request.method == 'POST':
-        form = PneumoniaUploadForm(request.POST, request.FILES)
         image_file = request.FILES.get('xray')
         error = validate_uploaded_xray(image_file)
 
@@ -776,6 +825,8 @@ def pneumonia_detector(request):
         'pneumonia_detected': pneumonia_detected,
         'probability': probability,
         'error': error,
+        'form': form,
+        'result_support': build_result_support(pneumonia_detected) if pneumonia_detected is not None else None,
     })
 
 

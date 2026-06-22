@@ -36,6 +36,7 @@
         <p>Kết quả chỉ hỗ trợ tham khảo ban đầu và nên được bác sĩ tim mạch đánh giá lại nếu có dấu hiệu nghi ngờ.</p>
       </div>
       <div class="screening-body">
+        {% include 'partials/screening_field_guidance.html' %}
         {% if error %}
         <div class="alert alert-danger" role="alert">
           {{ error }}
@@ -82,6 +83,7 @@
           {% endif %}
         </div>
         {% endif %}
+        {% include 'partials/screening_result_support.html' %}
         <form method="POST" action="{% url 'heart' %}">
           {% csrf_token %}
           <div class="field-card">
