@@ -140,10 +140,20 @@ WSGI_APPLICATION = 'mlhospital.wsgi.application'
 #         'NAME': os.getenv('DB_NAME', os.path.join(BASE_DIR, 'db.sqlite3')),
 #     }
 # }
+DB_ENGINE = os.getenv('DB_ENGINE', 'django.db.backends.sqlite3')
+DB_NAME = os.getenv('DB_NAME', str(BASE_DIR / 'db.sqlite3'))
+
+# SQLite paths in .env are often relative. Resolve them from the project root so
+# Django, Daphne, and Celery always share the same database regardless of CWD.
+if DB_ENGINE == 'django.db.backends.sqlite3' and DB_NAME != ':memory:':
+    db_path = Path(DB_NAME)
+    if not db_path.is_absolute():
+        DB_NAME = str(BASE_DIR / db_path)
+
 DATABASES = {
     'default': {
-        'ENGINE': os.getenv('DB_ENGINE'),
-        'NAME': os.getenv('DB_NAME'),
+        'ENGINE': DB_ENGINE,
+        'NAME': DB_NAME,
         'USER': os.getenv('DB_USER'),
         'PASSWORD': os.getenv('DB_PASSWORD'),
         'HOST': os.getenv('DB_HOST'),
@@ -283,6 +293,8 @@ EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() == 'true'
+EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', 15))
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'Medic <noreply@example.com>')
 
 # Celery / Redis

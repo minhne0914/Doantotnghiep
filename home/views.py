@@ -1045,16 +1045,23 @@ def chat_api(request):
         message=user_message,
     )
 
-    from .services_chat import build_local_chat_response, detect_intents
+    from .services_chat import (
+        build_local_chat_response,
+        detect_intents,
+        get_contextual_suggestions,
+    )
 
     local_response = build_local_chat_response(request.user, user_message)
     local_intents = detect_intents(user_message)
     prefer_local_response = bool(
         local_intents
-        & {'doctor', 'appointment', 'my_bookings', 'screening', 'emergency'}
+        & {
+            'doctor', 'appointment', 'my_bookings', 'screening', 'emergency',
+            'symptom', 'appointment_change', 'account',
+        }
     )
 
-    def save_and_return_bot_reply(reply, *, actions=None, source='gemini'):
+    def save_and_return_bot_reply(reply, *, actions=None, source='gemini', suggestions=None):
         ChatMessage.objects.create(
             user=request.user,
             sender=ChatMessage.SENDER_BOT,
@@ -1065,6 +1072,7 @@ def chat_api(request):
         return JsonResponse({
             'reply': reply,
             'actions': actions or [],
+            'suggestions': suggestions or get_contextual_suggestions(source),
             'source': source,
         })
 

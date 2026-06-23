@@ -48,7 +48,12 @@ def is_notification_scheduled_for_later(log):
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={'max_retries': 5})
 def send_notification_email_task(self, log_id, subject, template_name, context, recipient_email):
-    log = AppointmentNotificationLog.objects.select_related('appointment').get(id=log_id)
+    try:
+        log = AppointmentNotificationLog.objects.select_related('appointment').get(id=log_id)
+    except AppointmentNotificationLog.DoesNotExist:
+        # A delayed task can outlive a cancelled/deleted booking. It has no
+        # recipient to notify, so retrying would only create a noisy loop.
+        return
     if is_notification_scheduled_for_later(log):
         return
 
@@ -64,7 +69,8 @@ def send_notification_email_task(self, log_id, subject, template_name, context, 
         send_email_message(subject, template_name, context, recipient_email)
         log.status = 'sent'
         log.sent_at = timezone.now()
-        log.save(update_fields=['status', 'sent_at'])
+        log.error_message = ''
+        log.save(update_fields=['status', 'sent_at', 'error_message'])
     except Exception as exc:
         mark_log_failed(log, exc)
         raise
@@ -72,7 +78,10 @@ def send_notification_email_task(self, log_id, subject, template_name, context, 
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={'max_retries': 5})
 def send_notification_sms_task(self, log_id, message, phone_number):
-    log = AppointmentNotificationLog.objects.select_related('appointment').get(id=log_id)
+    try:
+        log = AppointmentNotificationLog.objects.select_related('appointment').get(id=log_id)
+    except AppointmentNotificationLog.DoesNotExist:
+        return
     if is_notification_scheduled_for_later(log):
         return
 
@@ -89,7 +98,8 @@ def send_notification_sms_task(self, log_id, message, phone_number):
         log.status = 'sent'
         log.provider_message_id = provider_message_id
         log.sent_at = timezone.now()
-        log.save(update_fields=['status', 'provider_message_id', 'sent_at'])
+        log.error_message = ''
+        log.save(update_fields=['status', 'provider_message_id', 'sent_at', 'error_message'])
     except Exception as exc:
         mark_log_failed(log, exc)
         raise

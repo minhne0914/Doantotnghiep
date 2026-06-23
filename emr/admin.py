@@ -1,137 +1,205 @@
-"""Admin cho EMR app: bệnh án, dấu hiệu sinh tồn, đơn thuốc.
-
-VitalSign và PrescriptionItem được hiển thị inline trong EMRRecord
-để bác sĩ có thể nhập 1 trang duy nhất.
-"""
+"""Administrative supervision screens for electronic medical records."""
 
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import EMRRecord, VitalSign, PrescriptionItem
+from .models import EMRRecord, PrescriptionItem, VitalSign
 
 
-# =============================================================================
-# Inline forms
-# =============================================================================
+class ReadOnlyClinicalInline:
+    """Prevent non-clinical staff from changing doctor-authored medical data."""
 
-class VitalSignInline(admin.StackedInline):
-    """Hiển thị VitalSign INLINE trong EMRRecord (1-1)."""
-    model = VitalSign
     extra = 0
     can_delete = False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+class VitalSignInline(ReadOnlyClinicalInline, admin.StackedInline):
+    model = VitalSign
+    readonly_fields = (
+        'weight_kg', 'height_cm', 'blood_pressure_systolic',
+        'blood_pressure_diastolic', 'heart_rate', 'temperature_c',
+    )
     fieldsets = (
-        ('Thể trạng', {'fields': (('weight_kg', 'height_cm'),)}),
-        ('Huyết áp', {'fields': (('blood_pressure_systolic', 'blood_pressure_diastolic'),)}),
-        ('Sinh hiệu khác', {'fields': (('heart_rate', 'temperature_c'),)}),
+        ('The trang', {'fields': (('weight_kg', 'height_cm'),)}),
+        ('Huyet ap', {'fields': (('blood_pressure_systolic', 'blood_pressure_diastolic'),)}),
+        ('Sinh hieu khac', {'fields': (('heart_rate', 'temperature_c'),)}),
     )
 
 
-class PrescriptionItemInline(admin.TabularInline):
-    """Hiển thị danh sách thuốc INLINE (1-N)."""
+class PrescriptionItemInline(ReadOnlyClinicalInline, admin.TabularInline):
     model = PrescriptionItem
-    extra = 1
-    fields = ('order', 'medicine_name', 'dosage', 'frequency', 'duration', 'instructions')
+    readonly_fields = (
+        'order', 'medicine_name', 'dosage', 'frequency', 'duration', 'instructions',
+    )
+    fields = readonly_fields
 
 
-# =============================================================================
-# Standalone admin
-# =============================================================================
+class ReadOnlyClinicalAdmin(admin.ModelAdmin):
+    """Allow administrators to audit medical data without editing it."""
+
+    actions = None
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        context = {
+            'show_save': False,
+            'show_save_and_add_another': False,
+            'show_save_and_continue': False,
+            'show_delete': False,
+        }
+        if extra_context:
+            context.update(extra_context)
+        return super().changeform_view(request, object_id, form_url, context)
+
 
 @admin.register(EMRRecord)
-class EMRRecordAdmin(admin.ModelAdmin):
+class EMRRecordAdmin(ReadOnlyClinicalAdmin):
     list_display = (
-        'id', 'patient_name', 'doctor_name', 'short_diagnosis',
-        'has_prescription', 'created_at',
+        'record_code', 'patient_details', 'doctor_details', 'appointment_schedule',
+        'short_diagnosis', 'prescription_status', 'created_at',
     )
-    list_filter = ('created_at', 'updated_at')
+    list_display_links = ('record_code',)
+    list_filter = ('appointment__appointment__department', 'created_at', 'updated_at')
     search_fields = (
         'patient__email', 'patient__first_name', 'patient__last_name',
         'doctor__email', 'doctor__first_name', 'doctor__last_name',
         'diagnosis', 'symptoms',
     )
+    search_help_text = 'Tim theo ten, email benh nhan/bac si, trieu chung hoac chan doan.'
     list_select_related = ('patient', 'doctor', 'appointment')
     list_per_page = 25
     date_hierarchy = 'created_at'
-    readonly_fields = ('created_at', 'updated_at')
-
-    fieldsets = (
-        ('Liên kết lịch khám', {'fields': ('appointment', 'patient', 'doctor')}),
-        ('Khám lâm sàng', {'fields': ('symptoms', 'diagnosis', 'clinical_notes')}),
-        ('Theo dõi', {'fields': ('follow_up_plan',)}),
-        ('Audit', {'fields': ('created_at', 'updated_at'), 'classes': ('collapse',)}),
+    ordering = ('-created_at',)
+    readonly_fields = (
+        'appointment_summary', 'appointment', 'patient', 'doctor', 'symptoms',
+        'diagnosis', 'clinical_notes', 'follow_up_plan', 'created_at', 'updated_at',
     )
-
+    fieldsets = (
+        ('Thong tin ho so', {
+            'fields': ('appointment_summary', 'patient', 'doctor'),
+        }),
+        ('Noi dung kham lam sang', {
+            'fields': ('symptoms', 'diagnosis', 'clinical_notes'),
+        }),
+        ('Ke hoach theo doi', {'fields': ('follow_up_plan',)}),
+        ('Lich su cap nhat', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',),
+        }),
+    )
     inlines = [VitalSignInline, PrescriptionItemInline]
 
-    def patient_name(self, obj):
-        return f'{obj.patient.first_name} {obj.patient.last_name}'.strip() or obj.patient.email
-    patient_name.short_description = 'Bệnh nhân'
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related('prescriptions')
 
-    def doctor_name(self, obj):
-        return f'BS. {obj.doctor.first_name} {obj.doctor.last_name}'.strip()
-    doctor_name.short_description = 'Bác sĩ phụ trách'
+    @admin.display(description='Ma EMR', ordering='id')
+    def record_code(self, obj):
+        return format_html(
+            '<strong style="color:#0f766e">{}</strong>',
+            f'EMR-{obj.pk:04d}',
+        )
 
+    @admin.display(description='Benh nhan', ordering='patient__first_name')
+    def patient_details(self, obj):
+        return format_html(
+            '<strong>{}</strong><br><small>{}</small>',
+            obj.patient.full_name, obj.patient.email,
+        )
+
+    @admin.display(description='Bac si phu trach', ordering='doctor__first_name')
+    def doctor_details(self, obj):
+        return format_html(
+            '<strong>BS. {}</strong><br><small>{}</small>',
+            obj.doctor.full_name, obj.doctor.email,
+        )
+
+    @admin.display(description='Lich kham', ordering='appointment__date')
+    def appointment_schedule(self, obj):
+        booking = obj.appointment
+        department = booking.appointment.department or 'Chua cap nhat chuyen khoa'
+        return format_html('{} {}<br><small>{}</small>', booking.date, booking.time, department)
+
+    @admin.display(description='Chan doan')
     def short_diagnosis(self, obj):
-        diag = obj.diagnosis or ''
-        return (diag[:60] + '...') if len(diag) > 60 else (diag or '—')
-    short_diagnosis.short_description = 'Chẩn đoán'
+        diagnosis = obj.diagnosis or ''
+        return (diagnosis[:70] + '...') if len(diagnosis) > 70 else (diagnosis or '-')
 
-    def has_prescription(self, obj):
-        return obj.prescriptions.exists()
-    has_prescription.short_description = 'Có đơn thuốc?'
-    has_prescription.boolean = True
+    @admin.display(description='Don thuoc', boolean=True)
+    def prescription_status(self, obj):
+        return bool(obj.prescriptions.all())
+
+    @admin.display(description='Thong tin lich kham')
+    def appointment_summary(self, obj):
+        booking = obj.appointment
+        return format_html(
+            '<strong>Ma lich #{}</strong> | {} {} | {}',
+            booking.pk, booking.date, booking.time, booking.appointment.department,
+        )
 
 
 @admin.register(VitalSign)
-class VitalSignAdmin(admin.ModelAdmin):
-    """Standalone view cho thống kê / báo cáo - vẫn dùng được dù đã có inline."""
+class VitalSignAdmin(ReadOnlyClinicalAdmin):
     list_display = (
         'emr_record_id', 'patient_label', 'weight_kg', 'height_cm',
         'bmi_display', 'bp_display', 'heart_rate', 'temperature_c',
     )
-    list_filter = ('emr_record__created_at',)
+    list_filter = ('emr_record__appointment__appointment__department', 'emr_record__created_at')
     search_fields = (
-        'emr_record__patient__email',
-        'emr_record__patient__first_name',
+        'emr_record__patient__email', 'emr_record__patient__first_name',
         'emr_record__patient__last_name',
     )
     list_select_related = ('emr_record__patient',)
     list_per_page = 25
+    readonly_fields = (
+        'emr_record', 'weight_kg', 'height_cm', 'blood_pressure_systolic',
+        'blood_pressure_diastolic', 'heart_rate', 'temperature_c',
+    )
 
+    @admin.display(description='Benh nhan', ordering='emr_record__patient__first_name')
     def patient_label(self, obj):
-        p = obj.emr_record.patient
-        return f'{p.first_name} {p.last_name}'.strip() or p.email
-    patient_label.short_description = 'Bệnh nhân'
+        return obj.emr_record.patient.full_name
 
+    @admin.display(description='BMI')
     def bmi_display(self, obj):
         bmi = obj.bmi
         if bmi is None:
-            return '—'
-        # Color theo phân loại WHO
-        if bmi < 18.5:
-            color = '#3b82f6'  # underweight - blue
-        elif bmi < 25:
-            color = '#16a34a'  # normal - green
-        elif bmi < 30:
-            color = '#f59e0b'  # overweight - amber
-        else:
-            color = '#dc2626'  # obese - red
-        return format_html(
-            '<span style="color:{};font-weight:bold">{}</span>',
-            color, bmi,
-        )
-    bmi_display.short_description = 'BMI'
+            return '-'
+        color = '#3b82f6' if bmi < 18.5 else '#16a34a' if bmi < 25 else '#f59e0b' if bmi < 30 else '#dc2626'
+        return format_html('<strong style="color:{}">{}</strong>', color, bmi)
 
+    @admin.display(description='Huyet ap')
     def bp_display(self, obj):
         return f'{obj.blood_pressure_systolic}/{obj.blood_pressure_diastolic}'
-    bp_display.short_description = 'Huyết áp'
 
 
 @admin.register(PrescriptionItem)
-class PrescriptionItemAdmin(admin.ModelAdmin):
-    list_display = ('order', 'medicine_name', 'dosage', 'frequency', 'duration', 'emr_record_id')
-    list_filter = ('emr_record__created_at',)
-    search_fields = ('medicine_name', 'dosage', 'instructions')
-    list_select_related = ('emr_record',)
+class PrescriptionItemAdmin(ReadOnlyClinicalAdmin):
+    list_display = (
+        'medicine_name', 'dosage', 'frequency', 'duration', 'patient_label', 'emr_record_id',
+    )
+    list_filter = ('emr_record__appointment__appointment__department', 'emr_record__created_at')
+    search_fields = (
+        'medicine_name', 'dosage', 'instructions', 'emr_record__patient__email',
+        'emr_record__patient__first_name', 'emr_record__patient__last_name',
+    )
+    list_select_related = ('emr_record__patient',)
     list_per_page = 50
     ordering = ('emr_record', 'order')
+    readonly_fields = (
+        'emr_record', 'order', 'medicine_name', 'dosage', 'frequency', 'duration', 'instructions',
+    )
+
+    @admin.display(description='Benh nhan', ordering='emr_record__patient__first_name')
+    def patient_label(self, obj):
+        return obj.emr_record.patient.full_name

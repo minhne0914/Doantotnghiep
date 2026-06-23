@@ -108,6 +108,43 @@ INTENT_KEYWORDS['screening'].extend([
     'skin', 'da', 'x ray', 'xray',
 ])
 
+for _generic_personal_phrase in (
+    'tôi có', 'tôi bị', 'tôi đang', 'của tôi', 'của mình', 'mình bị', 'mình đang',
+    'toi co', 'toi bi', 'toi dang', 'cua toi', 'cua minh', 'minh bi', 'minh dang',
+):
+    while _generic_personal_phrase in INTENT_KEYWORDS['my_history']:
+        INTENT_KEYWORDS['my_history'].remove(_generic_personal_phrase)
+
+# Keep screening/history retrieval explicit.  Short words such as ``da`` and
+# ``tim`` are common inside unrelated Vietnamese phrases (for example
+# "đau đầu" and "tìm bác sĩ") and must not route a symptom question to AI
+# history.
+for _ambiguous_keyword in ('AI', 'ai', 'tim', 'da'):
+    while _ambiguous_keyword in INTENT_KEYWORDS['screening']:
+        INTENT_KEYWORDS['screening'].remove(_ambiguous_keyword)
+
+INTENT_KEYWORDS['screening'].extend([
+    'ket qua sang loc', 'lich su sang loc', 'ket qua ai', 'sang loc da',
+    'ung thu da', 'benh tim', 'benh than', 'benh tieu duong',
+])
+
+INTENT_KEYWORDS['symptom'] = [
+    'đau đầu', 'dau dau', 'chóng mặt', 'chong mat', 'buồn nôn', 'buon non',
+    'sốt', 'sot', 'bị ho', 'bi ho', 'ho nhiều', 'ho nhieu', 'đau bụng', 'dau bung', 'mệt', 'met moi',
+    'đau lưng', 'dau lung', 'đau họng', 'dau hong', 'triệu chứng', 'trieu chung',
+]
+
+INTENT_KEYWORDS['appointment_change'] = [
+    'đổi lịch', 'doi lich', 'dời lịch', 'doi gio', 'đổi giờ', 'đổi ngày', 'doi ngay',
+    'hủy lịch', 'huy lich', 'hủy khám', 'huy kham', 'không khám nữa', 'khong kham nua',
+]
+
+INTENT_KEYWORDS['account'] = [
+    'quên mật khẩu', 'quen mat khau', 'đặt lại mật khẩu', 'dat lai mat khau',
+    'không đăng nhập', 'khong dang nhap', 'tài khoản', 'tai khoan',
+    'hồ sơ', 'ho so', 'đổi thông tin', 'doi thong tin',
+]
+
 
 def _normalize(text):
     """Lowercase + bỏ dấu để so sánh keyword chính xác hơn.
@@ -180,7 +217,16 @@ def detect_intents(user_message):
         for kw in keywords:
             kw_lower = kw.lower()
             _, kw_no_accent = _normalize(kw)
-            if kw_lower in msg_lower or kw_no_accent in msg_no_accent:
+            # Very short terms need word boundaries to avoid matching inside a
+            # normal Vietnamese word (e.g. ``da`` in ``dau``).
+            if len(kw_no_accent) <= 3:
+                matched = bool(re.search(
+                    rf'(?<![a-z0-9]){re.escape(kw_no_accent)}(?![a-z0-9])',
+                    msg_no_accent,
+                ))
+            else:
+                matched = kw_lower in msg_lower or kw_no_accent in msg_no_accent
+            if matched:
                 intents.add(intent)
                 break
     if _looks_like_user_booking_question(user_message):
@@ -188,6 +234,35 @@ def detect_intents(user_message):
     return intents
 
 
+def detect_primary_intent(user_message):
+    """Choose exactly one response path when a message matches several topics.
+
+    The priority prevents incidental words from pulling a patient into an
+    unrelated database query.  Medical safety and explicit actions always win.
+    """
+    intents = detect_intents(user_message)
+    _, message = _normalize(user_message)
+
+    # Keep this resolver deliberately linear so one message has one route.
+    if 'emergency' in intents:
+        return 'emergency'
+    if 'appointment_change' in intents:
+        return 'appointment_change'
+    if 'my_bookings' in intents:
+        return 'my_bookings'
+    if 'symptom' in intents:
+        return 'symptom'
+    if 'account' in intents:
+        return 'account'
+    if 'appointment' in intents:
+        return 'appointment'
+    if 'doctor' in intents:
+        return 'doctor'
+    if 'my_history' in intents or 'screening' in intents:
+        return 'history'
+    if _contains_any(message, ('ket qua ai', 'ket qua sang loc', 'lich su sang loc')):
+        return 'history'
+    return 'general'
 # =============================================================================
 # FAQ search - keyword overlap scoring
 # =============================================================================
@@ -444,9 +519,42 @@ def _format_slot(slot):
 
 
 def _format_history(item):
+    disease = _HISTORY_DISEASE_LABELS.get(item.disease_type, item.disease_type)
     return (
-        f'- {item.created_at.strftime("%d/%m/%Y %H:%M")}: {item.disease_type} '
-        f'-> {item.prediction_result}; chỉ số: {item.input_data or {}}'
+        f'- {item.created_at.strftime("%d/%m/%Y %H:%M")}: {disease}. '
+        f'{_friendly_history_result(item)}'
+    )
+
+
+_HISTORY_DISEASE_LABELS = {
+    'Diabetes': 'Sàng lọc nguy cơ tiểu đường',
+    'Diabetes Disease': 'Sàng lọc nguy cơ tiểu đường',
+    'Heart Disease': 'Sàng lọc nguy cơ tim mạch',
+    'Breast Cancer': 'Sàng lọc nguy cơ ung thư vú',
+    'Kidney Disease': 'Sàng lọc nguy cơ bệnh thận',
+    'Pneumonia': 'Sàng lọc nguy cơ viêm phổi',
+    'Skin Cancer': 'Sàng lọc tổn thương da',
+}
+
+
+def _friendly_history_result(item):
+    """Hide model labels such as ``have`` and ``Positive`` from patients."""
+    raw_result = (item.prediction_result or '').strip()
+    normalized = raw_result.lower()
+    if item.disease_type == 'Skin Cancer':
+        return 'Kết quả đã được lưu; xem chi tiết để theo dõi tổn thương da.'
+    if normalized in {'positive', 'have', 'elevated', 'high risk'}:
+        return 'Có chỉ số cần theo dõi thêm cùng bác sĩ.'
+    if normalized in {'negative', "don't have", 'lower', 'low risk'}:
+        return 'Chưa thấy tín hiệu nguy cơ nổi bật từ lần sàng lọc này.'
+    return raw_result or 'Kết quả sàng lọc đã được lưu.'
+
+
+def _format_history_card(item):
+    disease = _HISTORY_DISEASE_LABELS.get(item.disease_type, item.disease_type)
+    return (
+        f"- {item.created_at.strftime('%d/%m/%Y')}: {disease}. "
+        f"{_friendly_history_result(item)}"
     )
 
 
@@ -477,6 +585,7 @@ def build_rag_context(user, user_message, current_message_id=None):
     Trả về string đã format, có thể empty nếu không tìm thấy info nào.
     """
     intents = detect_intents(user_message)
+    primary_intent = detect_primary_intent(user_message)
     is_personal_booking_question = _looks_like_user_booking_question(user_message)
     booking_date_filter = _extract_booking_date_filter(user_message)
     blocks = []
@@ -490,7 +599,7 @@ def build_rag_context(user, user_message, current_message_id=None):
         blocks.append('\n'.join(lines))
 
     # 1. FAQ - luôn search vì câu hỏi nào cũng có thể trùng FAQ
-    faqs = search_faqs(user_message)
+    faqs = [] if primary_intent in {'symptom', 'emergency'} else search_faqs(user_message)
     if faqs:
         lines = ['## Câu hỏi thường gặp về hệ thống Medic:']
         for faq in faqs:
@@ -499,7 +608,7 @@ def build_rag_context(user, user_message, current_message_id=None):
         blocks.append('\n'.join(lines))
 
     # 2. Bác sĩ
-    if 'doctor' in intents:
+    if primary_intent == 'doctor':
         doctors = search_doctors(user_message)
         lines = ['## Bác sĩ trong hệ thống (phù hợp với câu hỏi):']
         if doctors:
@@ -509,7 +618,7 @@ def build_rag_context(user, user_message, current_message_id=None):
         blocks.append('\n'.join(lines))
 
     # 3. Lịch khám trống
-    if 'appointment' in intents and not is_personal_booking_question:
+    if primary_intent == 'appointment' and not is_personal_booking_question:
         slots = search_available_slots(user_message)
         lines = ['## Lịch khám trống trong 7 ngày tới:']
         if slots:
@@ -519,7 +628,7 @@ def build_rag_context(user, user_message, current_message_id=None):
         blocks.append('\n'.join(lines))
 
     # 4. Lịch sử user (nếu hỏi về bản thân)
-    if 'my_history' in intents or 'screening' in intents:
+    if primary_intent == 'history':
         history = get_user_medical_history(user)
         lines = ['## Lịch sử sàng lọc AI của bạn (3 mục gần nhất):']
         if history:
@@ -529,7 +638,7 @@ def build_rag_context(user, user_message, current_message_id=None):
         blocks.append('\n'.join(lines))
 
     # 5. Booking của user
-    if 'my_bookings' in intents:
+    if primary_intent == 'my_bookings':
         bookings = get_user_bookings(user, target_date=booking_date_filter)
         lines = ['## Lịch khám bạn đã đặt (sắp tới):']
         if bookings:
@@ -539,7 +648,7 @@ def build_rag_context(user, user_message, current_message_id=None):
         blocks.append('\n'.join(lines))
 
     # 6. Cảnh báo cấp cứu - nếu detect → AI sẽ ưu tiên trả lời 115
-    if 'emergency' in intents:
+    if primary_intent == 'emergency':
         blocks.insert(0,
             '## ⚠️ CẢNH BÁO: Câu hỏi có dấu hiệu khẩn cấp y tế.\n'
             'Hãy ưu tiên hướng dẫn user GỌI 115 hoặc đến bệnh viện ngay '
@@ -554,6 +663,52 @@ def build_rag_context(user, user_message, current_message_id=None):
 
 def _action(label, url, tone='primary'):
     return {'label': label, 'url': url, 'tone': tone}
+
+
+def _symptom_specialty(user_message):
+    """Return a conservative specialty suggestion for non-emergency symptoms."""
+    _, message = _normalize(user_message)
+    mappings = (
+        (('dau dau', 'chong mat', 'dau lung', 'te bi', 'yeu tay'), 'thần kinh', 'Nội thần kinh'),
+        (('dau hong', 'nghet mui', 'dau tai'), 'tai mũi họng', 'Tai Mũi Họng'),
+        (('dau rang', 'dau loi', 'sung loi'), 'nha khoa', 'Nha khoa'),
+        (('mat do', 'mo mat', 'dau mat'), 'mắt', 'Nhãn khoa'),
+    )
+    for keywords, search_term, label in mappings:
+        if _contains_any(message, keywords):
+            return search_term, label
+    return None, None
+
+
+def get_contextual_suggestions(source):
+    """Short follow-up prompts rendered as chat buttons after each answer."""
+    suggestions = {
+        'local_symptom': [
+            'Triệu chứng bắt đầu từ khi nào?',
+            'Tôi muốn tìm bác sĩ phù hợp',
+        ],
+        'local_bookings': [
+            'Tôi muốn đổi lịch khám',
+            'Tôi cần chuẩn bị gì trước buổi khám?',
+        ],
+        'local_appointment_change': [
+            'Lịch của tôi',
+            'Bác sĩ nào rảnh hôm nay?',
+        ],
+        'local_history': [
+            'Giải thích kết quả sàng lọc gần nhất',
+            'Tìm bác sĩ phù hợp với kết quả này',
+        ],
+        'local_account': [
+            'Tôi không nhận được email đặt lại mật khẩu',
+            'Tôi muốn cập nhật hồ sơ',
+        ],
+    }
+    return suggestions.get(source, [
+        'Hôm nay tôi có lịch khám không?',
+        'Tìm bác sĩ phù hợp',
+        'Cho tôi xem kết quả sàng lọc AI',
+    ])
 
 
 def _format_doctor_card(doctor):
@@ -602,13 +757,14 @@ def build_local_chat_response(user, user_message):
     missing or the provider is temporarily unavailable.
     """
     intents = detect_intents(user_message)
+    primary_intent = detect_primary_intent(user_message)
     is_personal_booking_question = _looks_like_user_booking_question(user_message)
     booking_date_filter = _extract_booking_date_filter(user_message)
     today = timezone.localdate()
     actions = []
 
     if getattr(user, 'role', '') == 'doctor' and (
-        'my_bookings' in intents or 'appointment' in intents
+        primary_intent in {'my_bookings', 'appointment'}
     ):
         target_date = booking_date_filter or today
         bookings = get_doctor_bookings(user, top_k=10, target_date=target_date)
@@ -643,7 +799,7 @@ def build_local_chat_response(user, user_message):
             'source': 'local_doctor_schedule',
         }
 
-    if 'emergency' in intents:
+    if primary_intent == 'emergency':
         return {
             'reply': (
                 'Tôi thấy nội dung của bạn có dấu hiệu khẩn cấp. Nếu bạn đang khó thở, '
@@ -657,7 +813,73 @@ def build_local_chat_response(user, user_message):
             'source': 'local_emergency',
         }
 
-    if 'my_bookings' in intents:
+    if primary_intent == 'symptom':
+        specialty_query, specialty_label = _symptom_specialty(user_message)
+        suggested_doctors = search_doctors(specialty_query, top_k=2) if specialty_query else []
+        specialty_note = ''
+        symptom_actions = [
+            _action('Tìm bác sĩ phù hợp', '/appoinment/doctor/', 'primary'),
+            _action('Đặt lịch khám', '/appoinment/doctor/', 'secondary'),
+        ]
+        if specialty_label:
+            specialty_note = f' Với triệu chứng này, bạn có thể ưu tiên khám chuyên khoa {specialty_label}.'
+        if suggested_doctors:
+            doctor = suggested_doctors[0]
+            symptom_actions.insert(
+                0,
+                _action(
+                    f'Xem BS. {doctor.first_name} {doctor.last_name}',
+                    f'/appoinment/doctor/{doctor.id}/profile/',
+                    'success',
+                ),
+            )
+        return {
+            'reply': (
+                'Tôi hiểu bạn đang khó chịu. Với đau đầu hoặc triệu chứng nhẹ mới xuất hiện, '
+                'bạn có thể nghỉ ở nơi yên tĩnh, uống đủ nước và theo dõi diễn tiến. '
+                'Tôi không thể xác định nguyên nhân chỉ qua chat. Nếu đau đầu xuất hiện đột ngột và dữ dội, '
+                'kèm yếu liệt, nói khó, lú lẫn, sốt cao/cứng gáy, nhìn mờ, ngất hoặc sau chấn thương đầu, '
+                'hãy gọi 115 hoặc đến cơ sở y tế ngay. Nếu triệu chứng kéo dài, tái diễn hoặc khiến bạn lo lắng, '
+                'bạn nên đặt lịch khám để được đánh giá trực tiếp.'
+                f'{specialty_note} Để tư vấn sát hơn, bạn có thể cho biết triệu chứng bắt đầu từ khi nào, '
+                'mức độ đau từ 0-10 và có sốt, nôn, nhìn mờ hoặc tê yếu không.'
+            ),
+            'actions': symptom_actions,
+            'source': 'local_symptom',
+        }
+
+    if primary_intent == 'appointment_change':
+        return {
+            'reply': (
+                'Bạn có thể đổi hoặc hủy lịch trong mục Lịch hẹn của tôi. Chọn lịch đang ở trạng thái '
+                'chờ xác nhận hoặc đã xác nhận, sau đó bấm Đổi lịch hoặc Hủy lịch. Khi đổi sang giờ mới, '
+                'hệ thống sẽ kiểm tra khung giờ trống và gửi yêu cầu để bác sĩ xác nhận lại.'
+            ),
+            'actions': [
+                _action('Mở lịch hẹn của tôi', '/appoinment/patient/my-appointments/', 'primary'),
+                _action('Tìm lịch trống', '/appoinment/doctor/', 'secondary'),
+            ],
+            'source': 'local_appointment_change',
+        }
+
+    if primary_intent == 'account':
+        _, normalized_message = _normalize(user_message)
+        if _contains_any(normalized_message, ('quen mat khau', 'dat lai mat khau', 'khong dang nhap')):
+            return {
+                'reply': (
+                    'Bạn có thể đặt lại mật khẩu bằng email đã đăng ký. Bấm Quên mật khẩu, nhập email, '
+                    'rồi mở email để dùng liên kết đặt lại mật khẩu.'
+                ),
+                'actions': [_action('Đặt lại mật khẩu', '/account/password_reset/', 'primary')],
+                'source': 'local_account',
+            }
+        return {
+            'reply': 'Bạn có thể cập nhật thông tin cá nhân trong Hồ sơ. Thông tin chuyên môn của bác sĩ do quản trị viên quản lý để bảo đảm chính xác.',
+            'actions': [_action('Mở trang chủ', '/', 'secondary')],
+            'source': 'local_account',
+        }
+
+    if primary_intent == 'my_bookings':
         bookings = get_user_bookings(user, top_k=5, target_date=booking_date_filter)
         actions.append(_action('Mở lịch hẹn của tôi', '/appoinment/patient/my-appointments/', 'primary'))
         if bookings:
@@ -697,7 +919,7 @@ def build_local_chat_response(user, user_message):
             'source': 'local_bookings',
         }
 
-    if 'appointment' in intents and not is_personal_booking_question:
+    if primary_intent == 'appointment' and not is_personal_booking_question:
         slots = search_available_slots(user_message, top_k=5)
         if slots:
             lines = ['Tôi tìm thấy một số khung khám còn trống trong 7 ngày tới:']
@@ -722,7 +944,7 @@ def build_local_chat_response(user, user_message):
             'source': 'local_slots',
         }
 
-    if 'doctor' in intents:
+    if primary_intent == 'doctor':
         doctors = search_doctors(user_message, top_k=5)
         if doctors:
             lines = ['Tôi tìm thấy các bác sĩ phù hợp trong hệ thống:']
@@ -742,15 +964,12 @@ def build_local_chat_response(user, user_message):
             'source': 'local_doctors',
         }
 
-    if 'my_history' in intents or 'screening' in intents:
+    if primary_intent == 'history':
         history = get_user_medical_history(user, top_k=5)
         actions.append(_action('Mở lịch sử AI', '/history/', 'primary'))
         if history:
             lines = ['Đây là các kết quả sàng lọc AI gần đây của bạn:']
-            lines.extend(
-                f"- {item.created_at.strftime('%d/%m/%Y')}: {item.disease_type} -> {item.prediction_result}"
-                for item in history
-            )
+            lines.extend(_format_history_card(item) for item in history)
             lines.append('Lưu ý: kết quả AI chỉ có tính tham khảo, bạn nên gặp bác sĩ để được kết luận chính xác.')
             return {
                 'reply': '\n'.join(lines),

@@ -14,7 +14,12 @@ from PIL import Image
 
 from .models import ChatMessage, MedicalHistory
 from .services_news import load_latest_reviews
-from .services_chat import build_local_chat_response, build_rag_context, detect_intents
+from .services_chat import (
+    build_local_chat_response,
+    build_rag_context,
+    detect_intents,
+    detect_primary_intent,
+)
 
 
 User = get_user_model()
@@ -277,7 +282,7 @@ class ChatEndpointTests(TestCase):
         with patch('google.genai.Client', return_value=fake_client):
             response = self.client.post(
                 reverse('chat_api'),
-                data=json.dumps({'message': 'Toi bi ho'}),
+                data=json.dumps({'message': 'Huong dan su dung he thong Medic'}),
                 content_type='application/json',
             )
 
@@ -315,13 +320,89 @@ class ChatEndpointTests(TestCase):
             with self.assertLogs('home.views', level='ERROR'):
                 response = self.client.post(
                     reverse('chat_api'),
-                    data=json.dumps({'message': 'Toi bi sot'}),
+                    data=json.dumps({'message': 'Hay cho toi mot loi chao'}),
                     content_type='application/json',
                 )
 
         self.assertEqual(response.status_code, 200)
         self.assertIn('reply', response.json())
         self.assertEqual(ChatMessage.objects.filter(user=self.user).count(), 2)
+
+    def test_symptom_question_does_not_return_screening_history(self):
+        MedicalHistory.objects.create(
+            user=self.user,
+            disease_type='Heart Disease',
+            prediction_result='have',
+            input_data={},
+        )
+
+        message = 'Tôi bị đau đầu thì cần phải làm gì?'
+        intents = detect_intents(message)
+        payload = build_local_chat_response(self.user, message)
+
+        self.assertIn('symptom', intents)
+        self.assertNotIn('screening', intents)
+        self.assertEqual(payload['source'], 'local_symptom')
+        self.assertIn('đau đầu', payload['reply'])
+        self.assertNotIn('Heart Disease', payload['reply'])
+        self.assertNotIn('-> have', payload['reply'])
+
+    def test_history_response_uses_patient_friendly_result_labels(self):
+        MedicalHistory.objects.create(
+            user=self.user,
+            disease_type='Heart Disease',
+            prediction_result='have',
+            input_data={'chol': 250},
+        )
+
+        payload = build_local_chat_response(self.user, 'Cho tôi xem kết quả sàng lọc AI')
+
+        self.assertEqual(payload['source'], 'local_history')
+        self.assertIn('Sàng lọc nguy cơ tim mạch', payload['reply'])
+        self.assertIn('Có chỉ số cần theo dõi thêm', payload['reply'])
+        self.assertNotIn('-> have', payload['reply'])
+
+    def test_chatbot_routes_overlapping_questions_to_one_primary_context(self):
+        cases = {
+            'Tôi muốn đổi lịch khám': 'appointment_change',
+            'Tôi quên mật khẩu và không đăng nhập được': 'account',
+            'Bác sĩ nào rảnh hôm nay?': 'appointment',
+            'Tôi bị đau đầu, nên khám bác sĩ nào?': 'symptom',
+            'Cho tôi xem kết quả sàng lọc AI': 'history',
+        }
+
+        for message, expected_intent in cases.items():
+            with self.subTest(message=message):
+                self.assertEqual(detect_primary_intent(message), expected_intent)
+
+    def test_chatbot_returns_dedicated_workflow_for_reschedule_and_password_reset(self):
+        change_payload = build_local_chat_response(self.user, 'Tôi muốn đổi lịch khám')
+        account_payload = build_local_chat_response(self.user, 'Tôi quên mật khẩu')
+
+        self.assertEqual(change_payload['source'], 'local_appointment_change')
+        self.assertTrue(change_payload['actions'])
+        self.assertEqual(account_payload['source'], 'local_account')
+        self.assertEqual(account_payload['actions'][0]['url'], '/account/password_reset/')
+
+    def test_symptom_response_recommends_specialty_and_follow_up_details(self):
+        payload = build_local_chat_response(self.user, 'Tôi bị đau đầu từ sáng nay')
+
+        self.assertEqual(payload['source'], 'local_symptom')
+        self.assertIn('Nội thần kinh', payload['reply'])
+        self.assertIn('mức độ đau từ 0-10', payload['reply'])
+
+    def test_chat_api_returns_contextual_follow_up_suggestions(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('chat_api'),
+            data=json.dumps({'message': 'Tôi muốn đổi lịch khám'}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['source'], 'local_appointment_change')
+        self.assertIn('Lịch của tôi', response.json()['suggestions'])
 
     @override_settings(GEMINI_API_KEY='')
     def test_chat_api_returns_db_backed_booking_actions(self):

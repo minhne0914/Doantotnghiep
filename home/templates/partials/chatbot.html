@@ -242,6 +242,13 @@
     color: #075985;
 }
 
+.chat-inline-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
 #chatInputContainer {
     padding: 14px;
     border-top: 1px solid #e2e8f0;
@@ -456,7 +463,7 @@
             .slice(0, 4);
     }
 
-    function appendMessage(sender, text, timestamp = '', actions = []) {
+    function appendMessage(sender, text, timestamp = '', actions = [], suggestions = []) {
         const messages = document.getElementById('chatMessages');
         const row = document.createElement('div');
         row.className = `chat-row ${sender}`;
@@ -478,6 +485,23 @@
                 actionWrap.appendChild(link);
             });
             row.appendChild(actionWrap);
+        }
+        if (sender === 'bot' && Array.isArray(suggestions) && suggestions.length) {
+            const suggestionWrap = document.createElement('div');
+            suggestionWrap.className = 'chat-inline-suggestions';
+            suggestions.slice(0, 3).forEach((suggestion) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'chat-suggestion';
+                button.textContent = suggestion;
+                button.addEventListener('click', () => {
+                    const input = document.getElementById('chatInput');
+                    input.value = suggestion;
+                    sendMessage();
+                });
+                suggestionWrap.appendChild(button);
+            });
+            row.appendChild(suggestionWrap);
         }
         if (timestamp) {
             const time = document.createElement('div');
@@ -609,7 +633,13 @@
             hideTyping();
 
             if (response.ok) {
-                appendMessage('bot', data.reply || 'AI chưa trả về nội dung hợp lệ.', '', data.actions || []);
+                appendMessage(
+                    'bot',
+                    data.reply || 'AI chưa trả về nội dung hợp lệ.',
+                    '',
+                    data.actions || [],
+                    data.suggestions || [],
+                );
                 setChatStatus('Phản hồi đã được lưu vào lịch sử chat.', 'success');
             } else {
                 appendMessage('bot', data.error || 'Xin lỗi, hệ thống AI tạm thời chưa phản hồi được.');
